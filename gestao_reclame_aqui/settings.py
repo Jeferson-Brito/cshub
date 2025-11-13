@@ -3,6 +3,7 @@ Django settings for gestao_reclame_aqui project.
 """
 
 import os
+import socket
 from pathlib import Path
 
 # Load environment variables from .env file
@@ -14,6 +15,16 @@ except ImportError:
 
 def get_env(key, default=None):
     return os.environ.get(key, default)
+
+def get_ipv4_host(hostname):
+    """Resolve hostname to IPv4 address"""
+    try:
+        # Tentar resolver para IPv4 primeiro
+        ipv4 = socket.gethostbyname(hostname)
+        return ipv4
+    except socket.gaierror:
+        # Se falhar, retornar o hostname original
+        return hostname
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
