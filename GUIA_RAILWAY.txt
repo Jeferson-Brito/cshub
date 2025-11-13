@@ -1,0 +1,93 @@
+========================================
+🚂 DEPLOY NO RAILWAY.APP - GUIA RÁPIDO
+========================================
+
+========================================
+PARTE 1: CRIAR CONTA E PROJETO
+========================================
+
+1. Acesse: https://railway.app
+2. Clique em "Start a New Project"
+3. Faça login com GitHub
+4. Autorize o Railway
+
+========================================
+PARTE 2: CRIAR BANCO POSTGRESQL
+========================================
+
+1. No projeto, clique em "New"
+2. Selecione "Database"
+3. Selecione "Add PostgreSQL"
+4. Aguarde criação (1-2 minutos)
+5. Clique no banco criado
+6. Vá em "Variables"
+7. ⚠️ ANOTE as variáveis que aparecem:
+   - PGHOST
+   - PGPORT
+   - PGDATABASE
+   - PGUSER
+   - PGPASSWORD
+
+========================================
+PARTE 3: CRIAR SERVIÇO WEB
+========================================
+
+1. No projeto, clique em "New"
+2. Selecione "GitHub Repo"
+3. Selecione seu repositório "cshub"
+4. Railway detecta automaticamente e faz deploy
+
+========================================
+PARTE 4: CONFIGURAR VARIÁVEIS
+========================================
+
+1. Clique no serviço web criado
+2. Vá em "Variables"
+3. Adicione estas variáveis:
+
+   SECRET_KEY = [gere uma chave]
+   DEBUG = False
+   ALLOWED_HOSTS = *.railway.app
+   
+   DB_NAME = [valor de PGDATABASE do banco]
+   DB_USER = [valor de PGUSER do banco]
+   DB_PASSWORD = [valor de PGPASSWORD do banco]
+   DB_HOST = [valor de PGHOST do banco]
+   DB_PORT = [valor de PGPORT do banco]
+
+4. Salve
+
+========================================
+PARTE 5: EXECUTAR MIGRAÇÕES
+========================================
+
+1. No serviço web, vá em "Deployments"
+2. Clique nos três pontinhos do último deploy
+3. Selecione "View Logs"
+4. Ou vá em "Settings" → "Service" → "Shell"
+5. Execute:
+   python manage.py migrate
+   python manage.py create_admin_user
+
+========================================
+PARTE 6: TESTAR
+========================================
+
+1. No serviço web, você verá uma URL como:
+   https://cshub-production.up.railway.app
+2. Acesse a URL
+3. Faça login:
+   E-mail: jeffersonbrito245@gmail.com
+   Senha: @Lionnees14
+
+========================================
+DIFERENÇAS DO RENDER:
+========================================
+
+✓ Railway cria banco mais fácil
+✓ Variáveis são mais simples
+✓ Shell disponível no plano free
+✓ Deploy automático igual
+
+========================================
+

@@ -1,0 +1,96 @@
+========================================
+🔧 CORRIGIR: BANCO DE DADOS NÃO EXISTE
+========================================
+
+O erro mostra que o banco "cshub" não existe.
+Vamos verificar e corrigir!
+
+========================================
+SOLUÇÃO:
+========================================
+
+ETAPA 1: VERIFICAR O NOME REAL DO BANCO
+----------------------------------------
+
+1. No Render, vá para seu banco PostgreSQL "cshub-db"
+
+2. Na página do banco, procure por:
+   - "Database" ou "Database name"
+   - Ou "Internal Database URL"
+
+3. O nome do banco pode ser diferente de "cshub"
+   Pode ser algo como:
+   - cshub_db
+   - cshubdb
+   - Ou outro nome
+
+4. 📝 ANOTE O NOME EXATO DO BANCO!
+
+ETAPA 2: VERIFICAR VARIÁVEIS DE AMBIENTE
+-----------------------------------------
+
+1. No Render, vá para seu Web Service "cshub"
+
+2. Clique em "Environment"
+
+3. Verifique a variável "DB_NAME":
+   - Deve ter EXATAMENTE o nome do banco que você anotou
+   - Se estiver diferente, edite e corrija
+
+4. Verifique também:
+   - DB_HOST: deve ser o host do banco
+   - DB_USER: deve ser o usuário do banco
+   - DB_PASSWORD: deve ser a senha do banco
+   - DB_PORT: deve ser 5432
+
+ETAPA 3: VERIFICAR INTERNAL DATABASE URL
+-----------------------------------------
+
+1. Na página do banco PostgreSQL, procure por:
+   "Internal Database URL"
+
+2. Ela deve ter este formato:
+   postgresql://usuario:senha@host:port/database
+
+3. Verifique o nome do banco no final da URL
+   (depois da última barra /)
+
+4. Use esse nome exato na variável DB_NAME
+
+ETAPA 4: CRIAR O BANCO SE NÃO EXISTIR
+--------------------------------------
+
+Se o banco realmente não existe:
+
+1. No Render, vá para seu banco PostgreSQL
+
+2. Clique em "Connect" ou procure por "Database Tools"
+
+3. Ou use o comando no Build Command temporariamente:
+   (mas primeiro tente as etapas acima)
+
+========================================
+VERIFICAÇÃO RÁPIDA:
+========================================
+
+No Render, verifique:
+
+1. Banco PostgreSQL existe? ✓
+2. Nome do banco está correto? ✓
+3. Variável DB_NAME tem o nome correto? ✓
+4. Todas as outras variáveis DB_* estão corretas? ✓
+
+========================================
+ALTERNATIVA: RECRIAR O BANCO
+========================================
+
+Se nada funcionar:
+
+1. Delete o banco atual (se possível)
+2. Crie um novo banco PostgreSQL
+3. Anote TODAS as credenciais
+4. Atualize TODAS as variáveis DB_* no Web Service
+5. Faça novo deploy
+
+========================================
+
