@@ -1,6 +1,7 @@
 Django==5.0.1
 psycopg[binary]>=3.1.0
 python-dotenv==1.0.0
+dj-database-url==2.1.0
 Pillow
 django-crispy-forms==2.1
 crispy-bootstrap5==0.7

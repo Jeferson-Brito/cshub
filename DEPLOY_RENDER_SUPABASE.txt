@@ -1,0 +1,70 @@
+========================================
+🚀 DEPLOY: RENDER + SUPABASE
+========================================
+
+PARTE 1: CRIAR BANCO NO SUPABASE
+==================================
+
+1. Acesse: https://supabase.com
+2. Clique em "Start your project"
+3. Faça login com GitHub
+4. Clique em "New Project"
+5. Preencha:
+   - Name: cshub
+   - Database Password: (crie uma senha forte)
+   - Region: South America (São Paulo)
+   - Plan: Free
+6. Clique em "Create new project"
+7. Aguarde 2-3 minutos
+
+8. Quando estiver pronto, vá em "Settings" → "Database"
+9. Role até "Connection string" → "URI"
+10. ⚠️ COPIE a string que começa com: postgresql://...
+    Essa é sua DATABASE_URL!
+
+PARTE 2: CRIAR WEB SERVICE NO RENDER
+=====================================
+
+1. Acesse: https://render.com
+2. Faça login com GitHub
+3. Clique em "New +" → "Web Service"
+4. Conecte seu repositório "cshub"
+5. Configure:
+   - Name: cshub
+   - Region: Oregon (ou mais próxima)
+   - Branch: main
+   - Build Command: pip install -r requirements.txt && python manage.py collectstatic --noinput
+   - Start Command: gunicorn gestao_reclame_aqui.wsgi:application
+
+PARTE 3: CONFIGURAR VARIÁVEIS NO RENDER
+========================================
+
+No Render, vá em "Environment" e adicione:
+
+SECRET_KEY = [gere com GERAR_SECRET_KEY.bat]
+DEBUG = False
+ALLOWED_HOSTS = seu-app.onrender.com
+DATABASE_URL = [cole a string do Supabase que você copiou]
+
+PARTE 4: DEPLOY E MIGRAÇÕES
+============================
+
+1. Clique em "Create Web Service"
+2. Aguarde deploy terminar
+3. Vá em "Shell" (se disponível) ou use Build Command:
+   Adicione ao Build Command:
+   && python manage.py init_production
+
+4. Ou após deploy, no Shell:
+   python manage.py migrate
+   python manage.py create_admin_user
+
+PARTE 5: TESTAR
+===============
+
+1. Acesse a URL do Render
+2. Login: jeffersonbrito245@gmail.com / @Lionnees14
+3. Pronto! ✅
+
+========================================
+
