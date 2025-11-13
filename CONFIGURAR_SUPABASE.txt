@@ -1,0 +1,40 @@
+========================================
+🔧 CONFIGURAR SUPABASE NO RENDER
+========================================
+
+O problema é que a DATABASE_URL pode estar incorreta.
+Vamos usar variáveis individuais (mais confiável).
+
+========================================
+OPÇÃO 1: USAR VARIÁVEIS INDIVIDUAIS
+========================================
+
+No Render, em "Environment", adicione estas variáveis:
+
+DB_NAME = postgres
+DB_USER = postgres.budxgfflbfcxsxyoceti
+DB_PASSWORD = @Lionnees14
+DB_HOST = aws-0-south-america-east-1.pooler.supabase.com
+DB_PORT = 6543
+
+E REMOVA a variável DATABASE_URL (se existir).
+
+========================================
+OPÇÃO 2: CORRIGIR DATABASE_URL
+========================================
+
+Se quiser usar DATABASE_URL, ela deve ser:
+
+postgresql://postgres.budxgfflbfcxsxyoceti:%40Lionnees14@aws-0-south-america-east-1.pooler.supabase.com:6543/postgres
+
+⚠️ IMPORTANTE: O @ da senha vira %40 na URL!
+
+========================================
+RECOMENDAÇÃO
+========================================
+
+Use a OPÇÃO 1 (variáveis individuais) - é mais fácil
+e menos propensa a erros.
+
+========================================
+

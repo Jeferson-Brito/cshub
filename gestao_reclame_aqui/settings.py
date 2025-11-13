@@ -75,25 +75,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'gestao_reclame_aqui.wsgi.application'
 
 # Database
-# Suporta Supabase (via DATABASE_URL) ou configuração manual
+# Suporta Supabase (via DATABASE_URL ou variáveis individuais) ou configuração manual
 DATABASE_URL = get_env('DATABASE_URL', '')
 if DATABASE_URL:
     # Usar DATABASE_URL (Supabase ou outros serviços)
     try:
         import dj_database_url
+        # Parse da URL e configuração do banco
+        db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
         DATABASES = {
-            'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+            'default': db_config
         }
-    except ImportError:
-        # Fallback se dj-database-url não estiver instalado
+    except Exception as e:
+        # Se der erro ao parsear, usar variáveis individuais como fallback
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': get_env('DB_NAME', 'gestao_reclame_aqui'),
+                'NAME': get_env('DB_NAME', 'postgres'),
                 'USER': get_env('DB_USER', 'postgres'),
                 'PASSWORD': get_env('DB_PASSWORD', ''),
                 'HOST': get_env('DB_HOST', 'localhost'),
-                'PORT': get_env('DB_PORT', '5433'),
+                'PORT': get_env('DB_PORT', '5432'),
             }
         }
 else:
