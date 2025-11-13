@@ -83,6 +83,11 @@ if DATABASE_URL:
         import dj_database_url
         # Parse da URL e configuração do banco
         db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        # Forçar IPv4 e adicionar opções de conexão
+        if 'OPTIONS' not in db_config:
+            db_config['OPTIONS'] = {}
+        db_config['OPTIONS']['connect_timeout'] = 10
+        # Forçar IPv4 usando hostaddr se necessário
         DATABASES = {
             'default': db_config
         }
@@ -96,18 +101,34 @@ if DATABASE_URL:
                 'PASSWORD': get_env('DB_PASSWORD', ''),
                 'HOST': get_env('DB_HOST', 'localhost'),
                 'PORT': get_env('DB_PORT', '5432'),
+                'OPTIONS': {
+                    'connect_timeout': 10,
+                },
             }
         }
 else:
     # Configuração manual (Render, local, etc)
+    db_host = get_env('DB_HOST', 'localhost')
+    db_port = get_env('DB_PORT', '5433')
+    
+    # Se for Supabase, usar pooler na porta 6543 e forçar IPv4
+    if 'supabase' in db_host.lower() or 'pooler' in db_host.lower():
+        db_port = '6543'
+        # Resolver hostname para IPv4 para evitar problemas com IPv6
+        if db_host != 'localhost':
+            db_host = get_ipv4_host(db_host)
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': get_env('DB_NAME', 'gestao_reclame_aqui'),
             'USER': get_env('DB_USER', 'postgres'),
             'PASSWORD': get_env('DB_PASSWORD', ''),
-            'HOST': get_env('DB_HOST', 'localhost'),
-            'PORT': get_env('DB_PORT', '5433'),
+            'HOST': db_host,
+            'PORT': db_port,
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
         }
     }
 
