@@ -1,0 +1,50 @@
+========================================
+COMANDOS PARA EXECUTAR NO SHELL DO RENDER
+========================================
+
+Após o deploy, vá em "Shell" do seu Web Service
+e execute estes comandos UM POR VEZ:
+
+========================================
+1. EXECUTAR MIGRAÇÕES
+========================================
+
+python manage.py migrate
+
+Aguarde a conclusão (pode levar 1-2 minutos)
+
+========================================
+2. CRIAR USUÁRIO ADMINISTRADOR
+========================================
+
+python manage.py create_admin_user
+
+Aguarde a conclusão
+
+========================================
+3. (OPCIONAL) CRIAR DADOS DE EXEMPLO
+========================================
+
+python manage.py create_sample_data
+
+Aguarde a conclusão
+
+========================================
+4. (SE PRECISAR) COLETAR ARQUIVOS ESTÁTICOS
+========================================
+
+python manage.py collectstatic --noinput
+
+========================================
+VERIFICAÇÃO
+========================================
+
+Após executar os comandos, você deve ver:
+✓ "Operations to perform..."
+✓ "Running migrations..."
+✓ "Usuário jefersonbrito criado com sucesso!"
+
+Se aparecer algum erro, anote a mensagem completa.
+
+========================================
+

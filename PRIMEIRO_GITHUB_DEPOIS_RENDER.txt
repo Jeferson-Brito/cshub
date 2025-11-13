@@ -1,0 +1,499 @@
+========================================
+🚀 GUIA COMPLETO: PRIMEIRO GITHUB, DEPOIS RENDER
+========================================
+
+Este guia está dividido em 2 partes:
+PARTE 1: O que fazer no GitHub
+PARTE 2: O que fazer no Render
+
+Siga na ordem! Não pule etapas.
+
+========================================
+════════════════════════════════════════
+PARTE 1: O QUE FAZER NO GITHUB
+════════════════════════════════════════
+========================================
+
+ETAPA 1.1: Criar Conta no GitHub
+----------------------------------
+1. Acesse: https://github.com
+
+2. Se você NÃO tem conta:
+   - Clique em "Sign up"
+   - Preencha:
+     * Username (ex: jefersonbrito)
+     * Email
+     * Senha
+   - Verifique seu email
+   - Faça login
+
+3. Se você JÁ tem conta:
+   - Faça login normalmente
+
+✅ Conta criada/verificada!
+
+ETAPA 1.2: Criar Repositório no GitHub
+---------------------------------------
+1. No GitHub, clique no ícone "+" no canto superior direito
+   (ao lado da foto do seu perfil)
+
+2. Selecione "New repository"
+
+3. Preencha o formulário:
+
+   ┌─────────────────────────────────────┐
+   │ Repository name:                    │
+   │ cshub                               │
+   │ (ou outro nome de sua escolha)     │
+   │                                     │
+   │ Description:                        │
+   │ Sistema de Gestão de Reclamações   │
+   │ (opcional)                          │
+   │                                     │
+   │ Visibility:                         │
+   │ ○ Public  (qualquer um vê)         │
+   │ ● Private (só você vê) ← RECOMENDADO│
+   │                                     │
+   │ ⚠️ NÃO marque:                      │
+   │ ☐ Add a README file                 │
+   │ ☐ Add .gitignore                    │
+   │ ☐ Choose a license                  │
+   │ (Já temos esses arquivos)           │
+   └─────────────────────────────────────┘
+
+4. Clique no botão verde "Create repository"
+
+5. Você verá uma página com instruções
+   (NÃO precisa seguir essas instruções, vamos fazer diferente)
+
+✅ Repositório criado!
+
+ETAPA 1.3: Preparar Código no Seu Computador
+----------------------------------------------
+1. Abra o PowerShell ou CMD
+
+2. Navegue até a pasta do projeto:
+   cd C:\Users\jeffe\Documents\Sites\gestao_reclame_aqui
+
+3. Execute estes comandos UM POR VEZ:
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 1: Configurar Git           │
+   │ (Só na primeira vez)                │
+   └─────────────────────────────────────┘
+   
+   git config --global user.name "Seu Nome"
+   git config --global user.email "seu@email.com"
+   
+   (Substitua pelos seus dados reais)
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 2: Inicializar Git          │
+   └─────────────────────────────────────┘
+   
+   git init
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 3: Adicionar Arquivos       │
+   └─────────────────────────────────────┘
+   
+   git add .
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 4: Criar Commit             │
+   └─────────────────────────────────────┘
+   
+   git commit -m "CSHub - Sistema de Gestão de Reclamações"
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 5: Renomear Branch          │
+   └─────────────────────────────────────┘
+   
+   git branch -M main
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 6: Conectar ao GitHub       │
+   └─────────────────────────────────────┘
+   
+   git remote add origin https://github.com/SEU_USUARIO/cshub.git
+   
+   (Substitua SEU_USUARIO pelo seu username do GitHub)
+   (Substitua cshub pelo nome do repositório que você criou)
+
+   ┌─────────────────────────────────────┐
+   │ COMANDO 7: Enviar para GitHub       │
+   └─────────────────────────────────────┘
+   
+   git push -u origin main
+
+ETAPA 1.4: Autenticação no GitHub
+-----------------------------------
+⚠️ IMPORTANTE: Quando executar "git push", o GitHub pedirá credenciais:
+
+1. Username: seu usuário do GitHub
+   (ex: jefersonbrito)
+
+2. Password: NÃO use sua senha do GitHub!
+   Use um Personal Access Token.
+
+Como criar o Token:
+
+a) No GitHub, clique na sua foto (canto superior direito)
+b) Clique em "Settings"
+c) No menu esquerdo, role até o final
+d) Clique em "Developer settings"
+e) Clique em "Personal access tokens"
+f) Clique em "Tokens (classic)"
+g) Clique em "Generate new token" → "Generate new token (classic)"
+h) Preencha:
+   - Note: "Deploy CSHub"
+   - Expiration: 90 days (ou mais)
+   - Marque: ☑ repo (acesso completo a repositórios)
+i) Clique em "Generate token"
+j) ⚠️ COPIE O TOKEN! (você só verá uma vez)
+k) Use este token como senha quando o Git pedir
+
+ETAPA 1.5: Verificar se Funcionou
+-----------------------------------
+1. Acesse seu repositório no GitHub:
+   https://github.com/SEU_USUARIO/cshub
+
+2. Você deve ver todos os arquivos do projeto:
+   - core/
+   - gestao_reclame_aqui/
+   - templates/
+   - static/
+   - manage.py
+   - requirements.txt
+   - Procfile
+   - etc.
+
+3. Se você vê os arquivos:
+   ✅ SUCESSO! Código está no GitHub!
+   ✅ Pode ir para a PARTE 2 (Render)
+
+4. Se não vê os arquivos ou deu erro:
+   ⚠️ Verifique:
+   - Se o repositório foi criado
+   - Se o nome do usuário está correto
+   - Se o token foi criado e usado corretamente
+   - Se todos os comandos foram executados
+
+========================================
+════════════════════════════════════════
+PARTE 2: O QUE FAZER NO RENDER
+════════════════════════════════════════
+========================================
+
+⚠️ IMPORTANTE: Só comece esta parte DEPOIS de ter
+concluído a PARTE 1 (GitHub) com sucesso!
+
+ETAPA 2.1: Criar Conta no Render
+----------------------------------
+1. Acesse: https://render.com
+
+2. Clique em "Get Started for Free"
+
+3. Escolha "Sign up with GitHub"
+   (Faça login com sua conta GitHub)
+
+4. Autorize o Render a acessar seu GitHub
+   (Clique em "Authorize render")
+
+5. Você será redirecionado para o Dashboard do Render
+   (Uma tela com "New +" no canto superior direito)
+
+✅ Conta criada!
+
+ETAPA 2.2: Criar Banco de Dados PostgreSQL
+-------------------------------------------
+1. No Dashboard do Render, clique no botão verde "New +"
+   (Canto superior direito)
+
+2. Selecione "PostgreSQL"
+
+3. Preencha o formulário:
+
+   ┌─────────────────────────────────────┐
+   │ Name: cshub-db                      │
+   │   (ou outro nome de sua escolha)   │
+   │                                     │
+   │ Database: cshub                    │
+   │   (nome do banco de dados)         │
+   │                                     │
+   │ User: cshub_user                    │
+   │   (usuário do banco)               │
+   │                                     │
+   │ Region:                             │
+   │   Escolha a região mais próxima    │
+   │   (ex: Oregon, Frankfurt, etc.)   │
+   │                                     │
+   │ PostgreSQL Version: 15             │
+   │   (deixe o padrão)                 │
+   │                                     │
+   │ Plan: Free                          │
+   │   (ou Starter se quiser $7/mês)    │
+   └─────────────────────────────────────┘
+
+4. Clique no botão verde "Create Database"
+
+5. Aguarde 2-3 minutos
+   (Você verá "Provisioning..." e depois "Available")
+
+6. ⚠️ ANOTE AS CREDENCIAIS!
+   
+   Quando o banco estiver pronto, você verá informações como:
+   
+   ┌─────────────────────────────────────┐
+   │ Internal Database URL:              │
+   │ postgresql://cshub_user:XXXXX@...  │
+   │                                     │
+   │ Host: dpg-xxxxx-a.oregon-postgres...│
+   │ Port: 5432                          │
+   │ Database: cshub                    │
+   │ User: cshub_user                    │
+   │ Password: [Clique em "Show"]        │
+   └─────────────────────────────────────┘
+
+   📝 COPIE E ANOTE EM UM ARQUIVO DE TEXTO:
+   - Host: (ex: dpg-xxxxx-a.oregon-postgres.render.com)
+   - Port: (geralmente 5432)
+   - Database: (cshub)
+   - User: (cshub_user)
+   - Password: (clique em "Show" e copie)
+
+   💡 Dica: Salve em um arquivo chamado "credenciais.txt"
+            Você vai precisar dessas informações!
+
+✅ Banco criado!
+
+ETAPA 2.3: Criar Web Service
+-----------------------------
+1. No Dashboard, clique em "New +" novamente
+
+2. Selecione "Web Service"
+
+3. Conecte seu repositório GitHub:
+   
+   a) Se for a primeira vez conectando:
+      - Clique em "Connect account" ou "Connect GitHub"
+      - Selecione "Only select repositories"
+      - Marque o repositório "cshub" (ou o nome que você usou)
+      - Clique em "Install & Authorize"
+   
+   b) Se já conectou antes:
+      - Selecione o repositório "cshub" na lista
+      - Clique em "Connect"
+
+4. Preencha o formulário:
+
+   ┌─────────────────────────────────────┐
+   │ Name: cshub                         │
+   │   (ou outro nome)                   │
+   │                                     │
+   │ Region:                             │
+   │   Escolha a MESMA região do banco   │
+   │   (importante para performance)    │
+   │                                     │
+   │ Branch: main                        │
+   │   (ou master, se for o caso)       │
+   │                                     │
+   │ Root Directory:                     │
+   │   (DEIXE VAZIO)                     │
+   │                                     │
+   │ Runtime: Python 3                   │
+   │                                     │
+   │ Build Command:                      │
+   │   pip install -r requirements.txt   │
+   │   && python manage.py collectstatic │
+   │   --noinput                         │
+   │                                     │
+   │ Start Command:                      │
+   │   gunicorn gestao_reclame_aqui.wsgi:│
+   │   application                       │
+   └─────────────────────────────────────┘
+
+5. NÃO clique em "Create Web Service" ainda!
+   Primeiro vamos adicionar as variáveis.
+
+ETAPA 2.4: Adicionar Variáveis de Ambiente
+-------------------------------------------
+Na mesma página, role para baixo até "Environment Variables".
+
+Clique em "Add Environment Variable" para cada uma:
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 1: SECRET_KEY              │
+└─────────────────────────────────────┘
+Key: SECRET_KEY
+Value: [Gere uma chave - veja como abaixo]
+
+Como gerar SECRET_KEY:
+- Execute: GERAR_SECRET_KEY.bat
+- OU no PowerShell:
+  python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+- Copie a chave gerada (string longa)
+- Cole no Value
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 2: DEBUG                   │
+└─────────────────────────────────────┘
+Key: DEBUG
+Value: False
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 3: ALLOWED_HOSTS           │
+└─────────────────────────────────────┘
+Key: ALLOWED_HOSTS
+Value: (DEIXE VAZIO por enquanto)
+⚠️ Você vai atualizar depois com o domínio
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 4: DB_NAME                 │
+└─────────────────────────────────────┘
+Key: DB_NAME
+Value: cshub
+(ou o nome que você usou ao criar o banco)
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 5: DB_USER                 │
+└─────────────────────────────────────┘
+Key: DB_USER
+Value: cshub_user
+(ou o usuário que você usou)
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 6: DB_PASSWORD             │
+└─────────────────────────────────────┘
+Key: DB_PASSWORD
+Value: [Cole a senha que você anotou do banco]
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 7: DB_HOST                 │
+└─────────────────────────────────────┘
+Key: DB_HOST
+Value: [Cole o host que você anotou do banco]
+Exemplo: dpg-xxxxx-a.oregon-postgres.render.com
+
+┌─────────────────────────────────────┐
+│ VARIÁVEL 8: DB_PORT                 │
+└─────────────────────────────────────┘
+Key: DB_PORT
+Value: 5432
+
+✅ Verifique se adicionou TODAS as 8 variáveis!
+
+ETAPA 2.5: Criar o Web Service
+--------------------------------
+1. Após adicionar todas as 8 variáveis
+
+2. Role até o final da página
+
+3. Clique no botão verde "Create Web Service"
+
+4. O Render começará o deploy automaticamente
+
+5. Você verá logs em tempo real:
+   - "Building..."
+   - "Installing dependencies..."
+   - "Deploying..."
+   - Pode levar 5-10 minutos na primeira vez
+
+6. Aguarde até ver "Live" ou "Your service is live"
+
+7. Você verá uma URL como:
+   https://cshub-xxxx.onrender.com
+
+   📝 ANOTE ESTA URL!
+
+ETAPA 2.6: Atualizar ALLOWED_HOSTS
+-----------------------------------
+1. No Web Service, clique na aba "Environment"
+   (no topo da página)
+
+2. Encontre a variável "ALLOWED_HOSTS"
+
+3. Clique em "Edit" (ícone de lápis)
+
+4. Cole o domínio (SEM https://):
+   Exemplo: cshub-xxxx.onrender.com
+
+5. Clique em "Save"
+
+6. O Render fará um novo deploy automaticamente
+   (mais rápido, ~2 minutos)
+
+ETAPA 2.7: Executar Migrações e Criar Usuário
+-----------------------------------------------
+1. No Web Service, clique na aba "Shell"
+   (no topo, ao lado de "Logs")
+
+2. Uma janela de terminal abrirá
+
+3. Execute estes comandos UM POR VEZ:
+
+   python manage.py migrate
+   
+   (Aguarde 1-2 minutos. Você verá "Operations to perform..."
+    e depois "OK")
+
+   python manage.py create_admin_user
+   
+   (Aguarde. Você verá "Usuário jefersonbrito criado com sucesso!")
+
+4. Feche o terminal
+
+ETAPA 2.8: Testar o Sistema
+----------------------------
+1. No Dashboard, vá para seu Web Service
+
+2. Você verá a URL: https://cshub-xxxx.onrender.com
+
+3. Clique na URL ou copie e cole no navegador
+
+4. ⚠️ Primeira vez pode demorar 30-60 segundos
+   (servidor "acordando" no plano gratuito)
+
+5. Você deve ver a tela de login do CSHub
+
+6. Faça login:
+   - E-mail: jeffersonbrito245@gmail.com
+   - Senha: @Lionnees14
+
+7. Se conseguir fazer login e ver o Dashboard:
+   ✅ SUCESSO! Sistema está funcionando!
+
+========================================
+✅ PRONTO! SISTEMA NO AR!
+========================================
+
+Agora você pode:
+- Compartilhar a URL com a equipe
+- Criar usuários para cada membro
+- Todos verão os mesmos dados
+- Todos podem trabalhar juntos!
+
+========================================
+📋 CHECKLIST FINAL
+========================================
+
+PARTE 1 - GITHUB:
+[ ] Conta criada no GitHub
+[ ] Repositório criado
+[ ] Código enviado para GitHub
+[ ] Arquivos visíveis no repositório
+
+PARTE 2 - RENDER:
+[ ] Conta criada no Render
+[ ] Banco PostgreSQL criado
+[ ] Credenciais do banco anotadas
+[ ] Web Service criado
+[ ] Todas as 8 variáveis configuradas
+[ ] Deploy concluído
+[ ] ALLOWED_HOSTS atualizado
+[ ] Migrações executadas
+[ ] Usuário admin criado
+[ ] Login funcionando
+
+========================================
+

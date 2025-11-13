@@ -1,0 +1,51 @@
+========================================
+COMANDOS PARA COPIAR E COLAR
+========================================
+
+Copie estes comandos e cole no terminal (PowerShell ou CMD)
+dentro da pasta: C:\Users\jeffe\Documents\Sites\gestao_reclame_aqui
+
+========================================
+1. CONFIGURAR GIT (Só primeira vez)
+========================================
+
+git config --global user.name "Seu Nome"
+git config --global user.email "seu@email.com"
+
+========================================
+2. PREPARAR CÓDIGO
+========================================
+
+git init
+git add .
+git commit -m "CSHub - Sistema de Gestão de Reclamações"
+git branch -M main
+
+========================================
+3. CONECTAR AO GITHUB
+========================================
+
+Substitua SEU_USUARIO pelo seu usuário do GitHub:
+
+git remote add origin https://github.com/SEU_USUARIO/cshub.git
+
+========================================
+4. ENVIAR PARA GITHUB
+========================================
+
+git push -u origin main
+
+⚠️ Se pedir credenciais:
+   Username: seu usuário do GitHub
+   Password: use um Personal Access Token (não sua senha)
+
+========================================
+5. GERAR SECRET_KEY (Para usar no Render)
+========================================
+
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+Copie a chave gerada para usar nas variáveis do Render.
+
+========================================
+

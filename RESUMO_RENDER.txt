@@ -1,0 +1,65 @@
+========================================
+📋 RESUMO RÁPIDO - RENDER
+========================================
+
+Guia ultra-resumido para consulta rápida.
+
+========================================
+1. CRIAR BANCO
+========================================
+New + → PostgreSQL
+Name: cshub-db
+Plan: Free
+ANOTAR: Host, Port, Database, User, Password
+
+========================================
+2. CRIAR WEB SERVICE
+========================================
+New + → Web Service
+Conectar repositório GitHub
+Name: cshub
+Build: pip install -r requirements.txt && python manage.py collectstatic --noinput
+Start: gunicorn gestao_reclame_aqui.wsgi:application
+
+========================================
+3. VARIÁVEIS (8 no total)
+========================================
+SECRET_KEY = [gerar chave]
+DEBUG = False
+ALLOWED_HOSTS = [deixar vazio, atualizar depois]
+DB_NAME = cshub
+DB_USER = cshub_user
+DB_PASSWORD = [senha do banco]
+DB_HOST = [host do banco]
+DB_PORT = 5432
+
+========================================
+4. DEPLOY
+========================================
+Create Web Service
+Aguardar conclusão
+Anotar URL fornecida
+
+========================================
+5. ATUALIZAR ALLOWED_HOSTS
+========================================
+Environment → ALLOWED_HOSTS → Edit
+Colar domínio (sem https://)
+
+========================================
+6. MIGRAÇÕES (Shell)
+========================================
+Shell → Executar:
+python manage.py migrate
+python manage.py create_admin_user
+
+========================================
+7. TESTAR
+========================================
+Acessar URL
+Login: jeffersonbrito245@gmail.com / @Lionnees14
+
+========================================
+PRONTO! ✅
+========================================
+

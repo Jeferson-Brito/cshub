@@ -1,0 +1,82 @@
+========================================
+VARIÁVEIS DE AMBIENTE PARA O RENDER
+========================================
+
+Adicione estas variáveis na seção "Environment Variables"
+do seu Web Service no Render:
+
+========================================
+VARIÁVEL 1: SECRET_KEY
+========================================
+Key: SECRET_KEY
+Value: [GERE UMA CHAVE - veja abaixo]
+
+Para gerar:
+- Execute: GERAR_SECRET_KEY.bat
+- OU: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+========================================
+VARIÁVEL 2: DEBUG
+========================================
+Key: DEBUG
+Value: False
+
+========================================
+VARIÁVEL 3: ALLOWED_HOSTS
+========================================
+Key: ALLOWED_HOSTS
+Value: [Deixe vazio primeiro, atualize depois com o domínio]
+
+Após o deploy, atualize com: cshub-xxxx.onrender.com
+(sem o https://)
+
+========================================
+VARIÁVEL 4: DB_NAME
+========================================
+Key: DB_NAME
+Value: cshub
+(ou o nome que você usou ao criar o banco)
+
+========================================
+VARIÁVEL 5: DB_USER
+========================================
+Key: DB_USER
+Value: cshub_user
+(ou o usuário que você usou ao criar o banco)
+
+========================================
+VARIÁVEL 6: DB_PASSWORD
+========================================
+Key: DB_PASSWORD
+Value: [SENHA DO BANCO]
+(Copie a senha que apareceu ao criar o banco)
+
+========================================
+VARIÁVEL 7: DB_HOST
+========================================
+Key: DB_HOST
+Value: [HOST DO BANCO]
+(Copie o host que apareceu ao criar o banco)
+Exemplo: dpg-xxxxx-a.oregon-postgres.render.com
+
+========================================
+VARIÁVEL 8: DB_PORT
+========================================
+Key: DB_PORT
+Value: 5432
+
+========================================
+RESUMO DAS VARIÁVEIS
+========================================
+
+1. SECRET_KEY = [chave gerada]
+2. DEBUG = False
+3. ALLOWED_HOSTS = [domínio do Render]
+4. DB_NAME = cshub
+5. DB_USER = cshub_user
+6. DB_PASSWORD = [senha do banco]
+7. DB_HOST = [host do banco]
+8. DB_PORT = 5432
+
+========================================
+

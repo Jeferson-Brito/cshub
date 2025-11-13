@@ -1,0 +1,13 @@
+Django==5.0.1
+psycopg[binary]>=3.1.0
+python-dotenv==1.0.0
+Pillow
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-filter==23.5
+django-import-export==4.0.5
+openpyxl==3.1.2
+django-extensions==3.2.3
+whitenoise==6.6.0
+gunicorn==21.2.0
+

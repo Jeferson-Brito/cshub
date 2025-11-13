@@ -1,0 +1,148 @@
+========================================
+CONFIGURAÇÃO NO RENDER.COM
+========================================
+
+Siga estes passos EXATOS após enviar código para GitHub:
+
+========================================
+PASSO 1: CRIAR BANCO DE DADOS
+========================================
+
+1. Acesse: https://render.com
+2. Faça login com GitHub
+3. Clique em "New +"
+4. Selecione "PostgreSQL"
+5. Configure:
+   - Name: cshub-db
+   - Plan: Free
+   - Region: Escolha a mais próxima
+6. Clique em "Create Database"
+7. ⚠️ ANOTE as credenciais que aparecem:
+   - Database
+   - User
+   - Password
+   - Host
+   - Port (geralmente 5432)
+
+========================================
+PASSO 2: CRIAR WEB SERVICE
+========================================
+
+1. No dashboard, clique em "New +"
+2. Selecione "Web Service"
+3. Conecte seu repositório GitHub
+4. Selecione o repositório "cshub"
+5. Configure:
+
+   Name: cshub
+   Region: (mesma do banco)
+   Branch: main
+   Root Directory: (deixe vazio)
+   Runtime: Python 3
+   
+   Build Command:
+   pip install -r requirements.txt && python manage.py collectstatic --noinput
+   
+   Start Command:
+   gunicorn gestao_reclame_aqui.wsgi:application
+
+========================================
+PASSO 3: VARIÁVEIS DE AMBIENTE
+========================================
+
+Na página do Web Service, vá em "Environment" e adicione:
+
+┌─────────────────────────────────────┐
+│ SECRET_KEY                           │
+│ (Use o gerado pelo GERAR_SECRET_KEY) │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DEBUG                                │
+│ False                                │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ ALLOWED_HOSTS                        │
+│ (Deixe vazio por enquanto)          │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DB_NAME                              │
+│ (Nome do banco que você anotou)     │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DB_USER                              │
+│ (Usuário do banco)                  │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DB_PASSWORD                          │
+│ (Senha do banco)                    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DB_HOST                              │
+│ (Host do banco)                     │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ DB_PORT                              │
+│ 5432                                 │
+└─────────────────────────────────────┘
+
+========================================
+PASSO 4: SALVAR E AGUARDAR DEPLOY
+========================================
+
+1. Clique em "Create Web Service"
+2. Aguarde o deploy (5-10 minutos na primeira vez)
+3. Quando terminar, você verá uma URL como:
+   https://cshub-xxxx.onrender.com
+
+========================================
+PASSO 5: ATUALIZAR ALLOWED_HOSTS
+========================================
+
+1. Após o deploy, copie a URL fornecida
+2. Vá em "Environment" do Web Service
+3. Atualize ALLOWED_HOSTS com:
+   cshub-xxxx.onrender.com
+   (sem o https://)
+
+========================================
+PASSO 6: EXECUTAR MIGRAÇÕES
+========================================
+
+1. No Web Service, clique na aba "Shell"
+2. Execute:
+
+   python manage.py migrate
+   python manage.py create_admin_user
+
+3. Aguarde a conclusão
+
+========================================
+PASSO 7: TESTAR ACESSO
+========================================
+
+1. Acesse a URL fornecida pelo Render
+2. Faça login:
+   Usuário: jefersonbrito
+   E-mail: jeffersonbrito245@gmail.com
+   Senha: @Lionnees14
+
+========================================
+PRONTO! 🎉
+========================================
+
+Seu sistema está no ar e acessível!
+
+Para compartilhar com a equipe:
+- Envie a URL do Render
+- Compartilhe as credenciais de login
+- Crie usuários adicionais pelo sistema
+
+========================================
+

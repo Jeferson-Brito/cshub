@@ -1,0 +1,46 @@
+# Render Blueprint - Configuração para deploy automático
+# Use este arquivo para criar todos os serviços de uma vez no Render
+
+services:
+  # Web Service
+  - type: web
+    name: cshub
+    env: python
+    plan: free  # ou starter para $7/mês
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn gestao_reclame_aqui.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: cshub.onrender.com  # Atualize com seu domínio
+      - key: DB_NAME
+        fromDatabase:
+          name: cshub-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: cshub-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cshub-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: cshub-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cshub-db
+          property: port
+
+databases:
+  # PostgreSQL Database
+  - name: cshub-db
+    plan: free  # ou starter para $7/mês
+    databaseName: cshub
+    user: cshub_user
+

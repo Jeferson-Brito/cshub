@@ -1,0 +1,148 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║     📊 COMO VISUALIZAR OS DADOS NO BANCO DE DADOS 📊        ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  OPÇÃO 1: DJANGO ADMIN (MAIS FÁCIL) ⭐ RECOMENDADO
+═══════════════════════════════════════════════════════════════
+
+1. Inicie o servidor:
+   → Execute: INICIAR_PYTHON.bat
+
+2. Acesse o Django Admin:
+   → Abra: http://localhost:8000/admin/
+
+3. Faça login:
+   → Use o usuário e senha que você criou com CRIAR_SUPERUSUARIO.bat
+   → OU use: gestor / 123456 (se executou CRIAR_DADOS_EXEMPLO.bat)
+
+4. Visualize os dados:
+   → Clique em "Users" para ver usuários
+   → Clique em "Complaints" para ver reclamações
+   → Clique em "Activities" para ver atividades
+   → Clique em "Audit logs" para ver logs de auditoria
+
+VANTAGENS:
+✅ Interface gráfica fácil de usar
+✅ Permite editar, criar e excluir dados
+✅ Filtros e buscas integradas
+✅ Não precisa instalar nada extra
+
+═══════════════════════════════════════════════════════════════
+  OPÇÃO 2: PGADMIN (INTERFACE GRÁFICA DO POSTGRESQL)
+═══════════════════════════════════════════════════════════════
+
+1. Instale o pgAdmin:
+   → Baixe de: https://www.pgadmin.org/download/
+   → Instale normalmente
+
+2. Abra o pgAdmin e conecte:
+   → Clique com botão direito em "Servers" → "Register" → "Server"
+   → Nome: Gestão Reclame Aqui
+   → Aba "Connection":
+     - Host: localhost
+     - Port: 5433
+     - Database: gestao_reclame_aqui
+     - Username: postgres
+     - Password: @Lionnees14 (ou sua senha)
+
+3. Visualize os dados:
+   → Expanda: Servers → Gestão Reclame Aqui → Databases → gestao_reclame_aqui → Schemas → public → Tables
+   → Clique com botão direito em uma tabela → "View/Edit Data" → "All Rows"
+
+VANTAGENS:
+✅ Interface gráfica profissional
+✅ Permite executar queries SQL
+✅ Visualização de estrutura do banco
+✅ Exportar dados
+
+═══════════════════════════════════════════════════════════════
+  OPÇÃO 3: PSQL (LINHA DE COMANDO)
+═══════════════════════════════════════════════════════════════
+
+1. Abra o PowerShell ou CMD
+
+2. Conecte ao banco:
+   psql -h localhost -p 5433 -U postgres -d gestao_reclame_aqui
+
+3. Digite sua senha quando solicitado
+
+4. Execute comandos SQL:
+   → Ver todas as tabelas:
+     \dt
+   
+   → Ver dados da tabela Users:
+     SELECT * FROM core_user;
+   
+   → Ver dados da tabela Complaints:
+     SELECT * FROM core_complaint;
+   
+   → Ver dados da tabela Activities:
+     SELECT * FROM core_activity;
+   
+   → Ver dados da tabela AuditLogs:
+     SELECT * FROM core_auditlog;
+   
+   → Contar registros:
+     SELECT COUNT(*) FROM core_complaint;
+   
+   → Sair:
+     \q
+
+VANTAGENS:
+✅ Rápido para consultas simples
+✅ Não precisa instalar nada
+✅ Permite executar qualquer SQL
+
+═══════════════════════════════════════════════════════════════
+  OPÇÃO 4: INTERFACE WEB DO SISTEMA
+═══════════════════════════════════════════════════════════════
+
+1. Inicie o servidor:
+   → Execute: INICIAR_PYTHON.bat
+
+2. Acesse o sistema:
+   → Abra: http://localhost:8000
+
+3. Faça login:
+   → Use: gestor / 123456 (ou seu usuário admin)
+
+4. Visualize os dados:
+   → Dashboard: mostra estatísticas e gráficos
+   → Lista de Reclamações: mostra todas as reclamações
+   → Detalhes: clique em uma reclamação para ver detalhes completos
+
+VANTAGENS:
+✅ Interface do próprio sistema
+✅ Visualização formatada e amigável
+✅ Gráficos e estatísticas
+✅ Filtros e buscas
+
+═══════════════════════════════════════════════════════════════
+  RESUMO DAS TABELAS
+═══════════════════════════════════════════════════════════════
+
+Tabelas principais:
+- core_user          → Usuários do sistema
+- core_complaint      → Reclamações
+- core_activity       → Histórico de atividades
+- core_auditlog       → Logs de auditoria
+
+Tabelas do Django:
+- django_migrations   → Controle de migrações
+- django_session      → Sessões de usuários
+- auth_*              → Sistema de autenticação
+
+═══════════════════════════════════════════════════════════════
+  DICAS
+═══════════════════════════════════════════════════════════════
+
+💡 Para iniciantes: Use o Django Admin (Opção 1)
+💡 Para análise avançada: Use o pgAdmin (Opção 2)
+💡 Para consultas rápidas: Use o psql (Opção 3)
+💡 Para uso normal: Use a Interface Web (Opção 4)
+
+═══════════════════════════════════════════════════════════════
+
