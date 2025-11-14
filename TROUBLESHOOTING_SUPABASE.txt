@@ -1,0 +1,88 @@
+========================================
+🔧 TROUBLESHOOTING: CONEXÃO SUPABASE
+========================================
+
+O erro "Name or service not known" indica que o
+hostname não está sendo resolvido ou está incorreto.
+
+========================================
+VERIFICAÇÃO 1: HOSTNAME CORRETO
+========================================
+
+No Supabase Dashboard:
+1. Vá em: Project Settings → Database
+2. Procure por "Connection string" ou "Connection info"
+3. Você verá algo como:
+
+   Host: db.XXXXXXXXXXXXX.supabase.co
+   Port: 5432
+   Database: postgres
+   User: postgres.XXXXXXXXXXXXX
+   Password: (sua senha)
+
+⚠️ IMPORTANTE:
+- O hostname DEVE começar com "db."
+- NÃO use o pooler (aws-0) se estiver dando erro
+- Use a porta 5432 (não 6543)
+
+========================================
+VERIFICAÇÃO 2: VARIÁVEIS NO RENDER
+========================================
+
+No Render, em "Environment", certifique-se:
+
+DB_HOST = db.budxgfflbfcxsxyoceti.supabase.co
+DB_PORT = 5432
+DB_NAME = postgres
+DB_USER = postgres.budxgfflbfcxsxyoceti
+DB_PASSWORD = @Lionnees14
+
+⚠️ SEM espaços extras antes ou depois!
+
+========================================
+VERIFICAÇÃO 3: WHITELIST NO SUPABASE
+========================================
+
+O Supabase pode estar bloqueando conexões do Render.
+
+1. No Supabase Dashboard
+2. Vá em: Project Settings → Database
+3. Procure por "Connection pooling" ou "Network restrictions"
+4. Verifique se há "Allowed IPs" ou "IP Whitelist"
+5. Se houver, adicione:
+   - 0.0.0.0/0 (permitir todos - para teste)
+   - OU o IP do Render (se disponível)
+
+⚠️ ATENÇÃO: Permitir 0.0.0.0/0 é menos seguro,
+mas necessário para testar. Depois você pode
+restringir para IPs específicos.
+
+========================================
+VERIFICAÇÃO 4: TESTAR CONEXÃO
+========================================
+
+Se ainda não funcionar, tente:
+
+1. No Supabase, vá em: SQL Editor
+2. Execute uma query simples para verificar
+   se o banco está acessível
+3. Verifique se há mensagens de erro
+
+========================================
+ALTERNATIVA: USAR POSTGRES DO RENDER
+========================================
+
+Se o Supabase continuar dando problema,
+você pode criar um PostgreSQL diretamente
+no Render:
+
+1. No Render Dashboard
+2. Clique em "New +" → "PostgreSQL"
+3. Crie o banco
+4. Use as credenciais fornecidas pelo Render
+5. Atualize as variáveis no Web Service
+
+Isso elimina problemas de rede/firewall.
+
+========================================
+
