@@ -3,7 +3,7 @@ Django settings for gestao_reclame_aqui project.
 """
 
 import os
-import socket
+import sys
 from pathlib import Path
 
 # Load environment variables from .env file
@@ -15,22 +15,6 @@ except ImportError:
 
 def get_env(key, default=None):
     return os.environ.get(key, default)
-
-def get_ipv4_host(hostname):
-    """Resolve hostname to IPv4 address, forcing IPv4 resolution"""
-    try:
-        # Usar getaddrinfo com AF_INET para forçar IPv4
-        addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
-        if addr_info:
-            # Retornar o primeiro endereço IPv4 encontrado
-            ipv4 = addr_info[0][4][0]
-            return ipv4
-        # Fallback para gethostbyname
-        ipv4 = socket.gethostbyname(hostname)
-        return ipv4
-    except (socket.gaierror, socket.herror, OSError):
-        # Se falhar, retornar o hostname original
-        return hostname
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,76 +76,96 @@ TEMPLATES = [
 WSGI_APPLICATION = 'gestao_reclame_aqui.wsgi.application'
 
 # Database
-# Suporta Supabase (via DATABASE_URL ou variáveis individuais) ou configuração manual
+# Suporta DATABASE_URL (recomendado) ou variáveis individuais
 DATABASE_URL = get_env('DATABASE_URL', '')
+
 if DATABASE_URL:
-    # Usar DATABASE_URL (Supabase ou outros serviços)
+    # Usar DATABASE_URL (método recomendado)
     try:
         import dj_database_url
-        # Parse da URL e configuração do banco
         db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-        # Para Supabase, manter hostname original (não resolver para IP)
-        # O hostname deve ser usado diretamente
-        # Adicionar opções de conexão
+        
+        # Adicionar opções de conexão para melhor estabilidade
         if 'OPTIONS' not in db_config:
             db_config['OPTIONS'] = {}
-        db_config['OPTIONS']['connect_timeout'] = 10
-        DATABASES = {
-            'default': db_config
-        }
+        
+        db_config['OPTIONS'].update({
+            'connect_timeout': 10,
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+        })
+        
+        DATABASES = {'default': db_config}
+        print(f"✓ Usando DATABASE_URL", file=sys.stderr)
+        
     except Exception as e:
-        # Se der erro ao parsear, usar variáveis individuais como fallback
-        db_host = get_env('DB_HOST', 'localhost')
-        if not db_host or db_host == '':
-            db_host = 'localhost'
-        # Para Supabase, manter hostname original (não resolver para IP)
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': get_env('DB_NAME', 'postgres'),
-                'USER': get_env('DB_USER', 'postgres'),
-                'PASSWORD': get_env('DB_PASSWORD', ''),
-                'HOST': db_host,
-                'PORT': get_env('DB_PORT', '6543'),
-                'OPTIONS': {
-                    'connect_timeout': 10,
-                },
-            }
-        }
+        print(f"✗ ERRO ao configurar DATABASE_URL: {e}", file=sys.stderr)
+        raise
 else:
-    # Configuração manual (Render, local, etc)
-    db_host = get_env('DB_HOST', 'localhost')
-    db_port = get_env('DB_PORT', '5433')
+    # Configuração manual com variáveis individuais
+    db_host = get_env('DB_HOST')
+    db_port = get_env('DB_PORT', '5432')
+    db_name = get_env('DB_NAME', 'postgres')
+    db_user = get_env('DB_USER', 'postgres')
+    db_password = get_env('DB_PASSWORD', '')
     
-    # Validar host
-    if not db_host or db_host == '':
-        db_host = 'localhost'
+    # Validações
+    if not db_host:
+        raise ValueError("✗ DB_HOST não configurado!")
     
-    # Se for Supabase, detectar tipo de conexão
+    if not db_password:
+        raise ValueError("✗ DB_PASSWORD não configurado!")
+    
+    # Auto-detectar porta do Supabase baseado no hostname
     if 'supabase' in db_host.lower():
-        # Se for pooler (aws-0), usar porta 6543
-        if 'pooler' in db_host.lower() or 'aws-0' in db_host.lower():
-            db_port = '6543'
-        # Se for conexão direta (db.), usar porta 5432
+        if 'pooler' in db_host.lower():
+            db_port = '6543'  # Connection pooler
+            print(f"✓ Detectado Supabase Pooler - usando porta 6543", file=sys.stderr)
         elif db_host.startswith('db.'):
-            db_port = '5432'
-        # NÃO resolver para IP - usar hostname diretamente
-        # (Supabase pode ter problemas com IPs diretos)
+            db_port = '5432'  # Direct connection
+            print(f"✓ Detectado Supabase Direct - usando porta 5432", file=sys.stderr)
     
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': get_env('DB_NAME', 'gestao_reclame_aqui'),
-            'USER': get_env('DB_USER', 'postgres'),
-            'PASSWORD': get_env('DB_PASSWORD', ''),
+            'NAME': db_name,
+            'USER': db_user,
+            'PASSWORD': db_password,
             'HOST': db_host,
             'PORT': db_port,
             'OPTIONS': {
                 'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
             },
         }
+    }
+    
+    # Debug info (pode remover depois que funcionar)
+    print(f"✓ DB CONFIG: {db_user}@{db_host}:{db_port}/{db_name}", file=sys.stderr)
 
-# Password validation (será sobrescrito abaixo com configurações mais específicas)
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 6,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 # Internationalization
 LANGUAGE_CODE = 'pt-br'
@@ -207,25 +211,6 @@ CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 86400  # 24 horas
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Password Settings
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 6,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
 
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
@@ -283,8 +268,6 @@ LOGGING = {
 }
 
 # Criar diretório de logs se não existir
-import os
 logs_dir = BASE_DIR / 'logs'
 if not os.path.exists(logs_dir):
     os.makedirs(logs_dir)
-
