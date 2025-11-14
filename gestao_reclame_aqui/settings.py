@@ -101,10 +101,13 @@ if DATABASE_URL:
         # Parse da URL e configuração do banco
         db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
         # Forçar IPv4: resolver hostname para IPv4 se for Supabase
-        if 'supabase' in db_config.get('HOST', '').lower() or 'pooler' in db_config.get('HOST', '').lower():
-            original_host = db_config.get('HOST', '')
-            if original_host and original_host != 'localhost':
-                db_config['HOST'] = get_ipv4_host(original_host)
+        original_host = db_config.get('HOST', '')
+        if original_host and original_host != 'localhost':
+            if 'supabase' in original_host.lower() or 'pooler' in original_host.lower():
+                resolved_host = get_ipv4_host(original_host)
+                # Só usar IP se a resolução funcionou
+                if resolved_host and resolved_host != original_host:
+                    db_config['HOST'] = resolved_host
         # Adicionar opções de conexão
         if 'OPTIONS' not in db_config:
             db_config['OPTIONS'] = {}
@@ -115,8 +118,12 @@ if DATABASE_URL:
     except Exception as e:
         # Se der erro ao parsear, usar variáveis individuais como fallback
         db_host = get_env('DB_HOST', 'localhost')
+        if not db_host or db_host == '':
+            db_host = 'localhost'
         if 'supabase' in db_host.lower() or 'pooler' in db_host.lower():
-            db_host = get_ipv4_host(db_host)
+            resolved_host = get_ipv4_host(db_host)
+            if resolved_host and resolved_host != db_host:
+                db_host = resolved_host
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
@@ -135,12 +142,19 @@ else:
     db_host = get_env('DB_HOST', 'localhost')
     db_port = get_env('DB_PORT', '5433')
     
-    # Se for Supabase, usar pooler na porta 6543 e forçar IPv4
+    # Validar host
+    if not db_host or db_host == '':
+        db_host = 'localhost'
+    
+    # Se for Supabase, usar pooler na porta 6543
     if 'supabase' in db_host.lower() or 'pooler' in db_host.lower():
         db_port = '6543'
-        # Resolver hostname para IPv4 para evitar problemas com IPv6
+        # Tentar resolver hostname para IPv4, mas manter hostname se falhar
         if db_host != 'localhost':
-            db_host = get_ipv4_host(db_host)
+            resolved_host = get_ipv4_host(db_host)
+            # Só usar IP se a resolução funcionou e retornou um IP válido
+            if resolved_host and resolved_host != db_host and '.' in resolved_host:
+                db_host = resolved_host
     
     DATABASES = {
         'default': {
@@ -154,7 +168,6 @@ else:
                 'connect_timeout': 10,
             },
         }
-    }
 
 # Password validation (será sobrescrito abaixo com configurações mais específicas)
 
