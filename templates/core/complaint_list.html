@@ -12,6 +12,11 @@
             <p class="page-subtitle">Gerencie todas as reclamações do sistema</p>
         </div>
         <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+            {% if user.is_gestor %}
+            <a href="{% url 'import_complaints_xlsx' %}" class="btn btn-success me-2">
+                <i class="bi bi-upload"></i> Importar XLSX
+            </a>
+            {% endif %}
             <a href="{% url 'complaint_create' %}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Nova Reclamação
             </a>
@@ -27,18 +32,18 @@
     </div>
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-4 col-sm-6">
+            <div class="col-md-2 col-sm-6">
                 <label class="form-label">
                     <i class="bi bi-search"></i> Buscar
                 </label>
                 <input type="text" name="search" id="searchInput" class="form-control" placeholder="ID, CPF, Nome, Email..." value="{{ request.GET.search }}">
             </div>
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-2 col-sm-6">
                 <label class="form-label">
                     <i class="bi bi-tag"></i> Status
                 </label>
                 <select name="status" class="form-control">
-                    <option value="">Todos os status</option>
+                    <option value="">Todos</option>
                     <option value="pendente" {% if request.GET.status == 'pendente' %}selected{% endif %}>Pendente</option>
                     <option value="em_andamento" {% if request.GET.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
                     <option value="em_replica" {% if request.GET.status == 'em_replica' %}selected{% endif %}>Em Réplica</option>
@@ -46,14 +51,47 @@
                     <option value="resolvido" {% if request.GET.status == 'resolvido' %}selected{% endif %}>Resolvido</option>
                 </select>
             </div>
-            <div class="col-md-3 col-sm-6">
+            <div class="col-md-2 col-sm-6">
                 <label class="form-label">
                     <i class="bi bi-shop"></i> Loja
                 </label>
-                <input type="text" name="loja" class="form-control" placeholder="Código da Loja" value="{{ request.GET.loja }}">
+                <input type="text" name="loja" class="form-control" placeholder="Código" value="{{ request.GET.loja }}">
             </div>
-            <div class="col-md-2 col-sm-6 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary flex-fill">
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label">
+                    <i class="bi bi-tag-fill"></i> Tipo
+                </label>
+                <select name="tipo" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="nota_fiscal" {% if request.GET.tipo == 'nota_fiscal' %}selected{% endif %}>Nota fiscal</option>
+                    <option value="pagamento_cartao" {% if request.GET.tipo == 'pagamento_cartao' %}selected{% endif %}>Pagamento - Cartão</option>
+                    <option value="pagamento_pix" {% if request.GET.tipo == 'pagamento_pix' %}selected{% endif %}>Pagamento - PIX</option>
+                    <option value="pagamento_checkout" {% if request.GET.tipo == 'pagamento_checkout' %}selected{% endif %}>Pagamento - Checkout</option>
+                    <option value="assinatura_mensal" {% if request.GET.tipo == 'assinatura_mensal' %}selected{% endif %}>Assinatura mensal</option>
+                    <option value="lavagem" {% if request.GET.tipo == 'lavagem' %}selected{% endif %}>Lavagem</option>
+                    <option value="secagem" {% if request.GET.tipo == 'secagem' %}selected{% endif %}>Secagem</option>
+                    <option value="atendimento" {% if request.GET.tipo == 'atendimento' %}selected{% endif %}>Atendimento</option>
+                    <option value="sistema_totem" {% if request.GET.tipo == 'sistema_totem' %}selected{% endif %}>Sistema/Totem</option>
+                    <option value="cupons" {% if request.GET.tipo == 'cupons' %}selected{% endif %}>Cupons</option>
+                    <option value="outros" {% if request.GET.tipo == 'outros' %}selected{% endif %}>Outros</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label">
+                    <i class="bi bi-person-badge"></i> Analista
+                </label>
+                <select name="analista" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="sem_analista" {% if request.GET.analista == 'sem_analista' %}selected{% endif %}>Sem Analista</option>
+                    {% for analista in analistas_list %}
+                    <option value="{{ analista.id }}" {% if request.GET.analista == analista.id|stringformat:"s" %}selected{% endif %}>
+                        {{ analista.get_full_name|default:analista.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-12 d-flex align-items-end gap-2 flex-wrap">
+                <button type="submit" class="btn btn-primary">
                     <i class="bi bi-funnel-fill"></i> Filtrar
                 </button>
                 <div class="btn-group">
@@ -61,16 +99,46 @@
                         <i class="bi bi-download"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'export_complaints_csv' %}{% if request.GET.search or request.GET.status or request.GET.loja %}?{{ request.GET.urlencode }}{% endif %}">
+                        <li><a class="dropdown-item" href="{% url 'export_complaints_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
                             <i class="bi bi-filetype-csv"></i> Exportar CSV
                         </a></li>
-                        <li><a class="dropdown-item" href="{% url 'export_complaints_xlsx' %}{% if request.GET.search or request.GET.status or request.GET.loja %}?{{ request.GET.urlencode }}{% endif %}">
+                        <li><a class="dropdown-item" href="{% url 'export_complaints_xlsx' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
                             <i class="bi bi-file-earmark-excel"></i> Exportar XLSX
                         </a></li>
                     </ul>
                 </div>
             </div>
         </form>
+        <!-- Filtros Avançados (Colapsável) -->
+        <div class="mt-3">
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosAvancados" aria-expanded="false">
+                <i class="bi bi-chevron-down"></i> Filtros Avançados
+            </button>
+            <div class="collapse mt-3" id="filtrosAvancados">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-event"></i> Data Inicial
+                        </label>
+                        <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            <i class="bi bi-calendar-check"></i> Data Final
+                        </label>
+                        <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sem_analista" value="true" id="semAnalista" {% if request.GET.sem_analista == 'true' %}checked{% endif %}>
+                            <label class="form-check-label" for="semAnalista">
+                                Apenas sem analista atribuído
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -101,6 +169,40 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Contador de Reclamações por Analista -->
+<div class="card mb-4 fade-in">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-people"></i> Reclamações por Analista
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for item in complaints_by_analyst %}
+            <div class="col-md-3 col-sm-6">
+                <div class="card border">
+                    <div class="card-body text-center">
+                        <h6 class="card-title mb-1">
+                            {% if item.analista__username %}
+                                {{ item.analista__first_name|default:item.analista__username }} {{ item.analista__last_name|default:"" }}
+                            {% else %}
+                                <span class="text-muted">Não Atribuído</span>
+                            {% endif %}
+                        </h6>
+                        <h3 class="mb-0 text-primary">{{ item.count }}</h3>
+                        <small class="text-muted">reclamação(ões)</small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted text-center">Nenhuma reclamação encontrada</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 
 <div class="card fade-in">
     <div class="card-header">

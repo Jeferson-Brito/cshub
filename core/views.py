@@ -67,9 +67,10 @@ def login_view_custom(request):
 def dashboard(request):
     total_complaints = Complaint.objects.count()
     pending = Complaint.objects.filter(status='pendente').count()
-    in_progress = Complaint.objects.filter(status='em_andamento').count()
+    em_replica = Complaint.objects.filter(status='em_replica').count()
     resolved = Complaint.objects.filter(status='resolvido').count()
     awaiting = Complaint.objects.filter(status='aguardando_avaliacao').count()
+    em_andamento = Complaint.objects.filter(status='em_andamento').count()
     
     # Ranking de lojas com mais reclamações (top 5)
     top_stores_ranking = Complaint.objects.values('loja_cod').annotate(
@@ -99,10 +100,23 @@ def dashboard(request):
     
     recent_complaints = Complaint.objects.select_related('analista').order_by('-created_at')[:10]
     
+    # Estatísticas adicionais
+    avg_satisfaction = Complaint.objects.filter(nota_satisfacao__isnull=False).aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0
+    total_analysts = User.objects.filter(role='analista', ativo=True).count()
+    complaints_without_analyst = Complaint.objects.filter(analista__isnull=True).count()
+    
+    # Reclamações urgentes (pendentes há mais de 3 dias)
+    urgent_date = timezone.now().date() - timedelta(days=3)
+    urgent_complaints = Complaint.objects.filter(
+        status='pendente',
+        data_reclamacao__lte=urgent_date
+    ).count()
+    
     context = {
         'total_complaints': total_complaints,
         'pending': pending,
-        'in_progress': in_progress,
+        'em_replica': em_replica,
+        'em_andamento': em_andamento,
         'resolved': resolved,
         'awaiting': awaiting,
         'recent_complaints': recent_complaints,
@@ -110,8 +124,98 @@ def dashboard(request):
         'top_stores_ranking': list(top_stores_ranking),
         'satisfaction_by_store': list(satisfaction_by_store),
         'complaints_by_status': list(complaints_by_status),
+        'avg_satisfaction': round(avg_satisfaction, 1),
+        'total_analysts': total_analysts,
+        'complaints_without_analyst': complaints_without_analyst,
+        'urgent_complaints': urgent_complaints,
     }
     return render(request, 'core/dashboard.html', context)
+
+
+@login_required
+def reports_view(request):
+    """Página de relatórios e estatísticas avançadas"""
+    from datetime import datetime, timedelta
+    from django.db.models import Count, Avg, Q
+    
+    # Filtros de data
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    # Base queryset
+    complaints = Complaint.objects.all()
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            complaints = complaints.filter(data_reclamacao__gte=date_from_obj)
+        except:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            complaints = complaints.filter(data_reclamacao__lte=date_to_obj)
+        except:
+            pass
+    
+    # Estatísticas gerais
+    total = complaints.count()
+    by_status = complaints.values('status').annotate(count=Count('id'))
+    by_tipo = complaints.values('tipo_reclamacao').annotate(count=Count('id')).exclude(tipo_reclamacao__isnull=True)
+    
+    # Estatísticas por analista
+    by_analyst = complaints.filter(analista__isnull=False).values(
+        'analista__username', 'analista__first_name', 'analista__last_name'
+    ).annotate(
+        total=Count('id'),
+        resolvidas=Count('id', filter=Q(status='resolvido')),
+        pendentes=Count('id', filter=Q(status='pendente')),
+        em_replica=Count('id', filter=Q(status='em_replica')),
+        media_nota=Avg('nota_satisfacao')
+    ).order_by('-total')
+    
+    # Estatísticas por loja
+    by_store = complaints.values('loja_cod').annotate(
+        total=Count('id'),
+        resolvidas=Count('id', filter=Q(status='resolvido')),
+        media_nota=Avg('nota_satisfacao')
+    ).order_by('-total')[:20]
+    
+    # Satisfação do cliente
+    satisfacao_stats = {
+        'total_avaliacoes': complaints.filter(nota_satisfacao__isnull=False).count(),
+        'media_geral': complaints.aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0,
+        'voltaria_sim': complaints.filter(volta_fazer_negocio='sim').count(),
+        'voltaria_nao': complaints.filter(volta_fazer_negocio='nao').count(),
+    }
+    
+    # Reclamações por período (últimos 30 dias)
+    complaints_by_day = []
+    for i in range(30):
+        date = timezone.now().date() - timedelta(days=29-i)
+        count = complaints.filter(data_reclamacao=date).count()
+        complaints_by_day.append({'date': date.isoformat(), 'count': count})
+    
+    # Top problemas
+    top_problemas = complaints.values('tipo_reclamacao').annotate(
+        count=Count('id')
+    ).exclude(tipo_reclamacao__isnull=True).order_by('-count')[:10]
+    
+    context = {
+        'total': total,
+        'by_status': by_status,
+        'by_tipo': by_tipo,
+        'by_analyst': by_analyst,
+        'by_store': by_store,
+        'satisfacao_stats': satisfacao_stats,
+        'complaints_by_day': complaints_by_day,
+        'top_problemas': top_problemas,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'core/reports.html', context)
 
 
 @login_required
@@ -152,13 +256,73 @@ def complaint_list(request):
     if loja_filter:
         complaints = complaints.filter(loja_cod=loja_filter)
     
+    # Filtro de reclamações urgentes (pendentes há mais de 3 dias)
+    urgentes = request.GET.get('urgentes', '')
+    if urgentes == 'true':
+        urgent_date = timezone.now().date() - timedelta(days=3)
+        complaints = complaints.filter(
+            status='pendente',
+            data_reclamacao__lte=urgent_date
+        )
+    
+    # Filtros avançados
+    tipo_filter = request.GET.get('tipo', '')
+    analista_filter = request.GET.get('analista', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    sem_analista = request.GET.get('sem_analista', '')
+    
+    if tipo_filter:
+        complaints = complaints.filter(tipo_reclamacao=tipo_filter)
+    
+    if analista_filter:
+        if analista_filter == 'sem_analista':
+            complaints = complaints.filter(analista__isnull=True)
+        else:
+            complaints = complaints.filter(analista_id=analista_filter)
+    
+    if date_from:
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            complaints = complaints.filter(data_reclamacao__gte=date_from_obj)
+        except:
+            pass
+    
+    if date_to:
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            complaints = complaints.filter(data_reclamacao__lte=date_to_obj)
+        except:
+            pass
+    
+    if sem_analista == 'true':
+        complaints = complaints.filter(analista__isnull=True)
+    
     complaints = complaints.order_by('-created_at')
+    
+    # Contador de reclamações por analista - apenas analistas reais
+    complaints_by_analyst = Complaint.objects.filter(
+        analista__isnull=False
+    ).values('analista__username', 'analista__first_name', 'analista__last_name').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Lista de analistas para filtro
+    analistas_list = User.objects.filter(role='analista', ativo=True).order_by('first_name', 'last_name')
     
     paginator = Paginator(complaints, 25)
     page = request.GET.get('page')
     complaints = paginator.get_page(page)
     
-    return render(request, 'core/complaint_list.html', {'complaints': complaints})
+    context = {
+        'complaints': complaints,
+        'complaints_by_analyst': complaints_by_analyst,
+        'analistas_list': analistas_list,
+    }
+    
+    return render(request, 'core/complaint_list.html', context)
 
 
 @login_required
@@ -290,9 +454,63 @@ def store_complaints(request, loja_cod):
 def complaint_detail(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
     activities = complaint.activities.select_related('usuario').order_by('-created_at')
+    
+    # Adicionar comentário interno rápido
+    if request.method == 'POST' and 'comentario_interno' in request.POST:
+        comentario = request.POST.get('comentario_interno', '').strip()
+        if comentario:
+            Activity.objects.create(
+                complaint=complaint,
+                usuario=request.user,
+                comentario=comentario,
+                tipo_interacao='comentario_interno'
+            )
+            messages.success(request, 'Comentário adicionado com sucesso!')
+            return redirect('complaint_detail', pk=pk)
+    
+    # Mudança rápida de status
+    if request.method == 'POST' and 'novo_status' in request.POST:
+        novo_status = request.POST.get('novo_status', '').strip()
+        if novo_status and novo_status != complaint.status:
+            status_antigo = complaint.get_status_display()
+            complaint.status = novo_status
+            complaint.save()
+            Activity.objects.create(
+                complaint=complaint,
+                usuario=request.user,
+                comentario=f'Status alterado de "{status_antigo}" para "{complaint.get_status_display()}"',
+                tipo_interacao='mudanca_status'
+            )
+            messages.success(request, f'Status alterado para "{complaint.get_status_display()}"!')
+            return redirect('complaint_detail', pk=pk)
+    
+    # Atribuição rápida de analista
+    if request.method == 'POST' and 'novo_analista' in request.POST:
+        novo_analista_id = request.POST.get('novo_analista', '').strip()
+        if novo_analista_id:
+            try:
+                novo_analista = User.objects.get(id=novo_analista_id, role='analista', ativo=True)
+                analista_antigo = complaint.analista.username if complaint.analista else "Não atribuído"
+                complaint.analista = novo_analista
+                complaint.save()
+                Activity.objects.create(
+                    complaint=complaint,
+                    usuario=request.user,
+                    comentario=f'Analista alterado de "{analista_antigo}" para "{novo_analista.username}"',
+                    tipo_interacao='atualizacao'
+                )
+                messages.success(request, f'Analista atribuído: {novo_analista.username}!')
+                return redirect('complaint_detail', pk=pk)
+            except User.DoesNotExist:
+                messages.error(request, 'Analista não encontrado!')
+    
+    # Lista de analistas para atribuição rápida
+    analistas_list = User.objects.filter(role='analista', ativo=True).order_by('first_name', 'last_name')
+    
     return render(request, 'core/complaint_detail.html', {
         'complaint': complaint,
-        'activities': activities
+        'activities': activities,
+        'analistas_list': analistas_list,
     })
 
 
@@ -625,18 +843,49 @@ def user_create(request):
         username = request.POST.get('username')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        role = request.POST.get('role', 'analista')  # Default para analista
+        role = request.POST.get('role', '')
         ativo = request.POST.get('ativo') == 'on'
         first_name = request.POST.get('first_name', '')
         last_name = request.POST.get('last_name', '')
         
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Este nome de usuário já existe.')
-            return render(request, 'core/user_form.html', {'form_type': 'create'})
+            return render(request, 'core/user_form.html', {
+                'form_type': 'create',
+                'form_data': {
+                    'email': email,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'role': role,
+                    'ativo': ativo
+                }
+            })
         
         if User.objects.filter(email=email).exists():
             messages.error(request, 'Este e-mail já está cadastrado.')
-            return render(request, 'core/user_form.html', {'form_type': 'create'})
+            return render(request, 'core/user_form.html', {
+                'form_type': 'create',
+                'form_data': {
+                    'username': username,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'role': role,
+                    'ativo': ativo
+                }
+            })
+        
+        if not role:
+            messages.error(request, 'Por favor, selecione um perfil.')
+            return render(request, 'core/user_form.html', {
+                'form_type': 'create',
+                'form_data': {
+                    'username': username,
+                    'email': email,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'ativo': ativo
+                }
+            })
         
         user = User.objects.create_user(
             username=username,
@@ -1042,3 +1291,291 @@ def export_users_xlsx(request):
     
     wb.save(response)
     return response
+
+@login_required
+def import_complaints_xlsx(request):
+    """Importar reclamações de arquivo XLSX"""
+    if not request.user.is_gestor():
+        messages.error(request, 'Você não tem permissão para importar dados.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        if 'xlsx_file' not in request.FILES:
+            messages.error(request, 'Por favor, selecione um arquivo XLSX.')
+            return render(request, 'core/import_complaints.html')
+        
+        file = request.FILES['xlsx_file']
+        if not file.name.endswith(('.xlsx', '.xls')):
+            messages.error(request, 'Por favor, selecione um arquivo XLSX válido.')
+            return render(request, 'core/import_complaints.html')
+        
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(file, data_only=True)
+            ws = wb.active
+            
+            # Mapeamento de status
+            status_map = {
+                'pendente': 'pendente',
+                'em andamento': 'em_andamento',
+                'em réplica': 'em_replica',
+                'aguardando avaliação': 'aguardando_avaliacao',
+                'resolvido': 'resolvido',
+                'resolvida': 'resolvido',
+            }
+            
+            # Mapeamento de tipo de reclamação
+            tipo_map = {
+                'nota fiscal': 'nota_fiscal',
+                'pagamento não processado - cartão': 'pagamento_cartao',
+                'pagamento não processado - pix': 'pagamento_pix',
+                'pagamento não processado - checkout web': 'pagamento_checkout',
+                'assinatura mensal': 'assinatura_mensal',
+                'lavagem': 'lavagem',
+                'secagem': 'secagem',
+                'atendimento': 'atendimento',
+                'sistema/totem': 'sistema_totem',
+                'totem': 'sistema_totem',
+                'cupons': 'cupons',
+                'outros': 'outros',
+            }
+            
+            # Mapeamento de volta fazer negócio
+            volta_negocio_map = {
+                'sim': 'sim',
+                's': 'sim',
+                'não': 'nao',
+                'nao': 'nao',
+                'n': 'nao',
+            }
+            
+            imported = 0
+            updated = 0
+            skipped = 0
+            errors = []
+            total_rows = 0
+            
+            # Contar total de linhas (exceto cabeçalho)
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                total_rows += 1
+            
+            # Começar da linha 2 (linha 1 é cabeçalho)
+            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                try:
+                    # Mapear colunas (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11)
+                    loja_cod = str(row[0]).strip() if len(row) > 0 and row[0] else None
+                    nome_completo = str(row[1]).strip() if len(row) > 1 and row[1] else None
+                    id_ra = str(row[2]).strip() if len(row) > 2 and row[2] else None
+                    cpf = None
+                    if len(row) > 3 and row[3]:
+                        cpf = str(row[3]).strip()
+                    email_cliente = str(row[4]).strip() if len(row) > 4 and row[4] else None
+                    telefone = str(row[5]).strip() if len(row) > 5 and row[5] else ''
+                    data_reclamacao = row[6] if len(row) > 6 and row[6] else None
+                    problema = str(row[7]).strip().lower() if len(row) > 7 and row[7] else None
+                    status = str(row[8]).strip().lower() if len(row) > 8 and row[8] else 'pendente'
+                    analista_nome = str(row[9]).strip() if len(row) > 9 and row[9] else None
+                    nota = row[10] if len(row) > 10 and row[10] else None
+                    volta_negocio = str(row[11]).strip().lower() if len(row) > 11 and row[11] else None
+                    
+                    # Validações básicas
+                    if not id_ra or str(id_ra).strip() == '':
+                        skipped += 1
+                        errors.append(f"Linha {row_num}: ID RA está vazio - linha ignorada")
+                        continue
+                    
+                    # Preencher campos vazios
+                    if not nome_completo or str(nome_completo).strip() == '':
+                        nome_completo = 'Nome não informado'
+                    if not loja_cod or str(loja_cod).strip() == '':
+                        loja_cod = 'Não informado'
+                    
+                    # Limpar CPF
+                    cpf_clean = None
+                    if cpf and str(cpf).strip() != '':
+                        cpf_clean = re.sub(r'\D', '', str(cpf))
+                        if len(cpf_clean) == 11:
+                            pass
+                        elif len(cpf_clean) == 0:
+                            cpf_clean = '00000000000'
+                            errors.append(f"Linha {row_num}: CPF vazio - usando placeholder")
+                        else:
+                            cpf_clean = '00000000000'
+                            errors.append(f"Linha {row_num}: CPF inválido - usando placeholder")
+                    else:
+                        cpf_clean = '00000000000'
+                        errors.append(f"Linha {row_num}: CPF vazio - usando placeholder")
+                    
+                    # Dividir nome
+                    nome_parts = str(nome_completo).split(maxsplit=1)
+                    nome_cliente = nome_parts[0] if nome_parts else 'Nome não informado'
+                    sobrenome = nome_parts[1] if len(nome_parts) > 1 else ''
+                    
+                    # Processar data
+                    data_reclamacao_value = None
+                    if data_reclamacao:
+                        if isinstance(data_reclamacao, datetime):
+                            data_reclamacao_value = data_reclamacao.date()
+                        elif isinstance(data_reclamacao, str) and str(data_reclamacao).strip() != '':
+                            try:
+                                data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%d/%m/%Y').date()
+                            except:
+                                try:
+                                    data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%Y-%m-%d').date()
+                                except:
+                                    try:
+                                        data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%d-%m-%Y').date()
+                                    except:
+                                        data_reclamacao_value = timezone.now().date()
+                                        errors.append(f"Linha {row_num}: Data inválida - usando data atual")
+                        else:
+                            data_reclamacao_value = timezone.now().date()
+                    else:
+                        data_reclamacao_value = timezone.now().date()
+                    
+                    data_reclamacao = data_reclamacao_value
+                    
+                    # Mapear status e tipo
+                    status_value = status_map.get(status, 'pendente')
+                    tipo_reclamacao_value = None
+                    if problema:
+                        tipo_reclamacao_value = tipo_map.get(problema, 'outros')
+                    
+                    # Buscar analista
+                    analista_obj = None
+                    if analista_nome and analista_nome.lower().strip() not in ['selecione um analista (opcional)', 'não atribuido', 'não atribuído', 'nao atribuido', '']:
+                        try:
+                            analista_nome_clean = str(analista_nome).strip()
+                            nome_parts = analista_nome_clean.split()
+                            analistas = User.objects.filter(role='analista', ativo=True)
+                            
+                            if len(nome_parts) >= 2:
+                                primeiro_nome = nome_parts[0]
+                                ultimo_nome = nome_parts[-1]
+                                analista_obj = analistas.filter(
+                                    Q(first_name__icontains=primeiro_nome) & Q(last_name__icontains=ultimo_nome)
+                                ).first()
+                                if not analista_obj:
+                                    analista_obj = analistas.filter(
+                                        Q(first_name__icontains=primeiro_nome) |
+                                        Q(last_name__icontains=ultimo_nome) |
+                                        Q(first_name__icontains=ultimo_nome) |
+                                        Q(last_name__icontains=primeiro_nome)
+                                    ).first()
+                            else:
+                                analista_obj = analistas.filter(
+                                    Q(first_name__icontains=analista_nome_clean) |
+                                    Q(last_name__icontains=analista_nome_clean) |
+                                    Q(username__icontains=analista_nome_clean) |
+                                    Q(email__icontains=analista_nome_clean)
+                                ).first()
+                            
+                            if not analista_obj:
+                                for parte in nome_parts:
+                                    analista_obj = analistas.filter(
+                                        Q(first_name__icontains=parte) |
+                                        Q(last_name__icontains=parte) |
+                                        Q(username__icontains=parte)
+                                    ).first()
+                                    if analista_obj:
+                                        break
+                            
+                            if not analista_obj:
+                                errors.append(f"Linha {row_num}: Analista '{analista_nome_clean}' não encontrado")
+                        except Exception as e:
+                            errors.append(f"Linha {row_num}: Erro ao buscar analista '{analista_nome}': {str(e)}")
+                    
+                    # Processar nota
+                    nota_value = None
+                    if nota is not None:
+                        try:
+                            nota_value = int(float(nota))
+                            if nota_value < 0:
+                                nota_value = 0
+                            elif nota_value > 10:
+                                nota_value = 10
+                        except:
+                            pass
+                    
+                    # Mapear volta fazer negócio
+                    volta_negocio_value = None
+                    if volta_negocio:
+                        volta_negocio_value = volta_negocio_map.get(volta_negocio, 'nao_informado')
+                    
+                    # Validar email
+                    if not email_cliente or str(email_cliente).strip() == '':
+                        email_cliente = f'{cpf_clean}@importado.com'
+                    else:
+                        email_cliente = str(email_cliente).strip()
+                        if '@' not in email_cliente:
+                            email_cliente = f'{cpf_clean}@importado.com'
+                            errors.append(f"Linha {row_num}: Email inválido - usando email temporário")
+                    
+                    # Descrição
+                    descricao = f'Importado da planilha'
+                    if problema:
+                        descricao += f' - Tipo: {problema}'
+                    else:
+                        descricao += ' - Tipo: Não informado'
+                    
+                    # Criar ou atualizar
+                    try:
+                        complaint, created = Complaint.objects.update_or_create(
+                            id_ra=str(id_ra).strip(),
+                            defaults={
+                                'cpf_cliente': cpf_clean,
+                                'nome_cliente': str(nome_cliente).strip(),
+                                'sobrenome': str(sobrenome).strip(),
+                                'email_cliente': email_cliente,
+                                'telefone': str(telefone).strip() if telefone else '',
+                                'loja_cod': str(loja_cod).strip(),
+                                'origem_contato': 'RA',
+                                'descricao': descricao,
+                                'status': status_value,
+                                'analista': analista_obj,
+                                'data_reclamacao': data_reclamacao,
+                                'tipo_reclamacao': tipo_reclamacao_value,
+                                'nota_satisfacao': nota_value,
+                                'volta_fazer_negocio': volta_negocio_value,
+                            }
+                        )
+                    except Exception as e:
+                        errors.append(f"Linha {row_num}: Erro ao salvar - {str(e)}")
+                        continue
+                    
+                    if created:
+                        imported += 1
+                    else:
+                        updated += 1
+                        
+                except Exception as e:
+                    errors.append(f"Linha {row_num}: Erro ao processar - {str(e)}")
+                    continue
+            
+            # Mensagens
+            total_processed = imported + updated
+            if total_processed > 0:
+                msg = f"Importação concluída! Processadas {total_rows} linha(s) da planilha. "
+                msg += f"{imported} reclamação(ões) criada(s), {updated} atualizada(s)."
+                if skipped > 0:
+                    msg += f" {skipped} linha(s) ignorada(s) (ID RA vazio)."
+                if len(errors) > skipped:
+                    msg += f" {len(errors) - skipped} aviso(s)."
+                messages.success(request, msg)
+            else:
+                messages.error(request, f"Nenhuma reclamação foi importada. Verifique os erros abaixo.")
+            
+            if errors:
+                for error in errors[:15]:
+                    messages.warning(request, error)
+                if len(errors) > 15:
+                    messages.warning(request, f"... e mais {len(errors) - 15} aviso(s)/erro(s).")
+            
+            return redirect('complaint_list')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao processar arquivo: {str(e)}')
+            return render(request, 'core/import_complaints.html')
+    
+    return render(request, 'core/import_complaints.html')
+

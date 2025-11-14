@@ -23,7 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = get_env('SECRET_KEY', 'django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env('DEBUG', 'False').lower() == 'true'
+# Em desenvolvimento local, DEBUG deve ser True para servir arquivos estáticos
+DEBUG = get_env('DEBUG', 'True').lower() == 'true'
 
 # ALLOWED_HOSTS - separado por vírgulas
 ALLOWED_HOSTS_STR = get_env('ALLOWED_HOSTS', 'localhost,127.0.0.1')
@@ -105,17 +106,19 @@ if DATABASE_URL:
         raise
 else:
     # Configuração manual com variáveis individuais
-    db_host = get_env('DB_HOST')
+    # Valores padrão para desenvolvimento local
+    db_host = get_env('DB_HOST', 'localhost')
     db_port = get_env('DB_PORT', '5432')
-    db_name = get_env('DB_NAME', 'postgres')
+    db_name = get_env('DB_NAME', 'gestao_reclame_aqui')
     db_user = get_env('DB_USER', 'postgres')
     db_password = get_env('DB_PASSWORD', '')
     
-    # Validações
-    if not db_host:
+    # Validações apenas em produção (quando não é localhost)
+    if db_host != 'localhost' and not db_host:
         raise ValueError("✗ DB_HOST não configurado!")
     
-    if not db_password:
+    # Senha não é obrigatória em localhost (pode ser vazia)
+    if db_host != 'localhost' and not db_password:
         raise ValueError("✗ DB_PASSWORD não configurado!")
     
     # Auto-detectar porta do Supabase baseado no hostname

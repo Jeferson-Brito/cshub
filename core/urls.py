@@ -25,6 +25,8 @@ urlpatterns = [
     path('export/stores/xlsx/', views.export_stores_xlsx, name='export_stores_xlsx'),
     path('export/users/csv/', views.export_users_csv, name='export_users_csv'),
     path('export/users/xlsx/', views.export_users_xlsx, name='export_users_xlsx'),
+    path('complaints/import/', views.import_complaints_xlsx, name='import_complaints_xlsx'),
+    path('reports/', views.reports_view, name='reports'),
 ]
 
 

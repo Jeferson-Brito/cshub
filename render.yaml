@@ -1,0 +1,31 @@
+# Configuração do Render (opcional - para usar Render Blueprint)
+# Este arquivo permite criar todos os serviços de uma vez
+# Acesse: https://dashboard.render.com/new/blueprint
+
+services:
+  - type: web
+    name: cshub
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn gestao_reclame_aqui.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        sync: false  # Será preenchido automaticamente
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cshub-db
+          property: connectionString
+      - key: INIT_DB
+        value: "true"
+
+databases:
+  - name: cshub-db
+    databaseName: cshub
+    user: cshub_user
+    plan: free
+    # Nota: No Render, o serviço aparece como "Postgres" no menu, não "PostgreSQL"
+

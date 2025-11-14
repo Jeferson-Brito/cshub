@@ -36,6 +36,26 @@ class Complaint(models.Model):
         ('resolvido', 'Resolvido'),
     ]
     
+    TIPO_RECLAMACAO_CHOICES = [
+        ('nota_fiscal', 'Nota fiscal'),
+        ('pagamento_cartao', 'Pagamento não processado - Cartão'),
+        ('pagamento_pix', 'Pagamento não processado - PIX'),
+        ('pagamento_checkout', 'Pagamento não processado - Checkout Web'),
+        ('assinatura_mensal', 'Assinatura mensal'),
+        ('lavagem', 'Lavagem'),
+        ('secagem', 'Secagem'),
+        ('atendimento', 'Atendimento'),
+        ('sistema_totem', 'Sistema/Totem'),
+        ('cupons', 'Cupons'),
+        ('outros', 'Outros'),
+    ]
+    
+    VOLTA_FAZER_NEGOCIO_CHOICES = [
+        ('sim', 'Sim'),
+        ('nao', 'Não'),
+        ('nao_informado', 'Não informado'),
+    ]
+    
     id_ra = models.CharField(max_length=100, unique=True)
     cpf_cliente = models.CharField(max_length=14)  # Aceita formato 000.000.000-00
     nome_cliente = models.CharField(max_length=200)
@@ -49,7 +69,9 @@ class Complaint(models.Model):
     analista = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='complaints')
     data_reclamacao = models.DateField()
     data_resposta = models.DateField(null=True, blank=True)
-    nota_satisfacao = models.IntegerField(null=True, blank=True)
+    tipo_reclamacao = models.CharField(max_length=30, choices=TIPO_RECLAMACAO_CHOICES, blank=True, null=True)
+    nota_satisfacao = models.IntegerField(null=True, blank=True)  # 0 a 10
+    volta_fazer_negocio = models.CharField(max_length=20, choices=VOLTA_FAZER_NEGOCIO_CHOICES, blank=True, null=True)
     feedback_text = models.TextField(blank=True)
     repeticoes_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

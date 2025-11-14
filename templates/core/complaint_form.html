@@ -144,6 +144,15 @@
                                 <div class="text-danger small">{{ form.origem_contato.errors }}</div>
                             {% endif %}
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-tag-fill"></i> Tipo de Reclamação
+                            </label>
+                            {{ form.tipo_reclamacao }}
+                            {% if form.tipo_reclamacao.errors %}
+                                <div class="text-danger small">{{ form.tipo_reclamacao.errors }}</div>
+                            {% endif %}
+                        </div>
                         {% if user.is_gestor %}
                         <div class="col-md-6">
                             <label class="form-label">
@@ -215,11 +224,20 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">
-                                <i class="bi bi-star"></i> Nota de Satisfação
+                                <i class="bi bi-star"></i> Nota de Satisfação (0 a 10)
                             </label>
                             {{ form.nota_satisfacao }}
                             {% if form.nota_satisfacao.errors %}
                                 <div class="text-danger small">{{ form.nota_satisfacao.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-arrow-repeat"></i> Voltaria a Fazer Negócios?
+                            </label>
+                            {{ form.volta_fazer_negocio }}
+                            {% if form.volta_fazer_negocio.errors %}
+                                <div class="text-danger small">{{ form.volta_fazer_negocio.errors }}</div>
                             {% endif %}
                         </div>
                         <div class="col-12">

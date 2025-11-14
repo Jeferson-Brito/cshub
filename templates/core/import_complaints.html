@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Importar Reclamações{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-upload"></i> Importar Reclamações do XLSX
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Formato da Planilha</h5>
+                        <p class="mb-2">A planilha deve conter as seguintes colunas na ordem especificada:</p>
+                        <ul class="mb-0">
+                            <li><strong>Coluna A:</strong> LOJA (Código da loja)</li>
+                            <li><strong>Coluna B:</strong> NOME (Nome completo do cliente)</li>
+                            <li><strong>Coluna C:</strong> ID (ID RA da reclamação)</li>
+                            <li><strong>Coluna D:</strong> CPF (CPF do cliente)</li>
+                            <li><strong>Coluna E:</strong> E-MAIL (E-mail do cliente)</li>
+                            <li><strong>Coluna F:</strong> TELEFONE (Telefone do cliente)</li>
+                            <li><strong>Coluna G:</strong> DATA DA RECLAMAÇÃO</li>
+                            <li><strong>Coluna H:</strong> PROBLEMA (Tipo da reclamação)</li>
+                            <li><strong>Coluna I:</strong> STATUS</li>
+                            <li><strong>Coluna J:</strong> Analista (Nome do analista responsável)</li>
+                            <li><strong>Coluna K:</strong> NOTA (Nota de satisfação de 0 a 10)</li>
+                            <li><strong>Coluna L:</strong> VOLTARIA A FAZER NEGÓCIOS? (Sim/Não)</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="xlsx_file" class="form-label">
+                                <strong>Selecione o arquivo XLSX:</strong>
+                            </label>
+                            <input type="file" class="form-control" id="xlsx_file" name="xlsx_file" accept=".xlsx,.xls" required>
+                            <small class="form-text text-muted">
+                                Apenas arquivos .xlsx ou .xls são aceitos.
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'complaint_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Importar Dados
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4">
+                        <h5>Observações Importantes:</h5>
+                        <ul>
+                            <li>A primeira linha da planilha será ignorada (cabeçalho)</li>
+                            <li>Reclamações com o mesmo ID RA serão atualizadas se já existirem</li>
+                            <li>Se o analista não for encontrado, a reclamação ficará sem atribuição</li>
+                            <li>CPFs serão formatados automaticamente (apenas números são salvos)</li>
+                            <li>Nomes serão divididos automaticamente em nome e sobrenome</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

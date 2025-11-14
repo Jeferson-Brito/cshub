@@ -9,9 +9,9 @@ class ComplaintForm(forms.ModelForm):
         fields = [
             'id_ra', 'cpf_cliente', 'nome_cliente', 'sobrenome',
             'email_cliente', 'telefone', 'loja_cod',
-            'origem_contato', 'descricao', 'status', 'analista',
+            'origem_contato', 'tipo_reclamacao', 'descricao', 'status', 'analista',
             'data_reclamacao', 'data_resposta', 'nota_satisfacao',
-            'feedback_text'
+            'volta_fazer_negocio', 'feedback_text'
         ]
         widgets = {
             'id_ra': forms.TextInput(attrs={
@@ -65,11 +65,17 @@ class ComplaintForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
+            'tipo_reclamacao': forms.Select(attrs={
+                'class': 'form-control'
+            }),
             'nota_satisfacao': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': 1,
-                'max': 5,
-                'placeholder': '1 a 5'
+                'min': 0,
+                'max': 10,
+                'placeholder': '0 a 10'
+            }),
+            'volta_fazer_negocio': forms.Select(attrs={
+                'class': 'form-control'
             }),
             'feedback_text': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -128,5 +134,21 @@ class ComplaintForm(forms.ModelForm):
             
             return cpf_clean
         return cpf
+    
+    def clean_nota_satisfacao(self):
+        """Validar que a nota está entre 0 e 10"""
+        nota = self.cleaned_data.get('nota_satisfacao')
+        if nota is not None:
+            if nota < 0 or nota > 10:
+                raise forms.ValidationError('A nota de satisfação deve estar entre 0 e 10.')
+        return nota
+    
+    def clean_data_reclamacao(self):
+        """Preservar data da reclamação se não for fornecida na edição"""
+        data = self.cleaned_data.get('data_reclamacao')
+        # Se estiver editando e a data não foi fornecida, manter a data existente
+        if self.instance and self.instance.pk and not data:
+            return self.instance.data_reclamacao
+        return data
 
 

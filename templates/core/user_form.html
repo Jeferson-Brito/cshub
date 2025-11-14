@@ -36,7 +36,7 @@
                                 type="text" 
                                 class="form-control" 
                                 name="username" 
-                                value="{% if user %}{{ user.username }}{% endif %}"
+                                value="{% if user %}{{ user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
                                 {% if form_type == 'edit' %}readonly{% endif %}
                                 required
                             >
@@ -52,7 +52,7 @@
                                 type="email" 
                                 class="form-control" 
                                 name="email" 
-                                value="{% if user %}{{ user.email }}{% endif %}"
+                                value="{% if user %}{{ user.email }}{% elif form_data %}{{ form_data.email|default:'' }}{% endif %}"
                                 required
                             >
                         </div>
@@ -65,8 +65,8 @@
                             </label>
                             <select class="form-control" name="role" required>
                                 <option value="">Selecione...</option>
-                                <option value="analista" {% if not user or user.role == 'analista' %}selected{% endif %}>Analista</option>
-                                <option value="gestor" {% if user and user.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="analista" {% if user and user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
+                                <option value="gestor" {% if user and user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -79,7 +79,7 @@
                                     type="checkbox" 
                                     name="ativo" 
                                     id="ativo"
-                                    {% if not user or user.ativo %}checked{% endif %}
+                                    {% if user and user.ativo %}checked{% elif form_data and form_data.ativo %}checked{% endif %}
                                 >
                                 <label class="form-check-label" for="ativo">
                                     Usuário Ativo
@@ -97,7 +97,7 @@
                                 type="text" 
                                 class="form-control" 
                                 name="first_name" 
-                                value="{% if user %}{{ user.first_name }}{% endif %}"
+                                value="{% if user %}{{ user.first_name }}{% elif form_data %}{{ form_data.first_name|default:'' }}{% endif %}"
                             >
                         </div>
                         <div class="col-md-6">
@@ -108,7 +108,7 @@
                                 type="text" 
                                 class="form-control" 
                                 name="last_name" 
-                                value="{% if user %}{{ user.last_name }}{% endif %}"
+                                value="{% if user %}{{ user.last_name }}{% elif form_data %}{{ form_data.last_name|default:'' }}{% endif %}"
                             >
                         </div>
                     </div>
