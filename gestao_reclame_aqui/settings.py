@@ -146,15 +146,24 @@ else:
     if not db_host or db_host == '':
         db_host = 'localhost'
     
-    # Se for Supabase, usar pooler na porta 6543
-    if 'supabase' in db_host.lower() or 'pooler' in db_host.lower():
-        db_port = '6543'
+    # Se for Supabase, detectar tipo de conexão
+    if 'supabase' in db_host.lower():
+        # Se for pooler (aws-0), usar porta 6543
+        if 'pooler' in db_host.lower() or 'aws-0' in db_host.lower():
+            db_port = '6543'
+        # Se for conexão direta (db.), usar porta 5432
+        elif db_host.startswith('db.'):
+            db_port = '5432'
         # Tentar resolver hostname para IPv4, mas manter hostname se falhar
         if db_host != 'localhost':
-            resolved_host = get_ipv4_host(db_host)
-            # Só usar IP se a resolução funcionou e retornou um IP válido
-            if resolved_host and resolved_host != db_host and '.' in resolved_host:
-                db_host = resolved_host
+            try:
+                resolved_host = get_ipv4_host(db_host)
+                # Só usar IP se a resolução funcionou e retornou um IP válido
+                if resolved_host and resolved_host != db_host and '.' in resolved_host:
+                    db_host = resolved_host
+            except Exception:
+                # Se falhar, manter hostname original
+                pass
     
     DATABASES = {
         'default': {

@@ -1,0 +1,69 @@
+========================================
+🔧 CONFIGURAR CONEXÃO DIRETA DO SUPABASE
+========================================
+
+O pooler pode estar com problemas de DNS.
+Vamos usar a conexão DIRETA (mais confiável).
+
+========================================
+PASSO 1: OBTER DADOS DO SUPABASE
+========================================
+
+1. Acesse: https://supabase.com/dashboard
+2. Selecione seu projeto
+3. Vá em: Project Settings → Database
+4. Procure por "Connection string" ou "Connection info"
+5. Você verá algo como:
+
+   Host: db.budxgfflbfcxsxyoceti.supabase.co
+   Port: 5432
+   Database: postgres
+   User: postgres.budxgfflbfcxsxyoceti
+   Password: @Lionnees14
+
+========================================
+PASSO 2: ATUALIZAR VARIÁVEIS NO RENDER
+========================================
+
+No Render, em "Environment", atualize:
+
+DB_HOST = db.budxgfflbfcxsxyoceti.supabase.co
+DB_PORT = 5432
+DB_NAME = postgres
+DB_USER = postgres.budxgfflbfcxsxyoceti
+DB_PASSWORD = @Lionnees14
+
+⚠️ IMPORTANTE:
+- Use a porta 5432 (não 6543)
+- Use o hostname que começa com "db." (não "aws-0")
+- Mantenha as outras variáveis como estão
+
+========================================
+PASSO 3: VERIFICAR ALLOWED_HOSTS
+========================================
+
+Certifique-se de que está correto:
+
+ALLOWED_HOSTS = cshub-18jg.onrender.com
+
+(Note: pode ser diferente do que mencionei antes)
+
+========================================
+PASSO 4: AGUARDAR DEPLOY
+========================================
+
+Após salvar, o Render fará deploy automático.
+Aguarde terminar e teste novamente.
+
+========================================
+ALTERNATIVA: VERIFICAR IP DO HOSTNAME
+========================================
+
+Se ainda não funcionar, podemos tentar:
+1. Resolver o IP do hostname manualmente
+2. Usar o IP diretamente no DB_HOST
+
+Mas primeiro tente a conexão direta (porta 5432).
+
+========================================
+
