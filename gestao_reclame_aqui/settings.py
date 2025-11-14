@@ -90,6 +90,14 @@ if DATABASE_URL:
         if 'OPTIONS' not in db_config:
             db_config['OPTIONS'] = {}
         
+        # Configurações SSL para Render (Postgres requer SSL)
+        # Se a URL já tiver ?sslmode=, não sobrescrever
+        if 'render.com' in db_config.get('HOST', '') or 'onrender.com' in str(DATABASE_URL):
+            # Render Postgres requer SSL
+            db_config['OPTIONS'].update({
+                'sslmode': 'require',
+            })
+        
         db_config['OPTIONS'].update({
             'connect_timeout': 10,
             'keepalives': 1,
@@ -97,6 +105,9 @@ if DATABASE_URL:
             'keepalives_interval': 10,
             'keepalives_count': 5,
         })
+        
+        # Reduzir conn_max_age para evitar conexões fechadas
+        db_config['CONN_MAX_AGE'] = 300  # 5 minutos
         
         DATABASES = {'default': db_config}
         print(f"✓ Usando DATABASE_URL", file=sys.stderr)
@@ -130,6 +141,22 @@ else:
             db_port = '5432'  # Direct connection
             print(f"✓ Detectado Supabase Direct - usando porta 5432", file=sys.stderr)
     
+    # Detectar se é Render e configurar SSL
+    ssl_mode = None
+    if 'render.com' in db_host or 'onrender.com' in db_host:
+        ssl_mode = 'require'
+    
+    db_options = {
+        'connect_timeout': 10,
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5,
+    }
+    
+    if ssl_mode:
+        db_options['sslmode'] = ssl_mode
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -138,13 +165,8 @@ else:
             'PASSWORD': db_password,
             'HOST': db_host,
             'PORT': db_port,
-            'OPTIONS': {
-                'connect_timeout': 10,
-                'keepalives': 1,
-                'keepalives_idle': 30,
-                'keepalives_interval': 10,
-                'keepalives_count': 5,
-            },
+            'OPTIONS': db_options,
+            'CONN_MAX_AGE': 300,  # 5 minutos para evitar conexões fechadas
         }
     }
     

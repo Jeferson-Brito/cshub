@@ -107,7 +107,12 @@ Preencha os campos:
   ```
 - **Start Command**: 
   ```
-  gunicorn gestao_reclame_aqui.wsgi:application
+  gunicorn gestao_reclame_aqui.wsgi:application --config gunicorn_config.py
+  ```
+  
+  Ou se preferir sem arquivo de config:
+  ```
+  gunicorn gestao_reclame_aqui.wsgi:application --timeout 120 --workers 2
   ```
 - **Plan**: Escolha **Free** (gratuito)
 

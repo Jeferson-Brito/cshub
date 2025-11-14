@@ -7,7 +7,7 @@ services:
     name: cshub
     env: python
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: gunicorn gestao_reclame_aqui.wsgi:application
+    startCommand: gunicorn gestao_reclame_aqui.wsgi:application --timeout 120 --workers 2
     envVars:
       - key: SECRET_KEY
         generateValue: true
