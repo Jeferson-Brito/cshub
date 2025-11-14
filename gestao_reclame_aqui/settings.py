@@ -17,12 +17,18 @@ def get_env(key, default=None):
     return os.environ.get(key, default)
 
 def get_ipv4_host(hostname):
-    """Resolve hostname to IPv4 address"""
+    """Resolve hostname to IPv4 address, forcing IPv4 resolution"""
     try:
-        # Tentar resolver para IPv4 primeiro
+        # Usar getaddrinfo com AF_INET para forçar IPv4
+        addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET, socket.SOCK_STREAM)
+        if addr_info:
+            # Retornar o primeiro endereço IPv4 encontrado
+            ipv4 = addr_info[0][4][0]
+            return ipv4
+        # Fallback para gethostbyname
         ipv4 = socket.gethostbyname(hostname)
         return ipv4
-    except socket.gaierror:
+    except (socket.gaierror, socket.herror, OSError):
         # Se falhar, retornar o hostname original
         return hostname
 
@@ -94,24 +100,31 @@ if DATABASE_URL:
         import dj_database_url
         # Parse da URL e configuração do banco
         db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-        # Forçar IPv4 e adicionar opções de conexão
+        # Forçar IPv4: resolver hostname para IPv4 se for Supabase
+        if 'supabase' in db_config.get('HOST', '').lower() or 'pooler' in db_config.get('HOST', '').lower():
+            original_host = db_config.get('HOST', '')
+            if original_host and original_host != 'localhost':
+                db_config['HOST'] = get_ipv4_host(original_host)
+        # Adicionar opções de conexão
         if 'OPTIONS' not in db_config:
             db_config['OPTIONS'] = {}
         db_config['OPTIONS']['connect_timeout'] = 10
-        # Forçar IPv4 usando hostaddr se necessário
         DATABASES = {
             'default': db_config
         }
     except Exception as e:
         # Se der erro ao parsear, usar variáveis individuais como fallback
+        db_host = get_env('DB_HOST', 'localhost')
+        if 'supabase' in db_host.lower() or 'pooler' in db_host.lower():
+            db_host = get_ipv4_host(db_host)
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': get_env('DB_NAME', 'postgres'),
                 'USER': get_env('DB_USER', 'postgres'),
                 'PASSWORD': get_env('DB_PASSWORD', ''),
-                'HOST': get_env('DB_HOST', 'localhost'),
-                'PORT': get_env('DB_PORT', '5432'),
+                'HOST': db_host,
+                'PORT': get_env('DB_PORT', '6543'),
                 'OPTIONS': {
                     'connect_timeout': 10,
                 },
