@@ -6,293 +6,213 @@ import os
 import sys
 from pathlib import Path
 
-# Load environment variables from .env file
+# ==============================
+# BASE DIR
+# ==============================
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ==============================
+# ENV
+# ==============================
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    pass  # python-dotenv not installed, use system env vars
+    pass
 
 def get_env(key, default=None):
     return os.environ.get(key, default)
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# ==============================
+# SECURITY
+# ==============================
+SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env('SECRET_KEY', 'django-insecure-change-me-in-production')
+DEBUG = get_env("DEBUG", "False").lower() == "true"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# Em desenvolvimento local, DEBUG deve ser True para servir arquivos estáticos
-DEBUG = get_env('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = [
+    "cshub-l8jg.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
-# ALLOWED_HOSTS - separado por vírgulas
-ALLOWED_HOSTS_STR = get_env('ALLOWED_HOSTS', 'localhost,127.0.0.1')
-ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',') if host.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    "https://cshub-l8jg.onrender.com",
+]
 
-# Application definition
+# ==============================
+# APPLICATIONS
+# ==============================
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'crispy_forms',
-    'crispy_bootstrap5',
-    'django_filters',
-    'import_export',
-    'core',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    # terceiros
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "django_filters",
+    "import_export",
+
+    # apps locais
+    "core",
 ]
 
+# ==============================
+# MIDDLEWARE
+# ==============================
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'gestao_reclame_aqui.urls'
+ROOT_URLCONF = "gestao_reclame_aqui.urls"
 
+# ==============================
+# TEMPLATES
+# ==============================
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'gestao_reclame_aqui.wsgi.application'
+WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 
-# Database
-# Suporta DATABASE_URL (recomendado) ou variáveis individuais
-DATABASE_URL = get_env('DATABASE_URL', '')
+# ==============================
+# DATABASE (RENDER POSTGRES)
+# ==============================
+import dj_database_url
 
-if DATABASE_URL:
-    # Usar DATABASE_URL (método recomendado)
-    try:
-        import dj_database_url
-        db_config = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-        
-        # Adicionar opções de conexão para melhor estabilidade
-        if 'OPTIONS' not in db_config:
-            db_config['OPTIONS'] = {}
-        
-        # Configurações SSL para Render (Postgres requer SSL)
-        # Se a URL já tiver ?sslmode=, não sobrescrever
-        if 'render.com' in db_config.get('HOST', '') or 'onrender.com' in str(DATABASE_URL):
-            # Render Postgres requer SSL
-            db_config['OPTIONS'].update({
-                'sslmode': 'require',
-            })
-        
-        db_config['OPTIONS'].update({
-            'connect_timeout': 10,
-            'keepalives': 1,
-            'keepalives_idle': 30,
-            'keepalives_interval': 10,
-            'keepalives_count': 5,
-        })
-        
-        # Reduzir conn_max_age para evitar conexões fechadas
-        db_config['CONN_MAX_AGE'] = 300  # 5 minutos
-        
-        DATABASES = {'default': db_config}
-        print(f"✓ Usando DATABASE_URL", file=sys.stderr)
-        
-    except Exception as e:
-        print(f"✗ ERRO ao configurar DATABASE_URL: {e}", file=sys.stderr)
-        raise
-else:
-    # Configuração manual com variáveis individuais
-    # Valores padrão para desenvolvimento local
-    db_host = get_env('DB_HOST', 'localhost')
-    db_port = get_env('DB_PORT', '5432')
-    db_name = get_env('DB_NAME', 'gestao_reclame_aqui')
-    db_user = get_env('DB_USER', 'postgres')
-    db_password = get_env('DB_PASSWORD', '')
-    
-    # Validações apenas em produção (quando não é localhost)
-    if db_host != 'localhost' and not db_host:
-        raise ValueError("✗ DB_HOST não configurado!")
-    
-    # Senha não é obrigatória em localhost (pode ser vazia)
-    if db_host != 'localhost' and not db_password:
-        raise ValueError("✗ DB_PASSWORD não configurado!")
-    
-    # Auto-detectar porta do Supabase baseado no hostname
-    if 'supabase' in db_host.lower():
-        if 'pooler' in db_host.lower():
-            db_port = '6543'  # Connection pooler
-            print(f"✓ Detectado Supabase Pooler - usando porta 6543", file=sys.stderr)
-        elif db_host.startswith('db.'):
-            db_port = '5432'  # Direct connection
-            print(f"✓ Detectado Supabase Direct - usando porta 5432", file=sys.stderr)
-    
-    # Detectar se é Render e configurar SSL
-    ssl_mode = None
-    if 'render.com' in db_host or 'onrender.com' in db_host:
-        ssl_mode = 'require'
-    
-    db_options = {
-        'connect_timeout': 10,
-        'keepalives': 1,
-        'keepalives_idle': 30,
-        'keepalives_interval': 10,
-        'keepalives_count': 5,
-    }
-    
-    if ssl_mode:
-        db_options['sslmode'] = ssl_mode
-    
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_name,
-            'USER': db_user,
-            'PASSWORD': db_password,
-            'HOST': db_host,
-            'PORT': db_port,
-            'OPTIONS': db_options,
-            'CONN_MAX_AGE': 300,  # 5 minutos para evitar conexões fechadas
-        }
-    }
-    
-    # Debug info (pode remover depois que funcionar)
-    print(f"✓ DB CONFIG: {db_user}@{db_host}:{db_port}/{db_name}", file=sys.stderr)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Password validation
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL não definida no ambiente")
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=False  # Internal Database do Render NÃO exige SSL
+    )
+}
+
+print("✓ Banco PostgreSQL configurado via DATABASE_URL (Render)", file=sys.stderr)
+
+# ==============================
+# AUTH / PASSWORDS
+# ==============================
 AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 6},
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 6,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Internationalization
-LANGUAGE_CODE = 'pt-br'
-TIME_ZONE = 'America/Sao_Paulo'
+AUTH_USER_MODEL = "core.User"
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"
+
+# ==============================
+# INTERNATIONALIZATION
+# ==============================
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+# ==============================
+# STATIC FILES
+# ==============================
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Media files
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ==============================
+# MEDIA FILES
+# ==============================
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ==============================
+# DEFAULT PK
+# ==============================
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Crispy Forms
+# ==============================
+# CRISPY FORMS
+# ==============================
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# Login URLs
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
-
-# Custom User Model
-AUTH_USER_MODEL = 'core.User'
-
-# Security Settings
+# ==============================
+# SECURITY HEADERS
+# ==============================
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-# Cookies seguros - True em produção com HTTPS
+X_FRAME_OPTIONS = "DENY"
+
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 
-# Session Settings
-SESSION_COOKIE_AGE = 86400  # 24 horas
+# ==============================
+# SESSION
+# ==============================
+SESSION_COOKIE_AGE = 86400  # 24h
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# File Upload Settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+# ==============================
+# UPLOAD LIMITS
+# ==============================
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
-# Email Settings (configurar em produção)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = get_env('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = get_env('EMAIL_HOST_PASSWORD', '')
+# ==============================
+# EMAIL (DEV)
+# ==============================
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# Logging
+# ==============================
+# LOGGING
+# ==============================
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'core': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
     },
 }
-
-# Criar diretório de logs se não existir
-logs_dir = BASE_DIR / 'logs'
-if not os.path.exists(logs_dir):
-    os.makedirs(logs_dir)
