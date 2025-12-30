@@ -52,11 +52,6 @@ Sistema completo para gestão de reclamações desenvolvido em Django/Python com
 
 Consulte o arquivo `DEPLOY_RENDER.md` para instruções completas de deploy.
 
-## 📝 Credenciais Padrão
-
-- **E-mail**: `jeffersonbrito245@gmail.com`
-- **Senha**: `@Lionnees14`
-- **Perfil**: Gestor
 
 ## 🛠️ Comandos Úteis
 
