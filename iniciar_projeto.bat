@@ -48,13 +48,28 @@ if exist "requirements.txt" (
 )
 echo.
 
-echo [4/4] Iniciando servidor Django...
+echo [4/5] Iniciando servidor Django...
 echo ========================================
 echo   Servidor rodando em: http://127.0.0.1:8000
+echo   Abrindo navegador Chrome...
 echo   Pressione Ctrl+C para parar o servidor
 echo ========================================
 echo.
 
+REM Inicia o servidor Django em segundo plano e abre o Chrome
+start /B python manage.py runserver
+
+REM Aguarda 3 segundos para o servidor inicializar
+timeout /t 3 /nobreak >nul
+
+REM Abre o Chrome no endereço do servidor
+echo [5/5] Abrindo Chrome...
+start chrome http://127.0.0.1:8000
+
+REM Aguarda o servidor continuar rodando
+echo.
+echo ✓ Servidor iniciado e navegador aberto!
+echo.
 python manage.py runserver
 
 pause

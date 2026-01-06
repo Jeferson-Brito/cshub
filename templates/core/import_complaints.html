@@ -33,13 +33,14 @@
                         </ul>
                     </div>
 
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" id="importForm">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="xlsx_file" class="form-label">
                                 <strong>Selecione o arquivo XLSX:</strong>
                             </label>
-                            <input type="file" class="form-control" id="xlsx_file" name="xlsx_file" accept=".xlsx,.xls" required>
+                            <input type="file" class="form-control" id="xlsx_file" name="xlsx_file" accept=".xlsx,.xls"
+                                required>
                             <small class="form-text text-muted">
                                 Apenas arquivos .xlsx ou .xls são aceitos.
                             </small>
@@ -49,7 +50,7 @@
                             <a href="{% url 'complaint_list' %}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Cancelar
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="btnImport">
                                 <i class="bi bi-upload"></i> Importar Dados
                             </button>
                         </div>
@@ -71,4 +72,3 @@
     </div>
 </div>
 {% endblock %}
-

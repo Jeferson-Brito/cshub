@@ -28,7 +28,7 @@ def get_env(key, default=None):
 # ==============================
 SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
-DEBUG = get_env("DEBUG", "False").lower() == "true"
+DEBUG = get_env("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     "cshub-l8jg.onrender.com",
@@ -99,24 +99,20 @@ TEMPLATES = [
 WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 
 # ==============================
-# DATABASE (RENDER POSTGRES)
+# DATABASE (POSTGRESQL)
 # ==============================
-import dj_database_url
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL não definida no ambiente")
-
 DATABASES = {
-    "default": dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=600,
-        ssl_require=False  # Internal Database do Render NÃO exige SSL
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": get_env("DB_NAME", "cshub"),
+        "USER": get_env("DB_USER", "postgres"),
+        "PASSWORD": get_env("DB_PASSWORD", ""),
+        "HOST": get_env("DB_HOST", "localhost"),
+        "PORT": get_env("DB_PORT", "5433"),
+    }
 }
 
-print("✓ Banco PostgreSQL configurado via DATABASE_URL (Render)", file=sys.stderr)
+print("✓ Banco PostgreSQL configurado", file=sys.stderr)
 
 # ==============================
 # AUTH / PASSWORDS
