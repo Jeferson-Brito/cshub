@@ -31,15 +31,13 @@ SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = get_env("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = [
-    "cshub-l8jg.onrender.com",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "cshub-deploy.onrender.com,localhost,127.0.0.1").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://cshub-deploy.onrender.com",
     "https://cshub-l8jg.onrender.com",
 ]
+
 
 # ==============================
 # APPLICATIONS
