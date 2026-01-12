@@ -5,6 +5,7 @@ Django settings for gestao_reclame_aqui project.
 import os
 import sys
 from pathlib import Path
+import dj_database_url
 
 # ==============================
 # BASE DIR
@@ -91,6 +92,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.departments",
             ],
         },
     },
@@ -99,17 +101,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 
 # ==============================
-# DATABASE (POSTGRESQL)
+# DATABASE (POSTGRESQL - Render & Supabase Config)
 # ==============================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": get_env("DB_NAME", "cshub"),
-        "USER": get_env("DB_USER", "postgres"),
-        "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "localhost"),
-        "PORT": get_env("DB_PORT", "5433"),
-    }
+    "default": dj_database_url.config(
+        default=f"postgres://{get_env('DB_USER', 'postgres')}:{get_env('DB_PASSWORD', '')}@{get_env('DB_HOST', 'localhost')}:{get_env('DB_PORT', '5433')}/{get_env('DB_NAME', 'cshub')}",
+        conn_max_age=600  # 10 minutes
+    )
 }
 
 print("✓ Banco PostgreSQL configurado", file=sys.stderr)

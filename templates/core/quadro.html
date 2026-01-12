@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quadro de Tarefas - Em Desenvolvimento{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+        <div class="col-md-6 text-center">
+            <div class="mb-4">
+                <i class="bi bi-cone-striped text-warning" style="font-size: 4rem;"></i>
+            </div>
+            <h2 class="fw-bold mb-3">Página em Desenvolvimento</h2>
+            <p class="text-muted fs-5 mb-4">Estamos trabalhando para trazer uma experiência incrível no Quadro de
+                Tarefas.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-2"></i>Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

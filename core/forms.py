@@ -1,6 +1,6 @@
 from django import forms
 import re
-from .models import Complaint, User
+from .models import Complaint, User, Store
 
 
 class ComplaintForm(forms.ModelForm):
@@ -88,38 +88,35 @@ class ComplaintForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Configurar campo analista baseado no tipo de usuário
-        analistas_queryset = User.objects.filter(role='analista', ativo=True).order_by('username')
+        # Configurar campo analista baseado no tipo de usuário e departamento
+        # Incluir também gestores como possíveis responsáveis
+        if user and not user.is_administrador():
+            responsaveis_queryset = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=user.department).order_by('first_name')
+        else:
+            responsaveis_queryset = User.objects.filter(role__in=['analista', 'gestor'], ativo=True).order_by('first_name')
+        
+        # Sempre definir o queryset primeiro
+        self.fields['analista'].queryset = responsaveis_queryset
         
         if user:
-            if user.is_gestor():
-                # Gestor pode ver e alterar analistas
-                self.fields['analista'].queryset = analistas_queryset
+            if user.is_gestor() or user.is_administrador():
+                # Gestor/Admin pode ver e alterar responsáveis
                 self.fields['analista'].required = False
-                self.fields['analista'].empty_label = "Selecione um analista (opcional)"
-                # Garantir que seja um Select visível e forçar atualização do queryset
-                widget = forms.Select(attrs={'class': 'form-control'})
-                self.fields['analista'].widget = widget
-                # Forçar atualização das choices do widget
-                self.fields['analista'].widget.choices = self.fields['analista'].widget.choices
+                self.fields['analista'].empty_label = "Selecione um responsável (opcional)"
+                self.fields['analista'].widget.attrs['class'] = 'form-control'
             elif user.is_analista():
                 # Analista não pode alterar, mas o campo deve estar presente (oculto)
-                self.fields['analista'].queryset = analistas_queryset
                 self.fields['analista'].initial = user
                 self.fields['analista'].widget = forms.HiddenInput()
             else:
                 # Outros usuários
-                self.fields['analista'].queryset = analistas_queryset
                 self.fields['analista'].required = False
-                self.fields['analista'].empty_label = "Selecione um analista"
-                widget = forms.Select(attrs={'class': 'form-control'})
-                self.fields['analista'].widget = widget
+                self.fields['analista'].empty_label = "Selecione um responsável"
+                self.fields['analista'].widget.attrs['class'] = 'form-control'
         else:
-            # Se não houver usuário, mostrar todos os analistas
-            self.fields['analista'].queryset = analistas_queryset
-            self.fields['analista'].empty_label = "Selecione um analista"
-            widget = forms.Select(attrs={'class': 'form-control'})
-            self.fields['analista'].widget = widget
+            # Se não houver usuário, mostrar todos os responsáveis
+            self.fields['analista'].empty_label = "Selecione um responsável"
+            self.fields['analista'].widget.attrs['class'] = 'form-control'
     
     def clean_cpf_cliente(self):
         """Remove formatação do CPF antes de salvar (apenas números)"""
@@ -150,5 +147,25 @@ class ComplaintForm(forms.ModelForm):
         if self.instance and self.instance.pk and not data:
             return self.instance.data_reclamacao
         return data
+
+
+class StoreForm(forms.ModelForm):
+    class Meta:
+        model = Store
+        fields = ['code', 'active']
+        labels = {
+            'code': 'Código da Loja',
+            'active': 'Status (Ativa/Suspensa)'
+        }
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: PB05'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        }
+
+    def clean_code(self):
+        code = self.cleaned_data.get('code')
+        if code:
+            return code.upper().strip()
+        return code
 
 

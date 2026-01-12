@@ -1,0 +1,115 @@
+/* Custom Time Picker Styles */
+.custom-timepicker-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.custom-timepicker-input {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+    width: 100%;
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-clock' viewBox='0 0 16 16'%3E%3Cpath d='M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z'/%3E%3Cpath d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 16px;
+}
+
+.custom-timepicker-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1050;
+    display: none;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+    margin-top: 0.125rem;
+    width: 180px;
+    font-size: 0.9rem;
+}
+
+.custom-timepicker-dropdown.show {
+    display: block;
+}
+
+.custom-timepicker-header {
+    padding: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.custom-timepicker-body {
+    display: flex;
+    height: 200px;
+}
+
+.custom-timepicker-column {
+    flex: 1;
+    overflow-y: auto;
+    border-right: 1px solid #e9ecef;
+    scrollbar-width: thin;
+}
+
+.custom-timepicker-column:last-child {
+    border-right: none;
+}
+
+.custom-timepicker-column::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-timepicker-column::-webkit-scrollbar-thumb {
+    background-color: #adb5bd;
+    border-radius: 4px;
+}
+
+.custom-timepicker-item {
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.15s;
+}
+
+.custom-timepicker-item:hover {
+    background-color: #f1f3f5;
+}
+
+.custom-timepicker-item.selected {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+.custom-timepicker-label-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.custom-timepicker-label-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #555;
+}
+
+.time-range-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-range-divider {
+    font-weight: bold;
+    color: #6c757d;
+}

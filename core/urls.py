@@ -1,11 +1,23 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import api_escala
+from . import api_eventos
+from . import api_kb
+from . import api_quadro
+from . import api_tasks
+from . import api_desempenho
+from . import api_refunds
+from . import api_stores
+from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
+
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('login/', views.login_view_custom, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    
+    path('tarefas/', views.tasks_view, name='tasks_view'),
     path('complaints/', views.complaint_list, name='complaint_list'),
     path('complaints/<int:pk>/', views.complaint_detail, name='complaint_detail'),
     path('complaints/new/', views.complaint_create, name='complaint_create'),
@@ -26,7 +38,118 @@ urlpatterns = [
     path('export/users/csv/', views.export_users_csv, name='export_users_csv'),
     path('export/users/xlsx/', views.export_users_xlsx, name='export_users_xlsx'),
     path('complaints/import/', views.import_complaints_xlsx, name='import_complaints_xlsx'),
+    path('complaints/import/batch/', views.import_complaints_batch, name='import_complaints_batch'),
     path('reports/', views.reports_view, name='reports'),
-]
+    path('department/change/<int:dept_id>/', views.change_department, name='change_department'),
+    
+    
+    # Abas em desenvolvimento - CS Clientes
+    path('google-meu-negocio/', views.under_development, {'page_name': 'Google Meu Negócio'}, name='google_meu_negocio'),
+    
+    # NRS Suporte - Abas implementadas
+    path('escala/', views.escala_view, name='escala'),
+    path('sites/', views.sites_view, name='sites'),
+    path('localizacao-lojas/', views.localizacao_view, name='localizacao'),
+    path('verificacao-lojas/', views.verificacao_lojas, name='verificacao_lojas'),
+    path('verificacao-lojas/auditoria/<int:store_id>/', views.store_audit_create, name='store_audit_create'),
+    path('verificacao-lojas/resolver/<int:issue_id>/', views.store_issue_resolve, name='store_issue_resolve'),
+    path('verificacao-lojas/loja/nova/', views.store_create, name='store_create'),
+    path('verificacao-lojas/loja/importar/', views.import_stores_xlsx, name='import_stores_xlsx'),
+    path('verificacao-lojas/loja/<int:store_id>/editar/', views.store_edit, name='store_edit'),
+    path('verificacao-lojas/loja/<int:store_id>/excluir/', views.store_delete, name='store_delete'),
+    path('verificacao-lojas/pendencia/<int:issue_id>/editar/', views.store_issue_edit, name='store_issue_edit'),
+    path('verificacao-lojas/pendencia/<int:issue_id>/excluir/', views.store_issue_delete, name='store_issue_delete'),
+    path('verificacao-lojas/loja/excluir-todas/', views.store_bulk_delete, name='store_bulk_delete'),
+    
+    # NRS Suporte - Abas em desenvolvimento
 
+    path('calendario/', views.calendar_view, name='calendario'),
+    path('base-conhecimento/', views.knowledge_base_view, name='base_conhecimento'),
+    path('desempenho/', views.performance_view, name='desempenho'),
+    path('quadro/', views.quadro_view, name='quadro'),
+    
+    # API Quadro
+    path('api/quadro/data/', api_quadro.api_quadro_data, name='api_quadro_data'),
+    path('api/quadro/cartao/create/', api_cartao_create, name='api_cartao_create'),
+    path('api/quadro/cartao/move/', api_cartao_move, name='api_cartao_move'),
+    path('api/quadro/cartao/<int:cartao_id>/update/', api_cartao_update, name='api_cartao_update'),
+    path('api/quadro/cartao/<int:cartao_id>/delete/', api_cartao_delete, name='api_cartao_delete'),
+    path('api/quadro/cartao/<int:cartao_id>/details/', api_quadro.api_cartao_details, name='api_cartao_details'),
+    path('api/quadro/cartao/<int:cartao_id>/comentario/', api_quadro.api_comentario_add, name='api_comentario_add'),
+    path('api/quadro/cartao/<int:cartao_id>/anexo/', api_quadro.api_anexo_add, name='api_anexo_add'),
+    path('api/quadro/anexo/<int:anexo_id>/delete/', api_quadro.api_anexo_delete, name='api_anexo_delete'),
+    path('api/quadro/lista/create/', api_quadro.api_lista_create, name='api_lista_create'),
+    path('api/quadro/lista/move/', api_quadro.api_lista_move, name='api_lista_move'),
+    path('api/quadro/lista/<int:lista_id>/delete/', api_quadro.api_lista_delete, name='api_lista_delete'),
+    path('api/quadro/lista/<int:lista_id>/archive/', api_quadro.api_lista_archive, name='api_lista_archive'),
+    path('api/quadro/cartao/<int:cartao_id>/archive/', api_quadro.api_cartao_archive, name='api_cartao_archive'),
+    
+    # Abas em desenvolvimento - Onboarding
+    path('onboarding/dev1/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 1'}, name='onboarding_dev_1'),
+    path('onboarding/dev2/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 2'}, name='onboarding_dev_2'),
+    path('onboarding/dev3/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 3'}, name='onboarding_dev_3'),
+    
+    # API Escala NRS
+    path('api/escala/turnos/', api_escala.api_turnos_list, name='api_turnos_list'),
+    path('api/escala/turnos/create/', api_escala.api_turno_create, name='api_turno_create'),
+    path('api/escala/turnos/<int:pk>/', api_escala.api_turno_detail, name='api_turno_detail'),
+    path('api/escala/turnos/reorder/', api_escala.api_turnos_reorder, name='api_turnos_reorder'),
+    path('api/escala/analistas/', api_escala.api_analistas_list, name='api_analistas_list'),
+    path('api/escala/analistas/create/', api_escala.api_analista_create, name='api_analista_create'),
+    path('api/escala/analistas/reorder/', api_escala.api_analistas_reorder, name='api_analistas_reorder'),
+    path('api/escala/analistas/<int:pk>/', api_escala.api_analista_detail, name='api_analista_detail'),
+    path('api/escala/folgas/', api_escala.api_folgas_list, name='api_folgas_list'),
+    path('api/escala/folgas/save/', api_escala.api_folga_save, name='api_folga_save'),
+    path('api/escala/folgas/<int:pk>/delete/', api_escala.api_folga_delete, name='api_folga_delete'),
+    
+    # API Calendário
+    path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),
+    path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),
+    path('api/eventos/create/', api_eventos.api_evento_create, name='api_evento_create'),
+    path('api/eventos/<int:pk>/', api_eventos.api_evento_detail, name='api_evento_detail'),
+    
+    # API Base de Conhecimento
+    path('api/kb/articles/', api_kb.api_kb_articles_list, name='api_kb_articles_list'),
+    path('api/kb/articles/create/', api_kb.api_kb_article_create, name='api_kb_article_create'),
+    path('api/kb/articles/<int:pk>/', api_kb.api_kb_article_detail, name='api_kb_article_detail'),
+    path('api/kb/tools/', api_kb.api_kb_tools_list, name='api_kb_tools_list'),
+    
+    # API Desempenho
+    path('api/desempenho/kpis/', api_desempenho.api_kpis_list, name='api_kpis_list'),
+    path('api/desempenho/kpis/save/', api_desempenho.api_kpi_save, name='api_kpi_save'),
+
+    # API Tarefas e Rotinas
+    path('api/tasks/', api_tasks.api_tasks_list, name='api_tasks_list'),
+    path('api/tasks/create/', api_tasks.api_task_create, name='api_task_create'),
+    path('api/tasks/<int:pk>/toggle/', api_tasks.api_task_toggle, name='api_task_toggle'),
+    path('api/tasks/<int:pk>/edit/', api_tasks.api_task_edit, name='api_task_edit'),
+    path('api/notifications/check/', api_tasks.api_notifications_check, name='api_notifications_check'),
+    
+    path('api/routines/daily/', api_tasks.api_routines_daily, name='api_routines_daily'),
+    path('api/routines/create/', api_tasks.api_routine_create, name='api_routine_create'),
+    path('api/routines/check/<int:log_id>/', api_tasks.api_routine_check, name='api_routine_check'),
+    path('api/routines/alerts/', api_tasks.api_manager_alerts, name='api_manager_alerts'),
+    path('api/routines/overview/', api_tasks.api_routines_overview, name='api_routines_overview'),
+    path('api/desempenho/kpis/<int:pk>/delete/', api_desempenho.api_kpi_delete, name='api_kpi_delete'),
+    
+    # Refund Request APIs
+    path('solicitacoes/', views.solicitacoes_view, name='solicitacoes'),
+    path('api/refunds/create/', api_refunds.api_refund_create, name='api_refund_create'),
+    path('api/refunds/list/', api_refunds.api_refund_list, name='api_refund_list'),
+    path('api/refunds/<int:pk>/', api_refunds.api_refund_detail, name='api_refund_detail'),
+    path('api/refunds/<int:pk>/status/', api_refunds.api_refund_update_status, name='api_refund_update_status'),
+    path('api/refunds/<int:pk>/attachment/', api_refunds.api_refund_add_attachment, name='api_refund_add_attachment'),
+    path('api/refunds/<int:pk>/cancel/', api_refunds.api_refund_request_cancellation, name='api_refund_cancel'),
+    path('api/refunds/<int:pk>/delete/', api_refunds.api_refund_delete, name='api_refund_delete'),
+    path('api/refunds/notifications/', api_refunds.api_refund_notifications, name='api_refund_notifications'),
+    path('api/refunds/stats/', api_refunds.api_refund_stats, name='api_refund_stats'),
+    path('api/users/nrs-analysts/', api_refunds.api_nrs_analysts, name='api_nrs_analysts'),
+    
+    # Store Presence and History APIs
+    path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),
+    path('api/stores/<int:store_id>/presence/heartbeat/', api_stores.api_store_presence_heartbeat, name='api_store_presence_heartbeat'),
+    path('api/stores/<int:store_id>/presence/', api_stores.api_store_presence_list, name='api_store_presence_list'),
+    path('api/stores/<int:store_id>/presence/leave/', api_stores.api_store_presence_leave, name='api_store_presence_leave'),
+    path('api/stores/<int:store_id>/history/', api_stores.api_store_audit_history, name='api_store_audit_history'),
+]
 

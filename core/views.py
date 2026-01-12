@@ -14,8 +14,8 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Activity, AuditLog, User
-from .forms import ComplaintForm
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue
+from .forms import ComplaintForm, StoreForm
 
 
 def login_view_custom(request):
@@ -64,50 +64,122 @@ def login_view_custom(request):
 
 
 @login_required
+def change_department(request, dept_id):
+    if not request.user.is_administrador():
+        return redirect('dashboard')
+    
+    # dept_id == 0 (Global) removido conforme solicitação
+    if dept_id == 0:
+        return redirect('dashboard')
+
+    request.session['selected_department_id'] = dept_id
+    from .models import Department
+    dept = get_object_or_404(Department, id=dept_id)
+    messages.success(request, f"Departamento alterado para: {dept.name}")
+    
+    # Redirecionar para a página principal de cada departamento
+    if dept.name == 'NRS Suporte':
+        return redirect('escala')
+    elif dept.name == 'CS Clientes':
+        return redirect('dashboard')
+    elif dept.name == 'Onboarding':
+        return redirect('onboarding_dev_1')
+    
+    return redirect('dashboard')
+
+@login_required
 def dashboard(request):
-    total_complaints = Complaint.objects.count()
-    pending = Complaint.objects.filter(status='pendente').count()
-    em_replica = Complaint.objects.filter(status='em_replica').count()
-    resolved = Complaint.objects.filter(status='resolvido').count()
-    awaiting = Complaint.objects.filter(status='aguardando_avaliacao').count()
-    em_andamento = Complaint.objects.filter(status='em_andamento').count()
+    # Filtro por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if not request.user.is_administrador():
+        # Redirecionar usuários do NRS Suporte para a escala (página operacional principal deles)
+        if request.user.department and request.user.department.name == 'NRS Suporte':
+            return redirect('escala')
+        queryset = Complaint.objects.filter(department=request.user.department)
+    else:
+        # Se houver depto na sessão, verificar se é o NRS Suporte para redirecionar
+        if selected_dept_id:
+            from .models import Department
+            current_dept = Department.objects.filter(id=selected_dept_id).first()
+            if current_dept and current_dept.name == 'NRS Suporte':
+                return redirect('escala')
+            queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            # Se é admin mas não tem depto na sessão (primeiro acesso), 
+            # tenta buscar o NRS Suporte e redirecionar
+            from .models import Department
+            nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+            if nrs_dept:
+                request.session['selected_department_id'] = nrs_dept.id
+                return redirect('escala')
+            queryset = Complaint.objects.all()
+        
+    total_complaints = queryset.count()
+    pending = queryset.filter(status='pendente').count()
+    em_replica = queryset.filter(status='em_replica').count()
+    resolved = queryset.filter(status='resolvido').count()
+    awaiting = queryset.filter(status='aguardando_avaliacao').count()
+    em_andamento = queryset.filter(status='em_andamento').count()
     
     # Ranking de lojas com mais reclamações (top 5)
-    top_stores_ranking = Complaint.objects.values('loja_cod').annotate(
+    top_stores_ranking = queryset.values('loja_cod').annotate(
         count=Count('id')
     ).order_by('-count')[:5]
     
-    # Gráficos - simplificado para compatibilidade
+    # Gráficos
+    # Gráficos - Otimizado
+    days = 30
+    date_threshold = timezone.now().date() - timedelta(days=days)
+    
+    # Query única para agrupar por data
+    daily_counts = queryset.filter(
+        created_at__date__gte=date_threshold
+    ).values('created_at__date').annotate(count=Count('id'))
+    
+    # Transformar em dicionário para lookup rápido
+    counts_map = {item['created_at__date']: item['count'] for item in daily_counts}
+    
     complaints_by_period = []
-    for i in range(30):
-        date = timezone.now().date() - timedelta(days=29-i)
-        count = Complaint.objects.filter(created_at__date=date).count()
+    for i in range(days):
+        date = timezone.now().date() - timedelta(days=days-1-i) # Order from oldest to newest usually? Current code was 29-i (descending?)
+        # Current code: for i in range(30): date = ... - (29-i). This goes from Oldest to Newest.
+        # i=0: -29 days. i=29: -0 days.
+        count = counts_map.get(date, 0)
         complaints_by_period.append({'day': date.isoformat(), 'count': count})
     
-    top_stores = Complaint.objects.values('loja_cod').annotate(
+    top_stores = queryset.values('loja_cod').annotate(
         count=Count('id')
     ).order_by('-count')[:10]
     
-    satisfaction_by_store = Complaint.objects.filter(
+    satisfaction_by_store = queryset.filter(
         nota_satisfacao__isnull=False
     ).values('loja_cod').annotate(
         avg=Avg('nota_satisfacao')
     )
     
-    complaints_by_status = Complaint.objects.values('status').annotate(
+    complaints_by_status = queryset.values('status').annotate(
         count=Count('id')
     )
     
-    recent_complaints = Complaint.objects.select_related('analista').order_by('-created_at')[:10]
+    recent_complaints = queryset.select_related('analista').order_by('-created_at')[:10]
     
     # Estatísticas adicionais
-    avg_satisfaction = Complaint.objects.filter(nota_satisfacao__isnull=False).aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0
-    total_analysts = User.objects.filter(role='analista', ativo=True).count()
-    complaints_without_analyst = Complaint.objects.filter(analista__isnull=True).count()
+    avg_satisfaction = queryset.filter(nota_satisfacao__isnull=False).aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0
+    
+    if not request.user.is_administrador():
+        total_analysts = User.objects.filter(role='analista', ativo=True, department=request.user.department).count()
+    else:
+        if selected_dept_id:
+            total_analysts = User.objects.filter(role='analista', ativo=True, department_id=selected_dept_id).count()
+        else:
+            total_analysts = User.objects.filter(role='analista', ativo=True).count()
+            
+    complaints_without_analyst = queryset.filter(analista__isnull=True).count()
     
     # Reclamações urgentes (pendentes há mais de 3 dias)
     urgent_date = timezone.now().date() - timedelta(days=3)
-    urgent_complaints = Complaint.objects.filter(
+    urgent_complaints = queryset.filter(
         status='pendente',
         data_reclamacao__lte=urgent_date
     ).count()
@@ -138,12 +210,18 @@ def reports_view(request):
     from datetime import datetime, timedelta
     from django.db.models import Count, Avg, Q
     
+    # Filtro base por departamento
+    if request.user.is_administrador():
+        base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
     # Filtros de data
     date_from = request.GET.get('date_from', '')
     date_to = request.GET.get('date_to', '')
     
     # Base queryset
-    complaints = Complaint.objects.all()
+    complaints = base_queryset
     
     if date_from:
         try:
@@ -191,10 +269,20 @@ def reports_view(request):
     }
     
     # Reclamações por período (últimos 30 dias)
+    # Reclamações por período (últimos 30 dias) - Otimizado
     complaints_by_day = []
-    for i in range(30):
-        date = timezone.now().date() - timedelta(days=29-i)
-        count = complaints.filter(data_reclamacao=date).count()
+    days = 30
+    date_threshold = timezone.now().date() - timedelta(days=days)
+    
+    daily_counts = complaints.filter(
+        data_reclamacao__gte=date_threshold
+    ).values('data_reclamacao').annotate(count=Count('id'))
+    
+    counts_map = {item['data_reclamacao']: item['count'] for item in daily_counts if item['data_reclamacao']}
+    
+    for i in range(days):
+        date = timezone.now().date() - timedelta(days=days-1-i)
+        count = counts_map.get(date, 0)
         complaints_by_day.append({'date': date.isoformat(), 'count': count})
     
     # Top problemas
@@ -220,7 +308,16 @@ def reports_view(request):
 
 @login_required
 def complaint_list(request):
-    complaints = Complaint.objects.select_related('analista').all()
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            complaints = Complaint.objects.filter(department_id=selected_dept_id).select_related('analista', 'department')
+        else:
+            complaints = Complaint.objects.all().select_related('analista', 'department')
+    else:
+        complaints = Complaint.objects.filter(department=request.user.department).select_related('analista')
     
     # Filtros
     search = request.GET.get('search', '')
@@ -302,15 +399,23 @@ def complaint_list(request):
     
     complaints = complaints.order_by('-created_at')
     
-    # Contador de reclamações por analista - apenas analistas reais
-    complaints_by_analyst = Complaint.objects.filter(
+    # Contador de reclamações por responsável - analistas e gestores do depto
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_analysts_stats = Complaint.objects.filter(department_id=selected_dept_id)
+            analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department_id=selected_dept_id).order_by('first_name')
+        else:
+            base_analysts_stats = Complaint.objects.all()
+            analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True).order_by('first_name')
+    else:
+        base_analysts_stats = Complaint.objects.filter(department=request.user.department)
+        analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=request.user.department).order_by('first_name')
+
+    complaints_by_analyst = base_analysts_stats.filter(
         analista__isnull=False
     ).values('analista__username', 'analista__first_name', 'analista__last_name').annotate(
         count=Count('id')
     ).order_by('-count')
-    
-    # Lista de analistas para filtro
-    analistas_list = User.objects.filter(role='analista', ativo=True).order_by('first_name', 'last_name')
     
     paginator = Paginator(complaints, 25)
     page = request.GET.get('page')
@@ -327,9 +432,20 @@ def complaint_list(request):
 
 @login_required
 def store_list(request):
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            queryset = Complaint.objects.all()
+    else:
+        queryset = Complaint.objects.filter(department=request.user.department)
+
     """Lista todas as lojas com reclamações, com filtros e ordenação"""
     # Obter todas as lojas com contagem de reclamações
-    stores = Complaint.objects.values('loja_cod').annotate(
+    stores = queryset.values('loja_cod').annotate(
         count=Count('id'),
         pendentes=Count('id', filter=Q(status='pendente')),
         em_andamento=Count('id', filter=Q(status='em_andamento')),
@@ -408,10 +524,21 @@ def store_list(request):
 @login_required
 def store_complaints(request, loja_cod):
     """Lista todas as reclamações de uma loja específica"""
-    complaints = Complaint.objects.filter(loja_cod=loja_cod).select_related('analista').order_by('-created_at')
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
+    complaints = base_queryset.filter(loja_cod=loja_cod).select_related('analista').order_by('-created_at')
     
     # Estatísticas da loja
-    store_stats = Complaint.objects.filter(loja_cod=loja_cod).aggregate(
+    store_stats = base_queryset.filter(loja_cod=loja_cod).aggregate(
         total=Count('id'),
         pendentes=Count('id', filter=Q(status='pendente')),
         em_andamento=Count('id', filter=Q(status='em_andamento')),
@@ -453,10 +580,18 @@ def store_complaints(request, loja_cod):
 @login_required
 def complaint_detail(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
+    
+    # Trava de segurança por departamento
+    if not request.user.is_administrador():
+        if complaint.department != request.user.department:
+            messages.error(request, 'Você não tem permissão para acessar esta reclamação.')
+            return redirect('dashboard')
+            
     activities = complaint.activities.select_related('usuario').order_by('-created_at')
     
     # Adicionar comentário interno rápido
     if request.method == 'POST' and 'comentario_interno' in request.POST:
+        # ... logic remains same ...
         comentario = request.POST.get('comentario_interno', '').strip()
         if comentario:
             Activity.objects.create(
@@ -486,26 +621,34 @@ def complaint_detail(request, pk):
     
     # Atribuição rápida de analista
     if request.method == 'POST' and 'novo_analista' in request.POST:
+        # Atribuição deve respeitar o departamento
         novo_analista_id = request.POST.get('novo_analista', '').strip()
         if novo_analista_id:
             try:
-                novo_analista = User.objects.get(id=novo_analista_id, role='analista', ativo=True)
+                if request.user.is_administrador():
+                    novo_analista = User.objects.get(id=novo_analista_id, role__in=['analista', 'gestor'], ativo=True, department=complaint.department)
+                else:
+                    novo_analista = User.objects.get(id=novo_analista_id, role__in=['analista', 'gestor'], ativo=True, department=request.user.department)
+                    
                 analista_antigo = complaint.analista.username if complaint.analista else "Não atribuído"
                 complaint.analista = novo_analista
                 complaint.save()
                 Activity.objects.create(
                     complaint=complaint,
                     usuario=request.user,
-                    comentario=f'Analista alterado de "{analista_antigo}" para "{novo_analista.username}"',
+                    comentario=f'Responsável alterado de "{analista_antigo}" para "{novo_analista.username}"',
                     tipo_interacao='atualizacao'
                 )
-                messages.success(request, f'Analista atribuído: {novo_analista.username}!')
+                messages.success(request, f'Responsável atribuído: {novo_analista.username}!')
                 return redirect('complaint_detail', pk=pk)
             except User.DoesNotExist:
-                messages.error(request, 'Analista não encontrado!')
+                messages.error(request, 'Responsável não encontrado ou pertence a outro departamento!')
     
-    # Lista de analistas para atribuição rápida
-    analistas_list = User.objects.filter(role='analista', ativo=True).order_by('first_name', 'last_name')
+    # Lista de responsáveis para atribuição rápida (analistas e gestores do depto)
+    if request.user.is_administrador():
+        analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=complaint.department).order_by('first_name')
+    else:
+        analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=request.user.department).order_by('first_name')
     
     return render(request, 'core/complaint_detail.html', {
         'complaint': complaint,
@@ -545,6 +688,12 @@ def complaint_create(request):
 @login_required
 def complaint_edit(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
+    
+    # Trava de segurança por departamento
+    if not request.user.is_administrador():
+        if complaint.department != request.user.department:
+            messages.error(request, 'Você não tem permissão para editar esta reclamação.')
+            return redirect('dashboard')
     if request.method == 'POST':
         form = ComplaintForm(request.POST, instance=complaint, user=request.user)
         if form.is_valid():
@@ -585,7 +734,7 @@ def complaint_edit(request, pk):
                 'origem_contato': 'Origem do Contato',
                 'descricao': 'Descrição',
                 'status': 'Status',
-                'analista': 'Analista Responsável',
+                'analista': 'Responsável',
                 'data_reclamacao': 'Data da Reclamação',
                 'data_resposta': 'Data de Resposta',
                 'nota_satisfacao': 'Nota de Satisfação',
@@ -681,11 +830,17 @@ def complaint_edit(request, pk):
 
 @login_required
 def complaint_delete(request, pk):
-    if not request.user.is_gestor():
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para excluir reclamações.')
         return redirect('complaint_list')
     
     complaint = get_object_or_404(Complaint, pk=pk)
+    
+    # Trava de segurança por departamento
+    if not request.user.is_administrador():
+        if complaint.department != request.user.department:
+            messages.error(request, 'Você não tem permissão para excluir esta reclamação.')
+            return redirect('dashboard')
     
     if request.method == 'POST':
         password = request.POST.get('password')
@@ -725,7 +880,7 @@ def complaint_delete(request, pk):
 @login_required
 def complaint_bulk_delete(request):
     """Exclusão em massa de reclamações - apenas para gestores"""
-    if not request.user.is_gestor():
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para excluir reclamações.')
         return redirect('complaint_list')
     
@@ -798,16 +953,25 @@ def logout_view(request):
 
 @login_required
 def user_list(request):
-    """Lista de usuários - apenas para gestores"""
-    if not request.user.is_gestor():
-        messages.error(request, 'Você não tem permissão para acessar esta página.')
+    """Lista de usuários - apenas para gestores e administradores"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        messages.error(request, 'Você não tem permissão para ver a lista de usuários.')
         return redirect('dashboard')
     
-    users = User.objects.all().order_by('-date_joined')
+    from .models import Department
+    departments = Department.objects.all().order_by('name')
+    
+    # Filtro base por departamento
+    if request.user.is_administrador():
+        users = User.objects.all().order_by('first_name', 'username')
+    else:
+        # Gestor só vê usuários do seu departamento
+        users = User.objects.filter(department=request.user.department).order_by('first_name', 'username')
     
     search = request.GET.get('search', '')
     role_filter = request.GET.get('role', '')
     status_filter = request.GET.get('status', '')
+    dept_filter = request.GET.get('department', '')
     
     if search:
         users = users.filter(
@@ -820,44 +984,71 @@ def user_list(request):
     if role_filter:
         users = users.filter(role=role_filter)
     
+    if dept_filter:
+        users = users.filter(department_id=dept_filter)
+    
     if status_filter == 'ativo':
         users = users.filter(ativo=True)
     elif status_filter == 'inativo':
         users = users.filter(ativo=False)
     
-    paginator = Paginator(users, 25)
+    paginator = Paginator(users, 10)
     page = request.GET.get('page')
     users = paginator.get_page(page)
     
-    return render(request, 'core/user_list.html', {'users': users})
+    context = {
+        'users': users,
+        'departments': departments
+    }
+    
+    return render(request, 'core/user_list.html', context)
 
 
 @login_required
+@login_required
 def user_create(request):
-    """Criar novo usuário - apenas para gestores"""
-    if not request.user.is_gestor():
+    """Criar novo usuário - apenas para gestores e administradores"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para criar usuários.')
         return redirect('dashboard')
+    
+    from .models import Department
+    departments = Department.objects.all()
     
     if request.method == 'POST':
         username = request.POST.get('username')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        role = request.POST.get('role', '')
+        role = request.POST.get('role', 'analista')
+        department_id = request.POST.get('department')
         ativo = request.POST.get('ativo') == 'on'
         first_name = request.POST.get('first_name', '')
         last_name = request.POST.get('last_name', '')
         
+        # Restrições de Gestor
+        if (request.user.is_gestor() or request.user.is_administrador()):
+            role = 'analista' # Gestor só cria analista
+            department_id = str(request.user.department_id) if request.user.department_id else None
+            
+        department = None
+        if department_id:
+            try:
+                department = Department.objects.get(id=department_id)
+            except (Department.DoesNotExist, ValueError):
+                department = None
+            
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Este nome de usuário já existe.')
             return render(request, 'core/user_form.html', {
                 'form_type': 'create',
+                'departments': departments,
                 'form_data': {
                     'email': email,
                     'first_name': first_name,
                     'last_name': last_name,
                     'role': role,
-                    'ativo': ativo
+                    'ativo': ativo,
+                    'department_id': department_id
                 }
             })
         
@@ -865,25 +1056,14 @@ def user_create(request):
             messages.error(request, 'Este e-mail já está cadastrado.')
             return render(request, 'core/user_form.html', {
                 'form_type': 'create',
+                'departments': departments,
                 'form_data': {
                     'username': username,
                     'first_name': first_name,
                     'last_name': last_name,
                     'role': role,
-                    'ativo': ativo
-                }
-            })
-        
-        if not role:
-            messages.error(request, 'Por favor, selecione um perfil.')
-            return render(request, 'core/user_form.html', {
-                'form_type': 'create',
-                'form_data': {
-                    'username': username,
-                    'email': email,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'ativo': ativo
+                    'ativo': ativo,
+                    'department_id': department_id
                 }
             })
         
@@ -892,10 +1072,25 @@ def user_create(request):
             email=email,
             password=password,
             role=role,
+            department=department,
             ativo=ativo,
             first_name=first_name,
             last_name=last_name
         )
+
+        # Integração Escala NRS Suporte
+        if role == 'analista' and department and department.name == 'NRS Suporte':
+            try:
+                from .models import AnalistaEscala
+                formatted_name = AnalistaEscala.format_schedule_name(first_name, last_name)
+                AnalistaEscala.objects.create(
+                    user=user,
+                    nome=formatted_name,
+                    ativo=ativo
+                )
+            except Exception as e:
+                # Não impedir a criação do usuário se falhar a escala, mas logar
+                print(f"Erro ao criar AnalistaEscala para {username}: {e}")
         
         AuditLog.objects.create(
             usuario=request.user,
@@ -908,72 +1103,130 @@ def user_create(request):
         messages.success(request, f'Usuário {username} criado com sucesso!')
         return redirect('user_list')
     
-    return render(request, 'core/user_form.html', {'form_type': 'create'})
+    return render(request, 'core/user_form.html', {
+        'form_type': 'create',
+        'departments': departments
+    })
 
 
 @login_required
 def user_edit(request, pk):
-    """Editar usuário - apenas para gestores"""
-    if not request.user.is_gestor():
+    """Editar usuário - apenas para gestores e administradores"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para editar usuários.')
         return redirect('dashboard')
     
-    user = get_object_or_404(User, pk=pk)
+    from .models import Department
+    departments = Department.objects.all()
+    user_to_edit = get_object_or_404(User, pk=pk)
+    
+    # Gestor só edita usuários do seu depto e apenas analistas (ou a si mesmo)
+    if request.user.is_gestor():
+        if user_to_edit != request.user:
+            if user_to_edit.department != request.user.department or user_to_edit.role != 'analista':
+                messages.error(request, 'Você não tem permissão para editar este usuário.')
+                return redirect('user_list')
     
     if request.method == 'POST':
-        user.email = request.POST.get('email')
-        user.role = request.POST.get('role')
-        user.ativo = request.POST.get('ativo') == 'on'
-        user.first_name = request.POST.get('first_name', '')
-        user.last_name = request.POST.get('last_name', '')
+        user_to_edit.email = request.POST.get('email')
+        role = request.POST.get('role')
+        department_id = request.POST.get('department')
+        
+        # Administrador pode mudar tudo, Gestor não muda role nem depto
+        if request.user.is_administrador():
+            user_to_edit.role = role
+            if department_id:
+                try:
+                    user_to_edit.department = Department.objects.get(id=department_id)
+                except (Department.DoesNotExist, ValueError):
+                    user_to_edit.department = None
+            else:
+                user_to_edit.department = None
+        
+        user_to_edit.ativo = request.POST.get('ativo') == 'on'
+        user_to_edit.first_name = request.POST.get('first_name', '')
+        user_to_edit.last_name = request.POST.get('last_name', '')
         
         password = request.POST.get('password')
         if password:
-            user.set_password(password)
+            user_to_edit.set_password(password)
+            
+        user_to_edit.save()
         
-        user.save()
+        # Sincronização Escala NRS Suporte
+        try:
+            if hasattr(user_to_edit, 'escala_perfil'):
+                analista_escala = user_to_edit.escala_perfil
+                
+                # Se saiu do NRS Suporte, desativa na escala
+                if not user_to_edit.department or user_to_edit.department.name != 'NRS Suporte':
+                    analista_escala.ativo = False
+                else:
+                    # Sincroniza dados
+                    from .models import AnalistaEscala
+                    analista_escala.nome = AnalistaEscala.format_schedule_name(user_to_edit.first_name, user_to_edit.last_name)
+                    analista_escala.ativo = user_to_edit.ativo
+                
+                analista_escala.save()
+        except Exception as e:
+            print(f"Erro ao sincronizar AnalistaEscala para {user_to_edit.username}: {e}")
         
         AuditLog.objects.create(
             usuario=request.user,
             action='update',
             target_type='User',
-            target_id=user.id,
-            detalhes_json={'username': user.username, 'role': user.role}
+            target_id=user_to_edit.id,
+            detalhes_json={'username': user_to_edit.username, 'role': user_to_edit.role}
         )
         
-        messages.success(request, f'Usuário {user.username} atualizado com sucesso!')
+        messages.success(request, f'Usuário {user_to_edit.username} atualizado!')
         return redirect('user_list')
     
-    return render(request, 'core/user_form.html', {'user': user, 'form_type': 'edit'})
+    return render(request, 'core/user_form.html', {
+        'form_type': 'edit',
+        'target_user': user_to_edit,
+        'departments': departments
+    })
 
 
 @login_required
 def user_delete(request, pk):
-    """Excluir usuário - apenas para gestores"""
-    if not request.user.is_gestor():
+    """Excluir usuário - apenas para gestores e administradores"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para excluir usuários.')
         return redirect('dashboard')
     
-    user = get_object_or_404(User, pk=pk)
-    
-    if user == request.user:
-        messages.error(request, 'Você não pode excluir seu próprio usuário.')
+    try:
+        user_to_delete = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        messages.error(request, 'Usuário não encontrado.')
         return redirect('user_list')
     
-    if request.method == 'POST':
-        username = user.username
-        AuditLog.objects.create(
-            usuario=request.user,
-            action='delete',
-            target_type='User',
-            target_id=user.id,
-            detalhes_json={'username': username}
-        )
-        user.delete()
-        messages.success(request, f'Usuário {username} excluído com sucesso!')
-        return redirect('user_list')
+    # Restrições de Gestor
+    if request.user.is_gestor():
+        if user_to_delete.department != request.user.department or user_to_delete.role != 'analista':
+            messages.error(request, 'Você não tem permissão para excluir este usuário.')
+            return redirect('user_list')
+            
+    username = user_to_delete.username
     
-    return render(request, 'core/user_confirm_delete.html', {'user': user})
+    # Prevenir exclusão do próprio usuário logado
+    if user_to_delete.id == request.user.id:
+        messages.error(request, 'Você não pode excluir sua própria conta.')
+        return redirect('user_list')
+        
+    user_to_delete.delete()
+    
+    AuditLog.objects.create(
+        usuario=request.user,
+        action='delete',
+        target_type='User',
+        target_id=pk,
+        detalhes_json={'username': username}
+    )
+    
+    messages.success(request, f'Usuário {username} excluído!')
+    return redirect('user_list')
 
 
 @login_required
@@ -985,7 +1238,18 @@ def settings_view(request):
 @login_required
 def export_complaints_csv(request):
     """Exportar reclamações para CSV"""
-    complaints = Complaint.objects.select_related('analista').all()
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
+    complaints = base_queryset.select_related('analista').all()
     
     # Aplicar filtros se existirem
     search = request.GET.get('search', '')
@@ -1052,7 +1316,18 @@ def export_complaints_csv(request):
 @login_required
 def export_complaints_xlsx(request):
     """Exportar reclamações para XLSX"""
-    complaints = Complaint.objects.select_related('analista').all()
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
+    complaints = base_queryset.select_related('analista').all()
     
     # Aplicar filtros se existirem
     search = request.GET.get('search', '')
@@ -1140,7 +1415,18 @@ def export_complaints_xlsx(request):
 @login_required
 def export_stores_csv(request):
     """Exportar lojas para CSV"""
-    stores = Complaint.objects.values('loja_cod').annotate(
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
+    stores = base_queryset.values('loja_cod').annotate(
         count=Count('id'),
         pendentes=Count('id', filter=Q(status='pendente')),
         em_andamento=Count('id', filter=Q(status='em_andamento')),
@@ -1170,7 +1456,18 @@ def export_stores_csv(request):
 @login_required
 def export_stores_xlsx(request):
     """Exportar lojas para XLSX"""
-    stores = Complaint.objects.values('loja_cod').annotate(
+    # Filtro base por departamento
+    selected_dept_id = request.session.get('selected_department_id')
+    
+    if request.user.is_administrador():
+        if selected_dept_id:
+            base_queryset = Complaint.objects.filter(department_id=selected_dept_id)
+        else:
+            base_queryset = Complaint.objects.all()
+    else:
+        base_queryset = Complaint.objects.filter(department=request.user.department)
+
+    stores = base_queryset.values('loja_cod').annotate(
         count=Count('id'),
         pendentes=Count('id', filter=Q(status='pendente')),
         em_andamento=Count('id', filter=Q(status='em_andamento')),
@@ -1218,11 +1515,15 @@ def export_stores_xlsx(request):
 @login_required
 def export_users_csv(request):
     """Exportar usuários para CSV - apenas gestores"""
-    if not request.user.is_gestor():
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para exportar usuários.')
         return redirect('dashboard')
     
-    users = User.objects.all().order_by('username')
+    # Filtro por departamento
+    if request.user.is_administrador():
+        users = User.objects.all().order_by('username')
+    else:
+        users = User.objects.filter(department=request.user.department).order_by('username')
     
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="usuarios_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
@@ -1247,12 +1548,16 @@ def export_users_csv(request):
 
 @login_required
 def export_users_xlsx(request):
-    """Exportar usuários para XLSX - apenas gestores"""
-    if not request.user.is_gestor():
+    """Exportar usuários para XLSX - apenas gestores e administradores"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para exportar usuários.')
         return redirect('dashboard')
     
-    users = User.objects.all().order_by('username')
+    # Filtro por departamento
+    if request.user.is_administrador():
+        users = User.objects.all().order_by('username')
+    else:
+        users = User.objects.filter(department=request.user.department).order_by('username')
     
     wb = Workbook()
     ws = wb.active
@@ -1295,10 +1600,20 @@ def export_users_xlsx(request):
 @login_required
 def import_complaints_xlsx(request):
     """Importar reclamações de arquivo XLSX"""
-    if not request.user.is_gestor():
+    if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para importar dados.')
         return redirect('dashboard')
     
+    from .models import Department
+    # Se for gestor, usa o depto dele. Se for admin, tenta pegar do POST ou padrão CS Clientes
+    target_dept = request.user.department
+    if request.user.is_administrador():
+        dept_id = request.POST.get('department')
+        if dept_id:
+            target_dept = Department.objects.filter(id=dept_id).first()
+        if not target_dept:
+            target_dept = Department.objects.filter(slug='cs-clientes').first()
+
     if request.method == 'POST':
         if 'xlsx_file' not in request.FILES:
             messages.error(request, 'Por favor, selecione um arquivo XLSX.')
@@ -1314,41 +1629,6 @@ def import_complaints_xlsx(request):
             wb = load_workbook(file, data_only=True)
             ws = wb.active
             
-            # Mapeamento de status
-            status_map = {
-                'pendente': 'pendente',
-                'em andamento': 'em_andamento',
-                'em réplica': 'em_replica',
-                'aguardando avaliação': 'aguardando_avaliacao',
-                'resolvido': 'resolvido',
-                'resolvida': 'resolvido',
-            }
-            
-            # Mapeamento de tipo de reclamação
-            tipo_map = {
-                'nota fiscal': 'nota_fiscal',
-                'pagamento não processado - cartão': 'pagamento_cartao',
-                'pagamento não processado - pix': 'pagamento_pix',
-                'pagamento não processado - checkout web': 'pagamento_checkout',
-                'assinatura mensal': 'assinatura_mensal',
-                'lavagem': 'lavagem',
-                'secagem': 'secagem',
-                'atendimento': 'atendimento',
-                'sistema/totem': 'sistema_totem',
-                'totem': 'sistema_totem',
-                'cupons': 'cupons',
-                'outros': 'outros',
-            }
-            
-            # Mapeamento de volta fazer negócio
-            volta_negocio_map = {
-                'sim': 'sim',
-                's': 'sim',
-                'não': 'nao',
-                'nao': 'nao',
-                'n': 'nao',
-            }
-            
             imported = 0
             updated = 0
             skipped = 0
@@ -1361,196 +1641,17 @@ def import_complaints_xlsx(request):
             
             # Começar da linha 2 (linha 1 é cabeçalho)
             for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
-                try:
-                    # Mapear colunas (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11)
-                    loja_cod = str(row[0]).strip() if len(row) > 0 and row[0] else None
-                    nome_completo = str(row[1]).strip() if len(row) > 1 and row[1] else None
-                    id_ra = str(row[2]).strip() if len(row) > 2 and row[2] else None
-                    cpf = None
-                    if len(row) > 3 and row[3]:
-                        cpf = str(row[3]).strip()
-                    email_cliente = str(row[4]).strip() if len(row) > 4 and row[4] else None
-                    telefone = str(row[5]).strip() if len(row) > 5 and row[5] else ''
-                    data_reclamacao = row[6] if len(row) > 6 and row[6] else None
-                    problema = str(row[7]).strip().lower() if len(row) > 7 and row[7] else None
-                    status = str(row[8]).strip().lower() if len(row) > 8 and row[8] else 'pendente'
-                    analista_nome = str(row[9]).strip() if len(row) > 9 and row[9] else None
-                    nota = row[10] if len(row) > 10 and row[10] else None
-                    volta_negocio = str(row[11]).strip().lower() if len(row) > 11 and row[11] else None
-                    
-                    # Validações básicas
-                    if not id_ra or str(id_ra).strip() == '':
-                        skipped += 1
-                        errors.append(f"Linha {row_num}: ID RA está vazio - linha ignorada")
-                        continue
-                    
-                    # Preencher campos vazios
-                    if not nome_completo or str(nome_completo).strip() == '':
-                        nome_completo = 'Nome não informado'
-                    if not loja_cod or str(loja_cod).strip() == '':
-                        loja_cod = 'Não informado'
-                    
-                    # Limpar CPF
-                    cpf_clean = None
-                    if cpf and str(cpf).strip() != '':
-                        cpf_clean = re.sub(r'\D', '', str(cpf))
-                        if len(cpf_clean) == 11:
-                            pass
-                        elif len(cpf_clean) == 0:
-                            cpf_clean = '00000000000'
-                            errors.append(f"Linha {row_num}: CPF vazio - usando placeholder")
-                        else:
-                            cpf_clean = '00000000000'
-                            errors.append(f"Linha {row_num}: CPF inválido - usando placeholder")
-                    else:
-                        cpf_clean = '00000000000'
-                        errors.append(f"Linha {row_num}: CPF vazio - usando placeholder")
-                    
-                    # Dividir nome
-                    nome_parts = str(nome_completo).split(maxsplit=1)
-                    nome_cliente = nome_parts[0] if nome_parts else 'Nome não informado'
-                    sobrenome = nome_parts[1] if len(nome_parts) > 1 else ''
-                    
-                    # Processar data
-                    data_reclamacao_value = None
-                    if data_reclamacao:
-                        if isinstance(data_reclamacao, datetime):
-                            data_reclamacao_value = data_reclamacao.date()
-                        elif isinstance(data_reclamacao, str) and str(data_reclamacao).strip() != '':
-                            try:
-                                data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%d/%m/%Y').date()
-                            except:
-                                try:
-                                    data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%Y-%m-%d').date()
-                                except:
-                                    try:
-                                        data_reclamacao_value = datetime.strptime(str(data_reclamacao).strip(), '%d-%m-%Y').date()
-                                    except:
-                                        data_reclamacao_value = timezone.now().date()
-                                        errors.append(f"Linha {row_num}: Data inválida - usando data atual")
-                        else:
-                            data_reclamacao_value = timezone.now().date()
-                    else:
-                        data_reclamacao_value = timezone.now().date()
-                    
-                    data_reclamacao = data_reclamacao_value
-                    
-                    # Mapear status e tipo
-                    status_value = status_map.get(status, 'pendente')
-                    tipo_reclamacao_value = None
-                    if problema:
-                        tipo_reclamacao_value = tipo_map.get(problema, 'outros')
-                    
-                    # Buscar analista
-                    analista_obj = None
-                    if analista_nome and analista_nome.lower().strip() not in ['selecione um analista (opcional)', 'não atribuido', 'não atribuído', 'nao atribuido', '']:
-                        try:
-                            analista_nome_clean = str(analista_nome).strip()
-                            nome_parts = analista_nome_clean.split()
-                            analistas = User.objects.filter(role='analista', ativo=True)
-                            
-                            if len(nome_parts) >= 2:
-                                primeiro_nome = nome_parts[0]
-                                ultimo_nome = nome_parts[-1]
-                                analista_obj = analistas.filter(
-                                    Q(first_name__icontains=primeiro_nome) & Q(last_name__icontains=ultimo_nome)
-                                ).first()
-                                if not analista_obj:
-                                    analista_obj = analistas.filter(
-                                        Q(first_name__icontains=primeiro_nome) |
-                                        Q(last_name__icontains=ultimo_nome) |
-                                        Q(first_name__icontains=ultimo_nome) |
-                                        Q(last_name__icontains=primeiro_nome)
-                                    ).first()
-                            else:
-                                analista_obj = analistas.filter(
-                                    Q(first_name__icontains=analista_nome_clean) |
-                                    Q(last_name__icontains=analista_nome_clean) |
-                                    Q(username__icontains=analista_nome_clean) |
-                                    Q(email__icontains=analista_nome_clean)
-                                ).first()
-                            
-                            if not analista_obj:
-                                for parte in nome_parts:
-                                    analista_obj = analistas.filter(
-                                        Q(first_name__icontains=parte) |
-                                        Q(last_name__icontains=parte) |
-                                        Q(username__icontains=parte)
-                                    ).first()
-                                    if analista_obj:
-                                        break
-                            
-                            if not analista_obj:
-                                errors.append(f"Linha {row_num}: Analista '{analista_nome_clean}' não encontrado")
-                        except Exception as e:
-                            errors.append(f"Linha {row_num}: Erro ao buscar analista '{analista_nome}': {str(e)}")
-                    
-                    # Processar nota
-                    nota_value = None
-                    if nota is not None:
-                        try:
-                            nota_value = int(float(nota))
-                            if nota_value < 0:
-                                nota_value = 0
-                            elif nota_value > 10:
-                                nota_value = 10
-                        except:
-                            pass
-                    
-                    # Mapear volta fazer negócio
-                    volta_negocio_value = None
-                    if volta_negocio:
-                        volta_negocio_value = volta_negocio_map.get(volta_negocio, 'nao_informado')
-                    
-                    # Validar email
-                    if not email_cliente or str(email_cliente).strip() == '':
-                        email_cliente = f'{cpf_clean}@importado.com'
-                    else:
-                        email_cliente = str(email_cliente).strip()
-                        if '@' not in email_cliente:
-                            email_cliente = f'{cpf_clean}@importado.com'
-                            errors.append(f"Linha {row_num}: Email inválido - usando email temporário")
-                    
-                    # Descrição
-                    descricao = f'Importado da planilha'
-                    if problema:
-                        descricao += f' - Tipo: {problema}'
-                    else:
-                        descricao += ' - Tipo: Não informado'
-                    
-                    # Criar ou atualizar
-                    try:
-                        complaint, created = Complaint.objects.update_or_create(
-                            id_ra=str(id_ra).strip(),
-                            defaults={
-                                'cpf_cliente': cpf_clean,
-                                'nome_cliente': str(nome_cliente).strip(),
-                                'sobrenome': str(sobrenome).strip(),
-                                'email_cliente': email_cliente,
-                                'telefone': str(telefone).strip() if telefone else '',
-                                'loja_cod': str(loja_cod).strip(),
-                                'origem_contato': 'RA',
-                                'descricao': descricao,
-                                'status': status_value,
-                                'analista': analista_obj,
-                                'data_reclamacao': data_reclamacao,
-                                'tipo_reclamacao': tipo_reclamacao_value,
-                                'nota_satisfacao': nota_value,
-                                'volta_fazer_negocio': volta_negocio_value,
-                            }
-                        )
-                    except Exception as e:
-                        errors.append(f"Linha {row_num}: Erro ao salvar - {str(e)}")
-                        continue
-                    
-                    if created:
-                        imported += 1
-                    else:
-                        updated += 1
-                        
-                except Exception as e:
-                    errors.append(f"Linha {row_num}: Erro ao processar - {str(e)}")
-                    continue
+                status, msg = _process_complaint_row(row, row_num, target_dept)
+                
+                if status == 'created':
+                    imported += 1
+                elif status == 'updated':
+                    updated += 1
+                elif status == 'skipped':
+                    skipped += 1
+                    errors.append(msg)
+                elif status == 'error':
+                    errors.append(msg)
             
             # Mensagens
             total_processed = imported + updated
@@ -1578,4 +1679,901 @@ def import_complaints_xlsx(request):
             return render(request, 'core/import_complaints.html')
     
     return render(request, 'core/import_complaints.html')
+
+
+def _process_complaint_row(row, row_num, target_dept):
+    """
+    Processa uma linha da planilha de importação.
+    Retorna (status, mensagem)
+    status: 'created', 'updated', 'skipped', 'error'
+    """
+    try:
+        # Mapeamento de status e tipos
+        status_map = {
+            'pendente': 'pendente', 'em andamento': 'em_andamento', 'em réplica': 'em_replica',
+            'aguardando avaliação': 'aguardando_avaliacao', 'resolvido': 'resolvido', 'resolvida': 'resolvido',
+        }
+        tipo_map = {
+            'nota fiscal': 'nota_fiscal', 'pagamento não processado - cartão': 'pagamento_cartao',
+            'pagamento não processado - pix': 'pagamento_pix', 'pagamento não processado - checkout web': 'pagamento_checkout',
+            'assinatura mensal': 'assinatura_mensal', 'lavagem': 'lavagem', 'secagem': 'secagem',
+            'atendimento': 'atendimento', 'sistema/totem': 'sistema_totem', 'totem': 'sistema_totem',
+            'cupons': 'cupons', 'outros': 'outros',
+        }
+        volta_negocio_map = {'sim': 'sim', 's': 'sim', 'não': 'nao', 'nao': 'nao', 'n': 'nao'}
+
+        # Mapear colunas
+        loja_cod = str(row[0]).strip() if len(row) > 0 and row[0] else 'Não informado'
+        nome_completo = str(row[1]).strip() if len(row) > 1 and row[1] else 'Nome não informado'
+        id_ra = str(row[2]).strip() if len(row) > 2 and row[2] else None
+        
+        # Validação ID RA
+        if not id_ra or id_ra == '':
+            return 'skipped', f"Linha {row_num}: ID RA está vazio - linha ignorada"
+
+        cpf = str(row[3]).strip() if len(row) > 3 and row[3] else None
+        email_cliente = str(row[4]).strip() if len(row) > 4 and row[4] else None
+        telefone = str(row[5]).strip() if len(row) > 5 and row[5] else ''
+        data_reclamacao = row[6] if len(row) > 6 and row[6] else None
+        problema = str(row[7]).strip().lower() if len(row) > 7 and row[7] else None
+        status = str(row[8]).strip().lower() if len(row) > 8 and row[8] else 'pendente'
+        analista_nome = str(row[9]).strip() if len(row) > 9 and row[9] else None
+        nota = row[10] if len(row) > 10 and row[10] else None
+        volta_negocio = str(row[11]).strip().lower() if len(row) > 11 and row[11] else None
+
+        # Processar CPF
+        cpf_clean = re.sub(r'\D', '', str(cpf)) if cpf else '00000000000'
+        if len(cpf_clean) != 11: cpf_clean = '00000000000'
+
+        # Dividir nome
+        nome_parts = str(nome_completo).split(maxsplit=1)
+        nome_cliente = nome_parts[0] if nome_parts else 'Nome não informado'
+        sobrenome = nome_parts[1] if len(nome_parts) > 1 else ''
+
+        # Processar Data
+        data_reclamacao_value = timezone.now().date()
+        if data_reclamacao:
+            if isinstance(data_reclamacao, datetime):
+                data_reclamacao_value = data_reclamacao.date()
+            elif isinstance(data_reclamacao, str) and data_reclamacao.strip():
+                for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y'):
+                    try:
+                        data_reclamacao_value = datetime.strptime(data_reclamacao.strip(), fmt).date()
+                        break
+                    except ValueError: pass
+
+        # Mapear Status e Tipo
+        status_value = status_map.get(status, 'pendente')
+        tipo_reclamacao_value = tipo_map.get(problema, 'outros') if problema else None
+        volta_negocio_value = volta_negocio_map.get(volta_negocio, 'nao_informado') if volta_negocio else None
+
+        # Buscar Analista
+        analista_obj = None
+        if analista_nome and analista_nome.lower().strip() not in ['selecione um analista (opcional)', 'não atribuido', '', 'nao atribuido']:
+            try:
+                parts = str(analista_nome).strip().split()
+                q = Q()
+                for p in parts:
+                    q |= Q(first_name__icontains=p) | Q(last_name__icontains=p)
+                analista_obj = User.objects.filter(role='analista', ativo=True).filter(q).first()
+            except: pass
+
+        # Nota
+        nota_value = None
+        if nota is not None:
+            try:
+                nota_value = max(0, min(10, int(float(nota))))
+            except: pass
+
+        # Email fallback
+        if not email_cliente or '@' not in email_cliente:
+            email_cliente = f'{cpf_clean}@importado.com'
+
+        descricao = f'Importado da planilha' + (f' - Tipo: {problema}' if problema else ' - Tipo: Não informado')
+
+        complaint, created = Complaint.objects.update_or_create(
+            id_ra=str(id_ra).strip(),
+            defaults={
+                'cpf_cliente': cpf_clean,
+                'nome_cliente': nome_cliente,
+                'sobrenome': sobrenome,
+                'email_cliente': email_cliente,
+                'telefone': telefone,
+                'loja_cod': loja_cod,
+                'origem_contato': 'RA',
+                'descricao': descricao,
+                'status': status_value,
+                'analista': analista_obj,
+                'data_reclamacao': data_reclamacao_value,
+                'tipo_reclamacao': tipo_reclamacao_value,
+                'nota_satisfacao': nota_value,
+                'volta_fazer_negocio': volta_negocio_value,
+                'department': target_dept,
+            }
+        )
+        return ('created' if created else 'updated'), None
+
+    except Exception as e:
+        return 'error', f"Linha {row_num}: {str(e)}"
+
+
+@login_required
+def import_complaints_batch(request):
+    """API para importação em lote (Batch)"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método não permitido'}, status=405)
+        
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'error': 'Permissão negada'}, status=403)
+
+    try:
+        import json
+        data = json.loads(request.body)
+        rows = data.get('rows', [])
+        
+        # Determinar departamento (mesma lógica do import normal)
+        from .models import Department
+        target_dept = request.user.department
+        if request.user.is_administrador():
+            # Tentar pegar dept do body se enviado, ou usar padrão
+             target_dept = Department.objects.filter(slug='cs-clientes').first()
+
+        results = {
+            'created': 0,
+            'updated': 0,
+            'skipped': 0,
+            'errors': []
+        }
+
+        for i, row in enumerate(rows):
+            # row deve ser uma lista/array vinda do SheetJS header:1
+            # O índice da linha real deve considerar offset do lote + cabeçalho se houver
+            # Aqui usamos apenas index relativo ao batch para log
+            db_status, msg = _process_complaint_row(row, i, target_dept)
+            
+            if db_status == 'created': results['created'] += 1
+            elif db_status == 'updated': results['updated'] += 1
+            elif db_status == 'skipped': results['skipped'] += 1
+            elif db_status == 'error': results['errors'].append(msg)
+
+        return JsonResponse(results)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def store_audit_form(request, store_id):
+    store = get_object_or_404(Store, id=store_id)
+    
+    if request.method == 'POST':
+        # Processar o formulário de auditoria
+        # ... (lógica de salvamento da auditoria)
+        
+        has_irregularity = False # Exemplo, você precisará determinar isso com base nos dados do formulário
+        
+        if has_irregularity:
+            messages.warning(request, f"Auditoria da loja {store.code} finalizada com irregularidades detectadas. Gestor notificado.")
+            request.session['play_irregularity_sound'] = True # Sinal para o front tocar som
+        else:
+            messages.success(request, f"Auditoria da loja {store.code} finalizada com sucesso (Tudo conforme).")
+            
+        return redirect('verificacao_lojas')
+
+    # Checklist items
+    items_choices = [
+        ('cameras', 'Câmeras'),
+        ('estofados', 'Estofados'),
+        ('cestos_medidas', 'Cestos de medidas'),
+        ('layout', 'Layout'),
+        ('tv', 'TV'),
+        ('totem', 'Totem'),
+        ('limpeza', 'Limpeza da loja'),
+        ('marketing', 'Marketing'),
+    ]
+
+    # Histórico de auditorias da loja
+    history = StoreAudit.objects.filter(store=store).order_by('-created_at')[:10]
+    
+    context = {
+        'store': store,
+        'history': history,
+        'items_choices': items_choices,
+        'title': f'Auditoria: Loja {store.code}'
+    }
+    return render(request, 'core/store_audit_form.html', context)
+    
+@login_required
+def under_development(request, page_name='Página'):
+    return render(request, 'core/under_development.html', {'page_name': page_name})
+
+
+@login_required
+def sites_view(request):
+    """Página de Sites e Sistemas - NRS Suporte"""
+    if not request.user.is_administrador():
+        if not request.user.department or request.user.department.name != 'NRS Suporte':
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas de NRS Suporte.')
+            return redirect('dashboard')
+            
+    return render(request, 'core/sites.html')
+
+
+@login_required
+def localizacao_view(request):
+    """Página de Localização das Lojas - NRS Suporte"""
+    if not request.user.is_administrador():
+        if not request.user.department or request.user.department.name != 'NRS Suporte':
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas de NRS Suporte.')
+            return redirect('dashboard')
+            
+    return render(request, 'core/localizacao.html')
+
+
+@login_required
+def escala_view(request):
+    """Página de Escala - NRS Suporte"""
+    if not request.user.is_administrador():
+        if not request.user.department or request.user.department.name != 'NRS Suporte':
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas de NRS Suporte.')
+            return redirect('dashboard')
+            
+    from .models import Turno, AnalistaEscala, FolgaManual
+    
+    # --- Sincronização de Usuários Otimizada ---
+    try:
+        # Busca usuários do NRS Suporte que são analistas, estão ativos e NÃO têm perfil de escala
+        users_missing_profile = User.objects.filter(
+            department__name='NRS Suporte', 
+            role='analista', 
+            ativo=True,
+            escala_perfil__isnull=True
+        )
+        
+        for user in users_missing_profile:
+            formatted_name = AnalistaEscala.format_schedule_name(user.first_name, user.last_name)
+            # Tenta encontrar analista desvinculado com mesmo nome para evitar duplicidade
+            existing = AnalistaEscala.objects.filter(nome=formatted_name, user__isnull=True).first()
+            if existing:
+                existing.user = user
+                existing.save()
+            else:
+                AnalistaEscala.objects.create(
+                    user=user,
+                    nome=formatted_name,
+                    ativo=True
+                )
+    except Exception as e:
+        print(f"Erro ao sincronizar analistas na escala: {e}")
+    # ---------------------------------------------------
+
+    turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
+    analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+    
+    # Preparar dados para JSON
+    turnos_data = [{
+        'id': t.id,
+        'nome': t.nome,
+        'horario': t.horario,
+        'cor': t.cor,
+        'ordem': t.ordem
+    } for t in turnos]
+    
+    analistas_data = [{
+        'id': a.id,
+        'nome': a.nome,
+        'turno': a.turno.nome if a.turno else None,
+        'turno_id': a.turno.id if a.turno else None,
+        'pausa': a.pausa,
+        'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
+        'ordem': a.ordem
+    } for a in analistas]
+    
+    # Folgas manuais como dicionário
+    folgas = FolgaManual.objects.select_related('analista').all()
+    folgas_data = {}
+    for f in folgas:
+        key = f"{f.analista.id}-{f.data.year}-{f.data.month}-{f.data.day}"
+        folgas_data[key] = {
+            'id': f.id,
+            'tipo': f.tipo,
+            'motivo': f.motivo
+        }
+    
+    import json
+    is_admin = request.user.is_gestor() or request.user.is_administrador()
+    context = {
+        'turnos_json': json.dumps(turnos_data),
+        'analistas_json': json.dumps(analistas_data),
+        'folgas_json': json.dumps(folgas_data),
+        'is_admin': is_admin,
+        'is_admin_json': 'true' if is_admin else 'false'
+    }
+    
+    return render(request, 'core/escala.html', context)
+
+@login_required
+def calendar_view(request):
+    """Visualização do calendário"""
+    user = request.user
+    # Gestores/Admins podem editar tudo
+    is_manager = user.role in ['gestor', 'administrador']
+    # Analistas do NRS podem criar/editar seus próprios eventos
+    is_nrs_analyst = user.role == 'analista' and user.department and user.department.name == 'NRS Suporte'
+    
+    can_create = is_manager or is_nrs_analyst
+    
+    context = {
+        'can_edit': can_create,  # No template, isso controla o botão "Adicionar"
+        'user_id': user.id,
+        'user_full_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+        'is_manager': is_manager,
+    }
+    return render(request, 'core/calendar.html', context)
+
+@login_required
+def knowledge_base_view(request):
+    """Visualização da Base de Conhecimento"""
+    can_edit = request.user.is_administrador() or request.user.is_gestor()
+    
+    context = {
+        'can_edit': can_edit,
+    }
+    return render(request, 'core/knowledge_base.html', context)
+
+
+@login_required
+def performance_view(request):
+    """Página de Desempenho do Time"""
+    from .models import Department, IndicadorDesempenho
+    import json
+    
+    user = request.user
+    
+    # Obter departamento NRS Suporte
+    try:
+        nrs_dept = Department.objects.get(name='NRS Suporte')
+    except Department.DoesNotExist:
+        nrs_dept = None
+    
+    # Determinar se é analista ou gestor/admin
+    is_analista = user.role == 'analista'
+    can_edit = user.role in ['gestor', 'administrador']
+    
+    # Título da página baseado no role
+    if is_analista:
+        page_title = "Meu Desempenho"
+    else:
+        page_title = "Desempenho do Time"
+    
+    # Lista de analistas (para dropdown do gestor)
+    if can_edit and nrs_dept:
+        analistas = User.objects.filter(
+            department=nrs_dept
+        ).order_by('first_name', 'username')
+    else:
+        analistas = []
+    
+    # Analista selecionado (para visualização)
+    selected_analista_id = request.GET.get('analista_id')
+    if is_analista:
+        selected_analista_id = user.id
+    elif not selected_analista_id and analistas:
+        selected_analista_id = analistas.first().id if analistas.exists() else None
+    
+    if selected_analista_id:
+        try:
+            selected_analista_id = int(selected_analista_id)
+        except (ValueError, TypeError):
+            selected_analista_id = None
+
+    # Obter KPIs do analista selecionado
+    kpis_data = []
+    if selected_analista_id and nrs_dept:
+        kpis = IndicadorDesempenho.objects.filter(
+            analista_id=selected_analista_id,
+            department=nrs_dept
+        ).order_by('ano', 'mes')
+        
+        for kpi in kpis:
+            kpis_data.append({
+                'id': kpi.id,
+                'mes': kpi.mes,
+                'ano': kpi.ano,
+                'label': f"{kpi.mes:02d}/{kpi.ano}",
+                'nps': float(kpi.nps) if kpi.nps else None,
+                'tme': kpi.tme,
+                'chats': kpi.chats,
+            })
+    
+    selected_analista = None
+    if selected_analista_id:
+        try:
+            selected_analista = User.objects.get(id=selected_analista_id)
+        except User.DoesNotExist:
+            pass
+
+    # Lista de analistas formatada com flag de seleção
+    analistas_list = []
+    for a in analistas:
+        analistas_list.append({
+            'id': a.id,
+            'name': a.get_full_name() or a.username,
+            'is_selected': a.id == selected_analista_id
+        })
+
+    context = {
+        'page_title': page_title,
+        'is_analista': is_analista,
+        'can_edit': can_edit,
+        'can_edit_str': "true" if can_edit else "false",
+        'analistas_list': analistas_list,
+        'selected_analista_id': selected_analista_id,
+        'selected_analista': selected_analista,
+        'kpis_json': json.dumps(kpis_data),
+        'analistas_json': json.dumps([{
+            'id': a.id,
+            'nome': a.get_full_name() or a.username
+        } for a in analistas]),
+    }
+    
+    return render(request, 'core/desempenho.html', context)
+
+
+@login_required
+def quadro_view(request):
+    """Visualização do Quadro Kanban"""
+    department = None
+    
+    # Determinar departamento
+    if request.user.is_administrador():
+        dept_id = request.session.get('selected_department_id')
+        if dept_id and dept_id != 0:
+            department = Department.objects.filter(id=dept_id).first()
+        
+        # Fallback para admins: se não tiver dept selecionado, pega o primeiro ou avisa
+        if not department:
+            department = Department.objects.first()
+            if not department:
+                 messages.warning(request, "É necessário ter pelo menos um departamento para usar o Quadro.")
+                 return redirect('dashboard')
+    else:
+        department = request.user.department
+        
+    if not department:
+        return redirect('dashboard')
+        
+    # Verificar se as listas padrão existem, se não, criar
+    if not Lista.objects.filter(department=department).exists():
+        Lista.objects.create(titulo='A Fazer', department=department, ordem=0)
+        Lista.objects.create(titulo='Em Andamento', department=department, ordem=1)
+        Lista.objects.create(titulo='Concluído', department=department, ordem=2)
+    
+    # Obter usuários do departamento para atribuição
+    users =  User.objects.filter(department=department, is_active=True)
+    
+    context = {
+        'department_users': users
+    }
+    return render(request, 'core/quadro.html', context)
+
+
+@login_required
+def tasks_view(request):
+    """View para a aba de tarefas e rotina"""
+    user = request.user
+    is_manager = user.role in ['gestor', 'administrador']
+    
+    # Permissão para botão "Criar": Gestores/Admins OU Analistas do NRS Suporte
+    is_nrs_analyst = (user.role == 'analista' and user.department and 
+                      user.department.name == 'NRS Suporte')
+    
+    show_create_button = is_manager or is_nrs_analyst or user.is_administrador()
+    
+    context = {
+        'title': 'Tarefas e Rotinas',
+        'is_manager': is_manager,
+        'show_create_button': show_create_button,
+    }
+    return render(request, 'core/tarefas.html', context)
+
+
+@login_required
+def solicitacoes_view(request):
+    """View para a aba de solicitações de estorno (CS Clientes)"""
+    user = request.user
+    is_manager = user.role in ['gestor', 'administrador']
+    is_cs_clientes = user.department and user.department.name == 'CS Clientes'
+    
+    context = {
+        'title': 'Solicitações de Estorno',
+        'is_manager': is_manager,
+        'is_cs_clientes': is_cs_clientes,
+    }
+    return render(request, 'core/solicitacoes.html', context)
+
+
+# ========================================
+# VIEWS PARA VERIFICAÇÃO DE LOJAS (AUDITORIA)
+# ========================================
+
+@login_required
+def verificacao_lojas(request):
+    """Página principal de verificação de lojas (NRS Suporte)"""
+    from django.core.paginator import Paginator
+    
+    # 1. Base QuerySet
+    stores_queryset = Store.objects.filter(active=True).order_by('code')
+    
+    # 2. Status Calculation (Aggregate counts efficiently)
+    # Get IDs for status sets
+    verified_store_ids = set(StoreAudit.objects.values_list('store_id', flat=True))
+    irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True))
+    
+    # Calculate OK stores
+    ok_store_ids = verified_store_ids - irregular_store_ids
+    
+    # 3. Apply Filters
+    filter_type = request.GET.get('filter')
+    if filter_type == 'verified':
+        stores_queryset = stores_queryset.filter(id__in=verified_store_ids)
+    elif filter_type == 'ok':
+        stores_queryset = stores_queryset.filter(id__in=ok_store_ids)
+    elif filter_type == 'irregular':
+        stores_queryset = stores_queryset.filter(id__in=irregular_store_ids)
+    
+    # Search Filter
+    search_query = request.GET.get('q')
+    if search_query:
+        stores_queryset = stores_queryset.filter(
+            Q(code__icontains=search_query) | 
+            Q(city__icontains=search_query)
+        )
+
+    # 4. Pagination
+    paginator = Paginator(stores_queryset, 25) # 25 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 5. Eager Load Latest Audits for CURRENT PAGE only (Performance Fix)
+    page_store_ids = [store.id for store in page_obj]
+    
+    # Fetch latest audits (optimized)
+    # Using window function or grouping in Python is needed for 'top N per group'
+    # Since page size is small (25), we can fetch recent audits for these stores efficiently
+    audits_qs = StoreAudit.objects.filter(store_id__in=page_store_ids).select_related('analyst').prefetch_related('items').order_by('store', '-created_at')
+    
+    # Group by store in memory
+    from collections import defaultdict
+    store_audits_map = defaultdict(list)
+    for audit in audits_qs:
+        # We only need the top 3 for the list view, others are loaded via API
+        if len(store_audits_map[audit.store_id]) < 3:
+            store_audits_map[audit.store_id].append(audit)
+            
+    latest_audits = {
+        store_id: audits[0] if audits else None
+        for store_id, audits in store_audits_map.items()
+    }
+    
+    # Attach stats manually to avoid template queries
+    for store in page_obj:
+        store.latest_audit = latest_audits.get(store.id)
+        
+        # Determine status for UI badge
+        if not store.active:
+            store.ui_status = 'suspended'
+        elif store.id in irregular_store_ids:
+            store.ui_status = 'irregular'
+        elif store.id in verified_store_ids:
+            store.ui_status = 'compliant'
+        else:
+            store.ui_status = 'pending'
+
+    # 6. Dashboard Counters (Cached if possible, but distinct count is okay for now)
+    # Note: These counts are for the WHOLE dataset, not just the page/filter
+    # To optimize further, we could cache these or calculate only once per session
+    total_stores = Store.objects.filter(active=True).count()
+    verified_count = len(verified_store_ids)
+    ok_count = len(ok_store_ids)
+    irregular_count = len(irregular_store_ids)
+
+    # Pendências abertas para exibição no dashboard (se o usuário for gestor/admin)
+    pending_issues = []
+    if request.user.role in ['gestor', 'administrador']:
+        pending_issues = StoreAuditIssue.objects.filter(status='aberta').select_related('store').prefetch_related('items__audit__analyst')
+
+    context = {
+        'title': 'Verificação de Lojas',
+        'stores': page_obj, # Now passing the Page object
+        'total_stores': total_stores,
+        'verified_count': verified_count,
+        'ok_count': ok_count,
+        'irregular_count': irregular_count,
+        'filter_type': filter_type,
+        'pending_issues': pending_issues,
+        'irregular_store_ids': irregular_store_ids,
+        'play_sound': request.session.pop('play_irregularity_sound', False),
+        'search_query': search_query
+    }
+    return render(request, 'core/verificacao_lojas.html', context)
+
+
+@login_required
+def store_audit_create(request, store_id):
+    """Cria uma nova auditoria para a loja"""
+    store = get_object_or_404(Store, id=store_id)
+    
+    if request.method == 'POST':
+        audit = StoreAudit.objects.create(analyst=request.user, store=store)
+        
+        items_slugs = ['cameras', 'estofados', 'cestos_medidas', 'layout', 'tv', 'totem', 'limpeza', 'marketing']
+        has_irregularity = False
+        
+        for slug in items_slugs:
+            status = request.POST.get(f'status_{slug}')
+            is_compliant = (status == 'conformidade')
+            photo = request.FILES.get(f'photo_{slug}')
+            description = request.POST.get(f'desc_{slug}', '')
+            
+            audit_item = StoreAuditItem.objects.create(
+                audit=audit,
+                item_name=slug,
+                is_compliant=is_compliant,
+                photo=photo,
+                description=description
+            )
+            
+            if not is_compliant:
+                has_irregularity = True
+                # Busca se já existe uma pendência aberta para esta loja
+                issue = StoreAuditIssue.objects.filter(store=store, status='aberta').first()
+                
+                if not issue:
+                    # Se não existe, cria uma nova
+                    issue = StoreAuditIssue.objects.create(store=store)
+                
+                # Vincula o item irregular à pendência (existente ou nova)
+                audit_item.issue = issue
+                audit_item.save()
+        
+        if has_irregularity:
+            messages.warning(request, f"Auditoria da loja {store.code} finalizada com irregularidades detectadas. Gestor notificado.")
+            request.session['play_irregularity_sound'] = True # Sinal para o front tocar som
+        else:
+            messages.success(request, f"Auditoria da loja {store.code} finalizada com sucesso (Tudo conforme).")
+            
+        return redirect('verificacao_lojas')
+
+    # Checklist items
+    items_choices = [
+        ('cameras', 'Câmeras'),
+        ('estofados', 'Estofados'),
+        ('cestos_medidas', 'Cestos de medidas'),
+        ('layout', 'Layout'),
+        ('tv', 'TV'),
+        ('totem', 'Totem'),
+        ('limpeza', 'Limpeza da loja'),
+        ('marketing', 'Marketing'),
+    ]
+
+    # Histórico de auditorias da loja
+    history = StoreAudit.objects.filter(store=store).order_by('-created_at')[:10]
+    
+    context = {
+        'store': store,
+        'history': history,
+        'items_choices': items_choices,
+        'title': f'Auditoria: Loja {store.code}'
+    }
+    return render(request, 'core/store_audit_form.html', context)
+
+
+@login_required
+def store_issue_resolve(request, issue_id):
+    """Resolve uma pendência de auditoria (Apenas Gestor/Admin)"""
+    if not (request.user.role in ['gestor', 'administrador']):
+        messages.error(request, "Apenas gestores ou administradores podem resolver pendências.")
+        return redirect('verificacao_lojas')
+        
+    issue = get_object_or_404(StoreAuditIssue, id=issue_id)
+    
+    if request.method == 'POST':
+        notes = request.POST.get('gestor_notes', '')
+        issue.gestor_notes = notes
+        issue.status = 'resolvida'
+        issue.resolved_at = timezone.now()
+        issue.resolved_by = request.user
+        issue.save()
+        
+        store_code = issue.store.code if issue.store else 'Loja Desconhecida'
+        messages.success(request, f"Pendência em {store_code} marcada como resolvida.")
+        
+    return redirect('verificacao_lojas')
+
+
+@login_required
+def store_create(request):
+    """Cria uma nova loja (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Você não tem permissão para criar lojas.")
+        return redirect('verificacao_lojas')
+
+    if request.method == 'POST':
+        form = StoreForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Loja criada com sucesso!")
+            return redirect('verificacao_lojas')
+    else:
+        form = StoreForm()
+
+    return render(request, 'core/store_form.html', {
+        'form': form,
+        'title': 'Cadastrar Nova Loja'
+    })
+
+
+@login_required
+def store_edit(request, store_id):
+    """Edita uma loja existente (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Apenas gestores ou administradores podem editar lojas.")
+        return redirect('verificacao_lojas')
+
+    store = get_object_or_404(Store, id=store_id)
+
+    if request.method == 'POST':
+        form = StoreForm(request.POST, instance=store)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Loja {store.code} atualizada com sucesso!")
+            return redirect('verificacao_lojas')
+    else:
+        form = StoreForm(instance=store)
+
+    return render(request, 'core/store_form.html', {
+        'form': form,
+        'title': f'Editar Loja: {store.code}'
+    })
+
+
+@login_required
+def store_delete(request, store_id):
+    """Exclui uma loja (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Apenas gestores ou administradores podem excluir lojas.")
+        return redirect('verificacao_lojas')
+
+    store = get_object_or_404(Store, id=store_id)
+
+    if request.method == 'POST':
+        code = store.code
+        store.delete()
+        messages.success(request, f"Loja {code} excluída com sucesso.")
+        return redirect('verificacao_lojas')
+
+    return render(request, 'core/confirm_delete.html', {
+        'title': f'Excluir Loja {store.code}',
+        'message': f'Tem certeza que deseja excluir a loja {store.code}? Todas as auditorias e pendências associadas também serão removidas.',
+        'back_url': 'verificacao_lojas'
+    })
+
+
+@login_required
+def store_bulk_delete(request):
+    """Exclui TODAS as lojas (Apenas Administrador)"""
+    if not request.user.is_administrador():
+        messages.error(request, "Acesso negado. Apenas administradores podem realizar esta ação.")
+        return redirect('verificacao_lojas')
+
+    if request.method == 'POST':
+        count = Store.objects.all().count()
+        # Delete all stores (cascades to audits/issues)
+        Store.objects.all().delete()
+        messages.success(request, f"Sucesso! {count} lojas foram excluídas permanentemente.")
+        return redirect('verificacao_lojas')
+
+    return render(request, 'core/confirm_delete.html', {
+        'title': 'EXCLUIR TODAS AS LOJAS',
+        'message': 'ATENÇÃO: Você está prestes a excluir TODAS as lojas cadastradas, incluindo todas as auditorias e históricos. Esta ação é irreversível. Tem certeza absoluta?',
+        'back_url': 'verificacao_lojas',
+        'confirm_btn_class': 'btn-danger' # Optional if supported by template
+    })
+
+
+@login_required
+def store_issue_edit(request, issue_id):
+    """Edita uma pendência de auditoria (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Permissão negada.")
+        return redirect('verificacao_lojas')
+
+    issue = get_object_or_404(StoreAuditIssue, id=issue_id)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        new_notes = request.POST.get('gestor_notes')
+        
+        if new_status:
+            issue.status = new_status
+        if new_notes is not None:
+             issue.gestor_notes = new_notes
+             
+        issue.save()
+        messages.success(request, "Pendência atualizada com sucesso.")
+        return redirect('verificacao_lojas')
+
+    # Como é uma edição simples, reutilizamos o template de confirmação/edição ou criamos um simples
+    # Vou usar um template simples dedicado ou reusar o form genérico
+    store_code = issue.store.code if issue.store else 'L000 (Desconhecida)'
+
+    return render(request, 'core/issue_edit_form.html', {
+        'issue': issue,
+        'title': f'Editar Pendência: {store_code}'
+    })
+
+
+@login_required
+def store_issue_delete(request, issue_id):
+    """Exclui uma pendência de auditoria (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Permissão negada.")
+        return redirect('verificacao_lojas')
+
+    issue = get_object_or_404(StoreAuditIssue, id=issue_id)
+
+    if request.method == 'POST':
+        issue.delete()
+        messages.success(request, "Pendência excluída com sucesso.")
+        return redirect('verificacao_lojas')
+
+    store_code = issue.store.code if issue.store else 'L000 (Desconhecida)'
+
+    return render(request, 'core/confirm_delete.html', {
+        'title': 'Excluir Pendência',
+        'message': f'Tem certeza que deseja excluir a pendência da loja {store_code}? Isso também excluirá os itens irregulares associados.',
+        'back_url': 'verificacao_lojas'
+    })
+
+
+@login_required
+def import_stores_xlsx(request):
+    """Importa base de lojas via XLSX (Apenas Gestor/Admin)"""
+    if request.user.role not in ['gestor', 'administrador']:
+        messages.error(request, "Você não tem permissão para importar lojas.")
+        return redirect('verificacao_lojas')
+
+    if request.method == 'POST':
+        if 'xlsx_file' not in request.FILES:
+            messages.error(request, "Selecione um arquivo XLSX.")
+            return redirect('import_stores_xlsx')
+
+        file = request.FILES['xlsx_file']
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(file, data_only=True)
+            ws = wb.active
+            
+            created = 0
+            updated = 0
+            
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                code = str(row[0]).strip().upper() if row and row[0] else None
+                
+                if code:
+                    store, is_created = Store.objects.get_or_create(
+                        code=code,
+                        defaults={'active': True}
+                    )
+                    if is_created: created += 1
+                    else: updated += 1
+            
+            messages.success(request, f"Importação concluída: {created} criadas, {updated} atualizadas.")
+            return redirect('verificacao_lojas')
+        except Exception as e:
+            messages.error(request, f"Erro ao processar arquivo: {str(e)}")
+            return redirect('import_stores_xlsx')
+
+    return render(request, 'core/import_stores.html', {'title': 'Importar Lojas (XLSX)'})
 

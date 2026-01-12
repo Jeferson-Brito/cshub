@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Usuários - CSHub{% endblock %}
 
@@ -31,7 +31,8 @@
                 <label class="form-label">
                     <i class="bi bi-search"></i> Buscar
                 </label>
-                <input type="text" name="search" class="form-control" placeholder="Usuário, E-mail, Nome..." value="{{ request.GET.search }}">
+                <input type="text" name="search" class="form-control" placeholder="Usuário, E-mail, Nome..."
+                    value="{{ request.GET.search }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label">
@@ -43,7 +44,22 @@
                     <option value="analista" {% if request.GET.role == 'analista' %}selected{% endif %}>Analista</option>
                 </select>
             </div>
+            {% if request.user.is_administrador %}
             <div class="col-md-3">
+                <label class="form-label">
+                    <i class="bi bi-diagram-3"></i> Departamento
+                </label>
+                <select name="department" class="form-control">
+                    <option value="">Todos os departamentos</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
                 <label class="form-label">
                     <i class="bi bi-toggle-on"></i> Status
                 </label>
@@ -57,18 +73,19 @@
                 <button type="submit" class="btn btn-primary flex-fill">
                     <i class="bi bi-funnel-fill"></i> Filtrar
                 </button>
-                {% if user.is_gestor %}
+                {% if user.is_gestor or user.is_administrador %}
                 <div class="btn-group">
-                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Exportar">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false" title="Exportar">
                         <i class="bi bi-download"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{% url 'export_users_csv' %}">
-                            <i class="bi bi-filetype-csv"></i> Exportar CSV
-                        </a></li>
+                                <i class="bi bi-filetype-csv"></i> Exportar CSV
+                            </a></li>
                         <li><a class="dropdown-item" href="{% url 'export_users_xlsx' %}">
-                            <i class="bi bi-file-earmark-excel"></i> Exportar XLSX
-                        </a></li>
+                                <i class="bi bi-file-earmark-excel"></i> Exportar XLSX
+                            </a></li>
                     </ul>
                 </div>
                 {% endif %}
@@ -90,51 +107,55 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Usuário</th>
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Perfil</th>
+                        <th>Departamento</th>
                         <th>Status</th>
-                        <th>Data Cadastro</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user_obj in users %}
                     <tr>
-                        <td><strong>{{ user_obj.username }}</strong></td>
-                        <td>{{ user_obj.get_full_name|default:"-" }}</td>
+                        <td><strong>{{ user_obj.get_full_name|default:user_obj.username }}</strong></td>
                         <td>{{ user_obj.email }}</td>
                         <td>
-                            {% if user_obj.role == 'gestor' %}
-                                <span class="badge bg-primary">
-                                    <i class="bi bi-shield-check"></i> {{ user_obj.get_role_display }}
-                                </span>
+                            {% if user_obj.role == 'administrador' %}
+                            <span class="badge badge-admin">
+                                <i class="bi bi-shield-lock-fill"></i> {{ user_obj.get_role_display }}
+                            </span>
+                            {% elif user_obj.role == 'gestor' %}
+                            <span class="badge badge-gestor">
+                                <i class="bi bi-shield-check"></i> {{ user_obj.get_role_display }}
+                            </span>
                             {% else %}
-                                <span class="badge bg-info">
-                                    <i class="bi bi-person"></i> {{ user_obj.get_role_display }}
-                                </span>
+                            <span class="badge badge-analista">
+                                <i class="bi bi-person"></i> {{ user_obj.get_role_display }}
+                            </span>
                             {% endif %}
                         </td>
+                        <td>{{ user_obj.department.name|default:"-" }}</td>
                         <td>
                             {% if user_obj.ativo %}
-                                <span class="badge bg-success">
-                                    <i class="bi bi-check-circle"></i> Ativo
-                                </span>
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Ativo
+                            </span>
                             {% else %}
-                                <span class="badge bg-danger">
-                                    <i class="bi bi-x-circle"></i> Inativo
-                                </span>
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle"></i> Inativo
+                            </span>
                             {% endif %}
                         </td>
-                        <td>{{ user_obj.date_joined|date:"d/m/Y" }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{% url 'user_edit' user_obj.pk %}" class="btn btn-sm btn-secondary" title="Editar">
+                                <a href="{% url 'user_edit' user_obj.pk %}" class="btn btn-sm btn-secondary"
+                                    title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 {% if user_obj != user %}
-                                <a href="{% url 'user_delete' user_obj.pk %}" class="btn btn-sm btn-danger" title="Excluir">
+                                <a href="{% url 'user_delete' user_obj.pk %}" class="btn btn-sm btn-danger"
+                                    title="Excluir">
                                     <i class="bi bi-trash"></i>
                                 </a>
                                 {% endif %}
@@ -151,7 +172,8 @@
             <ul class="pagination justify-content-center">
                 {% if users.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    <a class="page-link"
+                        href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                         <i class="bi bi-chevron-left"></i> Anterior
                     </a>
                 </li>
@@ -163,7 +185,8 @@
                 </li>
                 {% if users.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    <a class="page-link"
+                        href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                         Próximo <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
@@ -183,4 +206,3 @@
     </div>
 </div>
 {% endblock %}
-
