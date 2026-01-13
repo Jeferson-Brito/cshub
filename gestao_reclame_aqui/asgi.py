@@ -1,5 +1,6 @@
 """
 ASGI config for gestao_reclame_aqui project.
+Configurado para suportar WebSockets com Django Channels.
 """
 import os
 
@@ -7,6 +8,18 @@ from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestao_reclame_aqui.settings')
 
-application = get_asgi_application()
+# Inicializa Django ANTES de importar outros módulos
+django_asgi_app = get_asgi_application()
 
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from core import routing
 
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            routing.websocket_urlpatterns
+        )
+    ),
+})

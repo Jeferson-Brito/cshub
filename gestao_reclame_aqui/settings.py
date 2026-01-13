@@ -44,6 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
 # APPLICATIONS
 # ==============================
 INSTALLED_APPS = [
+    "daphne",  # WebSocket server (deve vir primeiro)
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # terceiros
+    "channels",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
@@ -91,6 +93,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.departments",
             ],
         },
     },
@@ -104,11 +107,12 @@ WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": get_env("DB_NAME", "cshub"),
-        "USER": get_env("DB_USER", "postgres"),
+        "NAME": get_env("DB_NAME", "postgres"),
+        "USER": get_env("DB_USER", "postgres.sepcgocgjbxqqyyyvnpw"),
         "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "localhost"),
-        "PORT": get_env("DB_PORT", "5433"),
+        "HOST": get_env("DB_HOST", "aws-0-us-east-2.pooler.supabase.com"),
+        "PORT": get_env("DB_PORT", "6543"),
+        "CONN_MAX_AGE": 0,  # Pooler gerencia conexões, não manter persistentes
     }
 }
 
@@ -211,4 +215,26 @@ LOGGING = {
         "handlers": ["console"],
         "level": "INFO",
     },
+}
+
+# ==============================
+# CHANNELS (WEBSOCKETS)
+# ==============================
+ASGI_APPLICATION = "gestao_reclame_aqui.asgi.application"
+
+# Para desenvolvimento local, usamos InMemoryChannelLayer
+# Em produção, usar Redis:
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("127.0.0.1", 6379)],
+#         },
+#     },
+# }
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }

@@ -79,3 +79,9 @@ coverage.xml
 # Logs
 logs/
 *.log
+
+# Node
+node_modules/
+
+# Environment variables
+.env

@@ -17,8 +17,8 @@ if not exist "manage.py" (
 )
 
 echo [1/3] Ativando ambiente virtual...
-if exist "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat
+if exist ".venv\Scripts\activate.bat" (
+    call .venv\Scripts\activate.bat
     echo ✓ Ambiente virtual ativado
 ) else (
     echo [AVISO] Ambiente virtual não encontrado!
