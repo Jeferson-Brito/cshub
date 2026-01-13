@@ -5,6 +5,7 @@ Django settings for gestao_reclame_aqui project.
 import os
 import sys
 from pathlib import Path
+import dj_database_url
 
 # ==============================
 # BASE DIR
@@ -30,15 +31,13 @@ SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = get_env("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = [
-    "cshub-l8jg.onrender.com",
-    "localhost",
-    "127.0.0.1",
-]
+ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "cshub-deploy.onrender.com,localhost,127.0.0.1").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://cshub-deploy.onrender.com",
     "https://cshub-l8jg.onrender.com",
 ]
+
 
 # ==============================
 # APPLICATIONS
@@ -102,7 +101,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 
 # ==============================
-# DATABASE (POSTGRESQL)
+# DATABASE (POSTGRESQL - Render & Supabase Config)
 # ==============================
 DATABASES = {
     "default": {
