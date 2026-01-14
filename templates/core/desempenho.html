@@ -383,9 +383,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>�ltimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>�ltimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o hist�rico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -401,13 +401,13 @@
         </div>
     </div>
 
-    <!-- Gr�ficos -->
+    <!-- Gráficos -->
     <div class="charts-grid">
         <div class="chart-card">
             <div class="chart-header">
                 <h3 class="chart-title tme">
                     <i class="bi bi-clock-history"></i>
-                    TME - Tempo M�dio de Espera
+                    TME - Tempo Médio de Espera
                 </h3>
             </div>
             <div class="chart-container">
@@ -419,7 +419,7 @@
             <div class="chart-header">
                 <h3 class="chart-title nps">
                     <i class="bi bi-star-fill"></i>
-                    NPS - Avalia��o
+                    NPS - Avaliação
                 </h3>
             </div>
             <div class="chart-container">
@@ -443,7 +443,7 @@
     <!-- Tabela de KPIs -->
     <div class="kpi-table-section">
         <div class="kpi-table-header">
-            <h3 class="kpi-table-title">Hist�rico de KPIs</h3>
+            <h3 class="kpi-table-title">Histórico de KPIs</h3>
         </div>
 
         <div id="kpiTableContainer">
@@ -452,7 +452,7 @@
     </div>
 
     {% if can_edit %}
-    <!-- Se��o de Ranking (apenas gestores/admin) -->
+    <!-- Seção de Ranking (apenas gestores/admin) -->
     <div class="kpi-table-section" style="margin-top: 25px;">
         <div class="kpi-table-header">
             <h3 class="kpi-table-title"><i class="bi bi-trophy" style="color: #f59e0b;"></i> Ranking de Analistas</h3>
@@ -460,7 +460,7 @@
                 <select id="rankingMonth" class="select-analista" style="min-width: 120px;" onchange="loadRanking()">
                     <option value="1">Janeiro</option>
                     <option value="2">Fevereiro</option>
-                    <option value="3">Mar�o</option>
+                    <option value="3">Março</option>
                     <option value="4">Abril</option>
                     <option value="5">Maio</option>
                     <option value="6">Junho</option>
@@ -479,7 +479,7 @@
         <div id="rankingTableContainer">
             <div class="empty-state" style="padding: 40px;">
                 <i class="bi bi-hourglass-split"></i>
-                <p>Selecione um m�s e ano para ver o ranking</p>
+                <p>Selecione um mês e ano para ver o ranking</p>
             </div>
         </div>
     </div>
@@ -497,7 +497,7 @@
             <form id="kpiForm">
                 <input type="hidden" id="kpiId">
                 <div class="form-group">
-                    <label for="kpiMes">M�s/Ano</label>
+                    <label for="kpiMes">Mês/Ano</label>
                     <input type="month" id="kpiMes" required>
                 </div>
 
@@ -535,7 +535,7 @@
         <div class="modal-body-desempenho">
             <form id="globalMetaForm">
                 <div class="form-group">
-                    <label for="globalMetaMes">M�s/Ano</label>
+                    <label for="globalMetaMes">Mês/Ano</label>
                     <input type="month" id="globalMetaMes" required>
                 </div>
                 <div class="form-group">
@@ -555,11 +555,11 @@
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
 
             <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">
-                <i class="bi bi-clock-history"></i> Hist�rico de Metas Globais
+                <i class="bi bi-clock-history"></i> Histórico de Metas Globais
             </h4>
             <div id="globalMetaHistoryContainer"
                 style="max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <!-- Tabela de hist�rico ser� carregada aqui -->
+                <!-- Tabela de histórico será carregada aqui -->
             </div>
         </div>
         <div class="modal-footer-desempenho">
@@ -626,7 +626,7 @@
         const npsValues = kpisData.map(k => k.nps);
         const chatsValues = kpisData.map(k => k.chats);
 
-        // Gera arrays de meta dinâmicos vindos do banco de dados
+        // Gera arrays de meta dinÃ¢micos vindos do banco de dados
         const tmeMetaValues = kpisData.map(k => k.meta_tme);
         const npsMetaValues = kpisData.map(k => k.meta_nps);
         const chatsMetaValues = kpisData.map(k => k.meta_chats);
@@ -892,11 +892,11 @@
             <table class="kpi-table">
                 <thead>
                     <tr>
-                        <th>M�s/Ano</th>
+                        <th>Mês/Ano</th>
                         <th>TME</th>
                         <th>NPS</th>
                         <th>Chats</th>
-                        ${canEdit ? '<th>A��es</th>' : ''}
+                        ${canEdit ? '<th>Ações</th>' : ''}
                     </tr>
                 </thead>
                 <tbody>
@@ -963,7 +963,7 @@
     async function saveKpi() {
         const mesInput = document.getElementById('kpiMes').value;
         if (!mesInput) {
-            alert('Selecione o m�s/ano');
+            alert('Selecione o mês/ano');
             return;
         }
 
@@ -1046,7 +1046,7 @@
 
     async function loadGlobalMetaHistory() {
         const container = document.getElementById('globalMetaHistoryContainer');
-        container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="bi bi-arrow-repeat spin"></i> Carregando hist�rico...</div>';
+        container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="bi bi-arrow-repeat spin"></i> Carregando histórico...</div>';
 
         try {
             const response = await fetch('/api/desempenho/metas/global/');
@@ -1061,11 +1061,11 @@
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                     <thead style="background: #f8fafc; position: sticky; top: 0;">
                         <tr>
-                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">M�s/Ano</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">Mês/Ano</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">TME</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">NPS</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">Chats</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">A��es</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1089,7 +1089,7 @@
             html += '</tbody></table>';
             container.innerHTML = html;
         } catch (error) {
-            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar hist�rico.</div>';
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar histórico.</div>';
         }
     }
 
@@ -1103,11 +1103,11 @@
     }
 
     async function deleteGlobalMeta(id) {
-        if (!confirm('Tem certeza que deseja excluir esta meta global? Isso afetar� os gráficos de todos os analistas para este m�s.')) return;
+        if (!confirm('Tem certeza que deseja excluir esta meta global? Isso afetará¡ os grÃ¡ficos de todos os analistas para este mês.')) return;
 
         try {
-            // Reaproveitar o roteamento de exclus�o se possível, ou criar um novo. 
-            // Como ainda n�o criei o endpoint de DELETE para metas globais, vou precisar dele.
+            // Reaproveitar o roteamento de exclusão se possÃ­vel, ou criar um novo. 
+            // Como ainda não criei o endpoint de DELETE para metas globais, vou precisar dele.
             const response = await fetch(`/api/desempenho/metas/global/${id}/delete/`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': csrfToken }
@@ -1115,7 +1115,7 @@
 
             if (response.ok) {
                 loadGlobalMetaHistory();
-                window.location.reload(); // Para atualizar os gráficos
+                window.location.reload(); // Para atualizar os grÃ¡ficos
             } else {
                 alert('Erro ao excluir meta global');
             }
@@ -1131,7 +1131,7 @@
     async function saveGlobalMeta() {
         const mesInput = document.getElementById('globalMetaMes').value;
         if (!mesInput) {
-            alert('Selecione o m�s/ano');
+            alert('Selecione o mês/ano');
             return;
         }
 
@@ -1220,7 +1220,7 @@
             }
         } catch (e) {
             console.error(e);
-            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-wifi-off"></i><p>Erro de conex�o</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-wifi-off"></i><p>Erro de conexão</p></div>';
         }
     }
 
@@ -1228,19 +1228,19 @@
         const container = document.getElementById('rankingTableContainer');
 
         if (!data.ranking || data.ranking.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este m�s</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este mês</p></div>';
             return;
         }
 
         const meta = data.meta_global;
         const metaInfo = meta.tme || meta.nps || meta.chats ?
             `<div class="alert alert-info py-2 mb-3" style="font-size: 13px;">
-                <strong>Metas do M�s:</strong> 
-                TME = ${meta.tme ? secondsToHms(meta.tme) : '-'} | 
-                NPS = ${meta.nps ? meta.nps.toFixed(2) : '-'} | 
-                Chats = ${meta.chats || '-'}
+                <strong>Metas do Mês:</strong> 
+                TME ≤ ${meta.tme ? secondsToHms(meta.tme) : '-'} | 
+                NPS ≥ ${meta.nps ? meta.nps.toFixed(2) : '-'} | 
+                Chats ≥ ${meta.chats || '-'}
             </div>` :
-            '<div class="alert alert-warning py-2 mb-3">?? Metas globais n�o definidas para este m�s</div>';
+            '<div class="alert alert-warning py-2 mb-3">⚠️ Metas globais não definidas para este mês</div>';
 
         let html = metaInfo + `
             <table class="kpi-table">
@@ -1258,16 +1258,16 @@
         `;
 
         data.ranking.forEach(item => {
-            const tmeIcon = item.tme_ok === true ? '??' : (item.tme_ok === false ? '??' : '?');
-            const npsIcon = item.nps_ok === true ? '??' : (item.nps_ok === false ? '??' : '?');
-            const chatsIcon = item.chats_ok === true ? '??' : (item.chats_ok === false ? '??' : '?');
+            const tmeIcon = item.tme_ok === true ? '🟢' : (item.tme_ok === false ? '🔴' : '⚪');
+            const npsIcon = item.nps_ok === true ? '🟢' : (item.nps_ok === false ? '🔴' : '⚪');
+            const chatsIcon = item.chats_ok === true ? '🟢' : (item.chats_ok === false ? '🔴' : '⚪');
 
             const rankBadge = item.posicao === 1 ? 'background: #fee2e2; color: #dc2626;' :
                 item.posicao === data.ranking.length ? 'background: #dcfce7; color: #16a34a;' : '';
 
             html += `
                 <tr>
-                    <td style="text-align: center;"><span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; ${rankBadge}">${item.posicao}�</span></td>
+                    <td style="text-align: center;"><span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; ${rankBadge}">${item.posicao}º</span></td>
                     <td><strong>${item.analista_nome}</strong></td>
                     <td style="text-align: center;">${tmeIcon} ${item.tme ? secondsToHms(item.tme) : '-'}</td>
                     <td style="text-align: center;">${npsIcon} ${item.nps ? item.nps.toFixed(2) : '-'}</td>
@@ -1278,7 +1278,7 @@
         });
 
         html += '</tbody></table>';
-        html += '<p class="text-muted mt-3" style="font-size: 12px;"><strong>Legenda:</strong> ?? Meta atingida | ?? Meta n�o atingida | ? Sem dados</p>';
+        html += '<p class="text-muted mt-3" style="font-size: 12px;"><strong>Legenda:</strong> 🟢 Meta atingida | 🔴 Meta não atingida | ⚪ Sem dados</p>';
 
         container.innerHTML = html;
     }

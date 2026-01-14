@@ -304,8 +304,8 @@ def api_ranking(request):
             'score': score
         })
     
-    # Ordenar: do pior para o melhor (menor score primeiro)
-    ranking_data.sort(key=lambda x: (x['score'], x['nps'] or 0, -(x['tme'] or 9999)))
+    # Ordenar: do melhor para o pior (maior score primeiro)
+    ranking_data.sort(key=lambda x: (x['score'], x['nps'] or 0, -(x['tme'] or 9999)), reverse=True)
     
     # Adicionar posição
     for i, item in enumerate(ranking_data):
