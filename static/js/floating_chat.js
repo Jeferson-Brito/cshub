@@ -492,7 +492,7 @@ class FloatingChat {
         this.sendBtn.disabled = true;
 
         // IMPORTANTE: Salvar via API HTTP (garante persistência no banco de dados)
-        fetch(`/api/chat/conversations/${this.currentConversationId}/messages/send/`, {
+        fetch(`/api/chat/conversations/${this.currentConversationId}/send/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -487,6 +487,102 @@
     </div>
 </div>
 
+<!-- Modal para Editar Solicitação de Estorno -->
+<div class="modal fade" id="editRefundModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Editar Solicitação de Estorno #<span
+                        id="edit-refund-id"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRefundForm">
+                    <input type="hidden" name="refund_id" id="edit-refund-id-input">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Código da Loja</label>
+                            <input type="text" class="form-control" name="store_code" id="edit-store_code" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome do Cliente</label>
+                            <input type="text" class="form-control" name="customer_name" id="edit-customer_name"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CPF do Cliente</label>
+                            <input type="text" class="form-control" name="customer_cpf" id="edit-customer_cpf" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">E-mail do Cliente</label>
+                            <input type="email" class="form-control" name="customer_email" id="edit-customer_email"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Telefone do Cliente</label>
+                            <input type="text" class="form-control" name="customer_phone" id="edit-customer_phone"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Data do Ocorrido</label>
+                            <input type="date" class="form-control" name="incident_date" id="edit-incident_date"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Valor do Estorno</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="text" class="form-control" name="refund_value" id="edit-refund_value"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tipo de Pagamento</label>
+                            <select class="form-select" name="refund_type" id="edit-refund_type" required>
+                                <option value="pix">PIX</option>
+                                <option value="cartao_credito">Cartão de Crédito</option>
+                                <option value="cartao_debito">Cartão de Débito</option>
+                                <option value="checkout_web">Checkout Web</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Destino do Estorno</label>
+                            <select class="form-select" name="refund_destination" id="edit-refund_destination" required>
+                                <option value="estorno_bancario">Estorno bancário</option>
+                                <option value="creditos_lavanderia">Créditos na lavanderia</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chave PIX (se aplicável)</label>
+                        <input type="text" class="form-control" name="pix_key" id="edit-pix_key">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo</label>
+                        <textarea class="form-control" name="reason" id="edit-reason" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resumo do Atendimento</label>
+                        <textarea class="form-control" name="summary" id="edit-summary" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveEditRefund()">
+                    <i class="bi bi-check-lg"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -1155,10 +1251,17 @@
                     ${attachmentsHtml}
                 `;
 
-                // Adicionar botão de cancelamento para gestores
+                // Adicionar botões de edição e cancelamento
                 let footerButtons = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
+
+                // Botão de edição para quem tem permissão (NRS Suporte, gestor, admin)
+                if (data.can_edit && r.status === 'aberta') {
+                    footerButtons = `<button class="btn btn-primary me-2" onclick="openEditRefundModal(${r.id})"><i class="bi bi-pencil"></i> Editar</button>` + footerButtons;
+                }
+
+                // Botão de cancelamento para gestores
                 if (isManager && r.status === 'aberta' && !r.cancellation_requested) {
-                    footerButtons += `<button type="button" class="btn btn-danger" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
+                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
                 }
                 document.getElementById('refund-detail-footer').innerHTML = footerButtons;
 
@@ -1242,6 +1345,72 @@
         } catch (e) {
             console.error('Erro ao solicitar cancelamento', e);
             Swal.fire('Erro!', 'Erro de conexão', 'error');
+        }
+    }
+
+    async function openEditRefundModal(id) {
+        // Close detail modal first
+        const detailModal = bootstrap.Modal.getInstance(document.getElementById('refundDetailModal'));
+        if (detailModal) detailModal.hide();
+
+        try {
+            const res = await fetch(`/api/refunds/${id}/`);
+            if (res.ok) {
+                const data = await res.json();
+                const r = data.refund;
+
+                // Populate form fields
+                document.getElementById('edit-refund-id').textContent = id;
+                document.getElementById('edit-refund-id-input').value = id;
+                document.getElementById('edit-store_code').value = r.store_code;
+                document.getElementById('edit-customer_name').value = r.customer_name;
+                document.getElementById('edit-customer_cpf').value = r.customer_cpf;
+                document.getElementById('edit-customer_email').value = r.customer_email;
+                document.getElementById('edit-customer_phone').value = r.customer_phone || '';
+                document.getElementById('edit-incident_date').value = r.incident_date;
+                document.getElementById('edit-refund_value').value = parseFloat(r.refund_value).toFixed(2).replace('.', ',');
+                document.getElementById('edit-refund_type').value = r.refund_type;
+                document.getElementById('edit-pix_key').value = r.pix_key || '';
+                document.getElementById('edit-reason').value = r.reason;
+                document.getElementById('edit-summary').value = r.summary;
+
+                new bootstrap.Modal(document.getElementById('editRefundModal')).show();
+            } else {
+                if (window.showToast) window.showToast('Erro ao carregar dados', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            if (window.showToast) window.showToast('Erro de conexão', 'error');
+        }
+    }
+
+    async function saveEditRefund() {
+        const form = document.getElementById('editRefundForm');
+        const id = document.getElementById('edit-refund-id-input').value;
+
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch(`/api/refunds/${id}/edit/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                bootstrap.Modal.getInstance(document.getElementById('editRefundModal')).hide();
+                if (window.showToast) window.showToast(data.message || 'Alterações salvas!', 'success');
+                loadMyRefunds();
+            } else {
+                const err = await res.json();
+                if (window.showToast) window.showToast(err.error || 'Erro ao salvar', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            if (window.showToast) window.showToast('Erro de conexão', 'error');
         }
     }
 
