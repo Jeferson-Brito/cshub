@@ -213,3 +213,111 @@ def api_global_meta_delete(request, pk):
         return JsonResponse({'success': True, 'message': 'Meta global excluída'})
     except MetaMensalGlobal.DoesNotExist:
         return JsonResponse({'error': 'Meta não encontrada'}, status=404)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_ranking(request):
+    """Retorna ranking de analistas para um mês/ano específico"""
+    user = request.user
+    
+    # Apenas gestores e admins podem ver o ranking
+    if user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'error': 'Sem permissão'}, status=403)
+    
+    # Verificar se é do departamento NRS Suporte
+    try:
+        nrs_dept = Department.objects.get(name='NRS Suporte')
+    except Department.DoesNotExist:
+        return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
+    
+    if user.department != nrs_dept and user.role != 'administrador':
+        return JsonResponse({'error': 'Acesso restrito ao NRS Suporte'}, status=403)
+    
+    # Parâmetros
+    mes = request.GET.get('mes')
+    ano = request.GET.get('ano')
+    
+    if not mes or not ano:
+        return JsonResponse({'error': 'Parâmetros mes e ano são obrigatórios'}, status=400)
+    
+    try:
+        mes = int(mes)
+        ano = int(ano)
+    except ValueError:
+        return JsonResponse({'error': 'Valores inválidos para mes/ano'}, status=400)
+    
+    # Buscar meta global do mês
+    try:
+        meta_global = MetaMensalGlobal.objects.get(department=nrs_dept, mes=mes, ano=ano)
+        meta_tme = meta_global.meta_tme
+        meta_nps = float(meta_global.meta_nps) if meta_global.meta_nps else None
+        meta_chats = meta_global.meta_chats
+    except MetaMensalGlobal.DoesNotExist:
+        meta_tme = None
+        meta_nps = None
+        meta_chats = None
+    
+    # Buscar KPIs do mês
+    kpis = IndicadorDesempenho.objects.filter(
+        department=nrs_dept,
+        mes=mes,
+        ano=ano
+    ).select_related('analista')
+    
+    ranking_data = []
+    for kpi in kpis:
+        # Calcular se atingiu cada meta
+        tme_ok = None
+        nps_ok = None
+        chats_ok = None
+        score = 0
+        
+        # TME: menor é melhor (≤ meta = OK)
+        if kpi.tme is not None and meta_tme is not None:
+            tme_ok = kpi.tme <= meta_tme
+            if tme_ok:
+                score += 1
+        
+        # NPS: maior é melhor (≥ meta = OK)
+        kpi_nps = float(kpi.nps) if kpi.nps else None
+        if kpi_nps is not None and meta_nps is not None:
+            nps_ok = kpi_nps >= meta_nps
+            if nps_ok:
+                score += 1
+        
+        # Chats: maior é melhor (≥ meta = OK)
+        if kpi.chats is not None and meta_chats is not None:
+            chats_ok = kpi.chats >= meta_chats
+            if chats_ok:
+                score += 1
+        
+        ranking_data.append({
+            'analista_id': kpi.analista_id,
+            'analista_nome': kpi.analista.get_full_name() or kpi.analista.username,
+            'tme': kpi.tme,
+            'tme_ok': tme_ok,
+            'nps': kpi_nps,
+            'nps_ok': nps_ok,
+            'chats': kpi.chats,
+            'chats_ok': chats_ok,
+            'score': score
+        })
+    
+    # Ordenar: do pior para o melhor (menor score primeiro)
+    ranking_data.sort(key=lambda x: (x['score'], x['nps'] or 0, -(x['tme'] or 9999)))
+    
+    # Adicionar posição
+    for i, item in enumerate(ranking_data):
+        item['posicao'] = i + 1
+    
+    return JsonResponse({
+        'ranking': ranking_data,
+        'meta_global': {
+            'tme': meta_tme,
+            'nps': meta_nps,
+            'chats': meta_chats
+        },
+        'mes': mes,
+        'ano': ano
+    })

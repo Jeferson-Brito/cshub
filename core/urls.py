@@ -123,6 +123,7 @@ urlpatterns = [
     path('api/desempenho/metas/global/', api_desempenho.api_global_metas_list, name='api_global_metas_list'),
     path('api/desempenho/metas/global/save/', api_desempenho.api_global_meta_save, name='api_global_meta_save'),
     path('api/desempenho/metas/global/<int:pk>/delete/', api_desempenho.api_global_meta_delete, name='api_global_meta_delete'),
+    path('api/desempenho/ranking/', api_desempenho.api_ranking, name='api_ranking'),
 
     # API Tarefas e Rotinas
     path('api/tasks/', api_tasks.api_tasks_list, name='api_tasks_list'),
