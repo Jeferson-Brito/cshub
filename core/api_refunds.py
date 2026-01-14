@@ -416,6 +416,68 @@ def api_refund_stats(request):
 
 
 @login_required
+@require_http_methods(["POST", "PUT", "PATCH"])
+def api_refund_edit(request, pk):
+    """Editar uma solicitação de estorno existente"""
+    try:
+        refund = RefundRequest.objects.get(pk=pk)
+        user = request.user
+        
+        # Verificar permissão de edição
+        can_edit = (
+            user == refund.analyst or 
+            user.role in ['gestor', 'administrador']
+        )
+        
+        if not can_edit:
+            return JsonResponse({'success': False, 'error': 'Sem permissão para editar'}, status=403)
+        
+        # Parse data
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            data = request.POST
+            checked_cameras = data.get('checked_cameras', 'false').lower() == 'true'
+            refund_value_str = data.get('refund_value', '0').replace('.', '').replace(',', '.')
+            try:
+                refund_value = float(refund_value_str)
+            except:
+                refund_value = float(refund.refund_value)
+        else:
+            data = json.loads(request.body)
+            checked_cameras = data.get('checked_cameras', refund.checked_cameras)
+            refund_value = data.get('refund_value', refund.refund_value)
+        
+        # Update fields
+        refund.store_code = data.get('store_code', refund.store_code)
+        refund.customer_name = data.get('customer_name', refund.customer_name)
+        refund.customer_cpf = data.get('customer_cpf', refund.customer_cpf)
+        refund.customer_email = data.get('customer_email', refund.customer_email)
+        refund.customer_phone = data.get('customer_phone', refund.customer_phone)
+        
+        incident_date = data.get('incident_date')
+        if incident_date:
+            refund.incident_date = incident_date
+            
+        refund.purchase_location = data.get('purchase_location', refund.purchase_location)
+        refund.reason = data.get('reason', refund.reason)
+        refund.checked_cameras = checked_cameras
+        refund.refund_value = refund_value
+        refund.refund_type = data.get('refund_type', refund.refund_type)
+        refund.pix_key = data.get('pix_key', refund.pix_key)
+        refund.summary = data.get('summary', refund.summary)
+        
+        refund.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Solicitação #{refund.id} atualizada com sucesso!'
+        })
+    except RefundRequest.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Solicitação não encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
 @require_http_methods(["GET"])
 def api_nrs_analysts(request):
     """Retorna lista de analistas do NRS Suporte para filtros"""

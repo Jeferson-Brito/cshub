@@ -510,44 +510,61 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const sidebar = document.getElementById('sidebar');
-            const reclameAquiToggle = document.querySelector('.dropdown-toggle-custom');
-            const reclameAquiSubmenu = document.getElementById('reclameAquiSubmenu');
 
-            if (reclameAquiToggle && reclameAquiSubmenu) {
-                reclameAquiToggle.addEventListener('click', function (e) {
+            // Handle both Reclame Aqui submenus (original and CS Clientes)
+            const submenuConfigs = [
+                { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
+                { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') }
+            ];
+
+            submenuConfigs.forEach(config => {
+                const { toggle, submenu } = config;
+                if (!toggle || !submenu) return;
+
+                toggle.addEventListener('click', function (e) {
                     // Se a sidebar está recolhida, forçar a abertura do submenu
                     if (sidebar && sidebar.classList.contains('collapsed')) {
                         e.preventDefault();
                         e.stopPropagation();
 
                         // Posicionar o submenu ao lado do ícone
-                        const rect = reclameAquiToggle.getBoundingClientRect();
-                        reclameAquiSubmenu.style.top = rect.top + 'px';
+                        const rect = toggle.getBoundingClientRect();
+                        submenu.style.top = rect.top + 'px';
 
                         // Toggle manual do submenu
-                        if (reclameAquiSubmenu.classList.contains('show')) {
-                            reclameAquiSubmenu.classList.remove('show');
+                        if (submenu.classList.contains('show')) {
+                            submenu.classList.remove('show');
                         } else {
-                            reclameAquiSubmenu.classList.add('show');
+                            // Fechar outros submenus primeiro
+                            submenuConfigs.forEach(c => {
+                                if (c.submenu && c.submenu !== submenu) {
+                                    c.submenu.classList.remove('show');
+                                }
+                            });
+                            submenu.classList.add('show');
                         }
                     }
                 });
+            });
 
-                // Fechar submenu ao clicar fora
-                document.addEventListener('click', function (e) {
-                    if (sidebar && sidebar.classList.contains('collapsed')) {
-                        if (!reclameAquiToggle.contains(e.target) && !reclameAquiSubmenu.contains(e.target)) {
-                            reclameAquiSubmenu.classList.remove('show');
+            // Fechar submenu ao clicar fora
+            document.addEventListener('click', function (e) {
+                if (sidebar && sidebar.classList.contains('collapsed')) {
+                    submenuConfigs.forEach(config => {
+                        const { toggle, submenu } = config;
+                        if (toggle && submenu && !toggle.contains(e.target) && !submenu.contains(e.target)) {
+                            submenu.classList.remove('show');
                         }
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
     </script>
+
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}

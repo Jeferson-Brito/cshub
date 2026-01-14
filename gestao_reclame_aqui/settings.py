@@ -109,11 +109,12 @@ DATABASES = {
         "NAME": get_env("DB_NAME", "postgres"),
         "USER": get_env("DB_USER", "postgres.sepcgocgjbxqqyyyvnpw"),
         "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "aws-0-us-east-2.pooler.supabase.com"),
-        "PORT": get_env("DB_PORT", "6543"),
+        "HOST": get_env("DB_HOST", "aws-1-us-east-2.pooler.supabase.com"),
+        "PORT": get_env("DB_PORT", "5432"),
         "CONN_MAX_AGE": 0,  # Pooler gerencia conexões, não manter persistentes
     }
 }
+
 
 print("✓ Banco PostgreSQL configurado", file=sys.stderr)
 

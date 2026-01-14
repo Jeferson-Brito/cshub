@@ -148,6 +148,79 @@
     </div>
 </div>
 
+<!-- Modal Editar Solicitação -->
+<div class="modal fade" id="editRefundModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square text-warning"></i> Editar Solicitação #<span
+                        id="edit-id"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRefundForm">
+                    <input type="hidden" name="refund_id" id="edit-refund-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Código da Loja</label>
+                            <input type="text" class="form-control" name="store_code" id="edit-store-code" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome do Cliente</label>
+                            <input type="text" class="form-control" name="customer_name" id="edit-customer-name"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CPF do Cliente</label>
+                            <input type="text" class="form-control" name="customer_cpf" id="edit-customer-cpf" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">E-mail do Cliente</label>
+                            <input type="email" class="form-control" name="customer_email" id="edit-customer-email"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Telefone do Cliente</label>
+                            <input type="text" class="form-control" name="customer_phone" id="edit-customer-phone"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valor do Estorno</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="text" class="form-control" name="refund_value" id="edit-refund-value"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo da Solicitação</label>
+                        <textarea class="form-control" name="reason" id="edit-reason" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resumo do Atendimento</label>
+                        <textarea class="form-control" name="summary" id="edit-summary" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" name="pix_key" id="edit-pix-key">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="saveEditRefund()">
+                    <i class="bi bi-check-lg"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -230,6 +303,9 @@
                     <td>
                         <button class="btn btn-sm btn-outline-primary" onclick="openDetail(${r.id})" title="Ver Detalhes">
                             <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="openEditModal(${r.id})" title="Editar">
+                            <i class="bi bi-pencil"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary" onclick="openAttachmentModal(${r.id})" title="Anexar">
                             <i class="bi bi-paperclip"></i>
@@ -508,6 +584,78 @@
         } catch (e) {
             console.error('Erro ao excluir', e);
             Swal.fire('Erro!', 'Erro de conexão', 'error');
+        }
+    }
+
+
+    async function openEditModal(id) {
+        try {
+            const res = await fetch(`/api/refunds/${id}/`);
+            if (res.ok) {
+                const data = await res.json();
+                const r = data.refund;
+
+                document.getElementById('edit-id').textContent = r.id;
+                document.getElementById('edit-refund-id').value = r.id;
+                document.getElementById('edit-store-code').value = r.store_code;
+                document.getElementById('edit-customer-name').value = r.customer_name;
+                document.getElementById('edit-customer-cpf').value = r.customer_cpf;
+                document.getElementById('edit-customer-email').value = r.customer_email;
+                document.getElementById('edit-customer-phone').value = r.customer_phone;
+                document.getElementById('edit-refund-value').value = parseFloat(r.refund_value).toFixed(2);
+                document.getElementById('edit-reason').value = r.reason;
+                document.getElementById('edit-summary').value = r.summary || '';
+                document.getElementById('edit-pix-key').value = r.pix_key || '';
+
+                new bootstrap.Modal(document.getElementById('editRefundModal')).show();
+            } else {
+                window.showToast('Erro ao carregar dados da solicitação', 'error');
+            }
+        } catch (e) {
+            console.error('Erro ao abrir edição', e);
+            window.showToast('Erro ao carregar dados', 'error');
+        }
+    }
+
+    async function saveEditRefund() {
+        const form = document.getElementById('editRefundForm');
+        const id = document.getElementById('edit-refund-id').value;
+
+        const data = {
+            store_code: document.getElementById('edit-store-code').value,
+            customer_name: document.getElementById('edit-customer-name').value,
+            customer_cpf: document.getElementById('edit-customer-cpf').value,
+            customer_email: document.getElementById('edit-customer-email').value,
+            customer_phone: document.getElementById('edit-customer-phone').value,
+            refund_value: document.getElementById('edit-refund-value').value.replace(',', '.'),
+            reason: document.getElementById('edit-reason').value,
+            summary: document.getElementById('edit-summary').value,
+            pix_key: document.getElementById('edit-pix-key').value
+        };
+
+        try {
+            const res = await fetch(`/api/refunds/${id}/edit/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                window.showToast(result.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editRefundModal')).hide();
+                loadRefunds();
+                loadStats();
+            } else {
+                const err = await res.json();
+                window.showToast(err.error || 'Erro ao salvar', 'error');
+            }
+        } catch (e) {
+            console.error('Erro ao salvar edição', e);
+            window.showToast('Erro de conexão', 'error');
         }
     }
 

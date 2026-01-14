@@ -424,7 +424,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Verificou nas Câmeras?</label>
-                            <select class="form-select" name="checked_cameras">
+                            <select class="form-select" name="checked_cameras" required>
                                 <option value="" disabled selected>Selecione...</option>
                                 <option value="false">Não</option>
                                 <option value="true">Sim</option>
@@ -464,7 +464,11 @@
                         <input type="text" class="form-control" name="pix_key"
                             placeholder="CPF, E-mail, Telefone ou Chave aleatória">
                     </div>
-
+                    <div class="mb-3">
+                        <label class="form-label">Resumo do Atendimento</label>
+                        <textarea class="form-control" name="summary" rows="3" required
+                            placeholder="Descreva o resumo do atendimento ao cliente..."></textarea>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label"><i class="bi bi-paperclip"></i> Anexos (fotos, prints, etc.)</label>
                         <input type="file" class="form-control" name="attachments" id="refund-attachments" multiple

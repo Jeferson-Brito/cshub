@@ -149,6 +149,7 @@ urlpatterns = [
     path('api/refunds/<int:pk>/delete/', api_refunds.api_refund_delete, name='api_refund_delete'),
     path('api/refunds/notifications/', api_refunds.api_refund_notifications, name='api_refund_notifications'),
     path('api/refunds/stats/', api_refunds.api_refund_stats, name='api_refund_stats'),
+    path('api/refunds/<int:pk>/edit/', api_refunds.api_refund_edit, name='api_refund_edit'),
     path('api/users/nrs-analysts/', api_refunds.api_nrs_analysts, name='api_nrs_analysts'),
     
     # Store Presence and History APIs
