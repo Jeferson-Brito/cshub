@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <html lang="pt-BR">
 
@@ -135,11 +135,11 @@
         {% endif %}
         {% endif %}
 
-        <!-- Menu de Navega��o -->
+        <!-- Menu de Navegação -->
         <nav class="sidebar-nav">
             {% if current_department.name == 'Reclame Aqui' %}
             <!-- Reclame Aqui -->
-            <div class="nav-group-title">Opera��o</div>
+            <div class="nav-group-title">Operação</div>
 
             <a href="#reclameAquiSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -161,9 +161,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Reclama��es">
+                        title="Reclamações">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">Reclama��es</span>
+                        <span class="link-text">Reclamações</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -173,9 +173,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="Relat�rios">
+                        title="Relatórios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">Relat�rios</span>
+                        <span class="link-text">Relatórios</span>
                     </a>
                 </div>
             </div>
@@ -183,14 +183,14 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Neg�cio">
+                title="Google Meu Negócio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Neg�cio</span>
+                <span class="link-text">Google Meu Negócio</span>
             </a>
 
             {% elif current_department.name == 'NRS Suporte' %}
             <!-- NRS Suporte -->
-            <div class="nav-group-title">Opera��o</div>
+            <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
                 <i class="bi bi-calendar-event"></i>
@@ -204,7 +204,7 @@
             <a href="{% url 'calendario' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                 <i class="bi bi-calendar3"></i>
-                <span class="link-text">Calend�rio</span>
+                <span class="link-text">Calendário</span>
             </a>
             <a href="{% url 'tasks_view' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
@@ -214,10 +214,10 @@
             <a href="{% url 'verificacao_lojas' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
                 <i class="bi bi-shield-check"></i>
-                <span class="link-text">Verifica��o de Lojas</span>
+                <span class="link-text">Verificação de Lojas</span>
             </a>
 
-            <div class="nav-group-title">Informa��o</div>
+            <div class="nav-group-title">Informação</div>
             <a href="{% url 'base_conhecimento' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
                 <i class="bi bi-book"></i>
@@ -233,7 +233,7 @@
 
             {% elif current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
-            <div class="nav-group-title">Implanta��o</div>
+            <div class="nav-group-title">Implantação</div>
             <a href="{% url 'onboarding_dev_1' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
                 <i class="bi bi-hammer"></i>
@@ -253,7 +253,7 @@
             {% elif current_department.name == 'CS Clientes' %}
 
             <!-- CS Clientes -->
-            <div class="nav-group-title">Opera��o</div>
+            <div class="nav-group-title">Operação</div>
             <a href="#reclameAquiSubmenuCS"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
                 data-bs-toggle="collapse"
@@ -274,9 +274,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Reclama��es">
+                        title="Reclamações">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">Reclama��es</span>
+                        <span class="link-text">Reclamações</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -286,9 +286,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="Relat�rios">
+                        title="Relatórios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">Relat�rios</span>
+                        <span class="link-text">Relatórios</span>
                     </a>
                 </div>
             </div>
@@ -296,16 +296,16 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Neg�cio">
+                title="Google Meu Negócio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Neg�cio</span>
+                <span class="link-text">Google Meu Negócio</span>
             </a>
 
             <div class="nav-group-title">Atendimento</div>
             <a href="{% url 'solicitacoes' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
                 <i class="bi bi-receipt-cutoff"></i>
-                <span class="link-text">Solicita��es</span>
+                <span class="link-text">Solicitações</span>
             </a>
             {% endif %}
 
@@ -315,23 +315,23 @@
             {% if user.is_administrador %}
             <div class="nav-group-title">Sistema</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usu�rios">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
                 <i class="bi bi-people"></i>
-                <span class="link-text">Usu�rios</span>
+                <span class="link-text">Usuários</span>
             </a>
             {% elif user.is_gestor or user.is_administrador %}
-            <div class="nav-group-title">Gest�o</div>
+            <div class="nav-group-title">Gestão</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usu�rios">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
                 <i class="bi bi-people"></i>
                 <span class="link-text">Equipe</span>
             </a>
             {% endif %}
 
-            <!-- Chat movido para o balão flutuante -->
+            <!-- Chat movido para o balÃ£o flutuante -->
         </nav>
 
-        <!-- Usuário -->
+        <!-- UsuÃ¡rio -->
         <div class="sidebar-user">
             <div class="user-avatar">{{ user.username|first|upper }}</div>
             <div class="user-details">
@@ -344,7 +344,7 @@
                 </p>
             </div>
             <div class="user-actions">
-                <a href="{% url 'settings' %}" class="user-action" title="Configurações">
+                <a href="{% url 'settings' %}" class="user-action" title="ConfiguraÃ§Ãµes">
                     <i class="bi bi-gear"></i>
                 </a>
                 <button type="button" class="user-action" title="Sair" data-bs-toggle="modal"
@@ -355,12 +355,12 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Logout -->
+    <!-- Modal de ConfirmaÃ§Ã£o de Logout -->
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-light border-0 py-3">
-                    <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirmar Saída</h5>
+                    <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirmar SaÃ­da</h5>
                     <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#logoutModal"
                         aria-label="Close"></button>
                 </div>
@@ -378,7 +378,7 @@
     </div>
     {% endif %}
 
-    <!-- Conteúdo Principal -->
+    <!-- ConteÃºdo Principal -->
     <div class="{% if user.is_authenticated %}main-content{% endif %}">
         {% block content %}{% endblock %}
     </div>
@@ -411,7 +411,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Carregar tema salvo ao carregar a página
+        // Carregar tema salvo ao carregar a pÃ¡gina
         document.addEventListener('DOMContentLoaded', function () {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
@@ -452,7 +452,7 @@
                 const isCollapsed = sidebar.classList.contains('collapsed');
                 localStorage.setItem('sidebarCollapsed', isCollapsed);
 
-                // Trocar ícone
+                // Trocar Ã­cone
                 const icon = this.querySelector('i');
                 if (isCollapsed) {
                     icon.classList.remove('bi-chevron-left');
@@ -522,12 +522,12 @@
                 if (!toggle || !submenu) return;
 
                 toggle.addEventListener('click', function (e) {
-                    // Se a sidebar está recolhida, forçar a abertura do submenu
+                    // Se a sidebar estÃ¡ recolhida, forÃ§ar a abertura do submenu
                     if (sidebar && sidebar.classList.contains('collapsed')) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        // Posicionar o submenu ao lado do ícone
+                        // Posicionar o submenu ao lado do Ã­cone
                         const rect = toggle.getBoundingClientRect();
                         submenu.style.top = rect.top + 'px';
 
@@ -597,7 +597,7 @@
             checkChatUnread();
         });
 
-        // Verifica mensagens não lidas do chat
+        // Verifica mensagens nÃ£o lidas do chat
         async function checkChatUnread() {
             try {
                 const res = await fetch('/api/chat/unread-count/');
@@ -676,7 +676,7 @@
                     }
                 }
             } catch (e) {
-                console.error('Erro ao verificar notificações', e);
+                console.error('Erro ao verificar notificaÃ§Ãµes', e);
             }
         }
 
