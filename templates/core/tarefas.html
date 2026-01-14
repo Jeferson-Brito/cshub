@@ -833,6 +833,33 @@
 
     async function submitRefundRequest() {
         const form = document.getElementById('refundRequestForm');
+
+        // Validate all required fields
+        const requiredFields = [
+            { name: 'store_code', label: 'Código da Loja' },
+            { name: 'customer_name', label: 'Nome do Cliente' },
+            { name: 'customer_cpf', label: 'CPF do Cliente' },
+            { name: 'customer_email', label: 'E-mail do Cliente' },
+            { name: 'customer_phone', label: 'Telefone do Cliente' },
+            { name: 'incident_date', label: 'Data do Ocorrido' },
+            { name: 'purchase_location', label: 'Local da Compra' },
+            { name: 'reason', label: 'Motivo da Solicitação de Estorno' },
+            { name: 'checked_cameras', label: 'Verificou nas Câmeras?' },
+            { name: 'refund_value', label: 'Valor do Estorno' },
+            { name: 'refund_type', label: 'Pagamento realizado com' },
+            { name: 'refund_destination', label: 'Destino do Estorno' },
+            { name: 'summary', label: 'Resumo do Atendimento' }
+        ];
+
+        for (const field of requiredFields) {
+            const el = form.elements[field.name];
+            if (!el || !el.value || el.value.trim() === '') {
+                if (window.showToast) window.showToast(`O campo "${field.label}" é obrigatório!`, 'error');
+                if (el) el.focus();
+                return;
+            }
+        }
+
         const formData = new FormData(form);
 
         // Add attachments from file input

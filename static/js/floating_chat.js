@@ -491,13 +491,38 @@ class FloatingChat {
         this.input.value = '';
         this.sendBtn.disabled = true;
 
-        // Envia via WebSocket (servidor vai confirmar)
-        if (this.chatSocket && this.chatSocket.readyState === WebSocket.OPEN) {
-            this.chatSocket.send(JSON.stringify({
-                type: 'message',
-                content: content
-            }));
-        }
+        // IMPORTANTE: Salvar via API HTTP (garante persistência no banco de dados)
+        fetch(`/api/chat/conversations/${this.currentConversationId}/messages/send/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCookie('csrftoken')
+            },
+            body: JSON.stringify({ content: content })
+        })
+            .then(res => {
+                if (res.ok) {
+                    return res.json();
+                } else {
+                    throw new Error('Falha ao salvar mensagem');
+                }
+            })
+            .then(data => {
+                // Atualiza o tempId para o ID real na mensagem exibida
+                const tempEl = this.msgList.querySelector(`[data-msg-id="${tempId}"]`);
+                if (tempEl) {
+                    tempEl.dataset.msgId = data.id;
+                }
+            })
+            .catch(e => {
+                console.error('Erro ao enviar mensagem:', e);
+                // Marca mensagem como erro visual
+                const tempEl = this.msgList.querySelector(`[data-msg-id="${tempId}"]`);
+                if (tempEl) {
+                    tempEl.style.opacity = '0.5';
+                    tempEl.title = 'Erro ao enviar - tente novamente';
+                }
+            });
     }
 
     async handleFileSelect() {

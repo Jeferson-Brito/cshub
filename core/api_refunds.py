@@ -173,9 +173,11 @@ def api_refund_detail(request, pk):
             })
         
         # Verificar permissões de edição
+        is_nrs_suporte = user.department and user.department.name == 'NRS Suporte'
         can_edit = (
             user == refund.analyst or 
-            user.role in ['gestor', 'administrador']
+            user.role in ['gestor', 'administrador'] or
+            is_nrs_suporte  # NRS Suporte pode editar todas as solicitações
         )
         
         # Verificar permissão de exclusão (gestores CS ou admin)
@@ -424,9 +426,11 @@ def api_refund_edit(request, pk):
         user = request.user
         
         # Verificar permissão de edição
+        is_nrs_suporte = user.department and user.department.name == 'NRS Suporte'
         can_edit = (
             user == refund.analyst or 
-            user.role in ['gestor', 'administrador']
+            user.role in ['gestor', 'administrador'] or
+            is_nrs_suporte  # NRS Suporte pode editar todas as solicitações
         )
         
         if not can_edit:

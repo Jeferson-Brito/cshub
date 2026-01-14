@@ -135,11 +135,11 @@
         {% endif %}
         {% endif %}
 
-        <!-- Menu de NavegaÃ§Ã£o -->
+        <!-- Menu de Navegação -->
         <nav class="sidebar-nav">
             {% if current_department.name == 'Reclame Aqui' %}
             <!-- Reclame Aqui -->
-            <div class="nav-group-title">OperaÃ§Ã£o</div>
+            <div class="nav-group-title">Operação</div>
 
             <a href="#reclameAquiSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -161,9 +161,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="ReclamaÃ§Ãµes">
+                        title="Reclamações">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">ReclamaÃ§Ãµes</span>
+                        <span class="link-text">Reclamações</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -173,9 +173,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="RelatÃ³rios">
+                        title="Relatórios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">RelatÃ³rios</span>
+                        <span class="link-text">Relatórios</span>
                     </a>
                 </div>
             </div>
@@ -183,14 +183,14 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu NegÃ³cio">
+                title="Google Meu Negócio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu NegÃ³cio</span>
+                <span class="link-text">Google Meu Negócio</span>
             </a>
 
             {% elif current_department.name == 'NRS Suporte' %}
             <!-- NRS Suporte -->
-            <div class="nav-group-title">OperaÃ§Ã£o</div>
+            <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
                 <i class="bi bi-calendar-event"></i>
@@ -204,7 +204,7 @@
             <a href="{% url 'calendario' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                 <i class="bi bi-calendar3"></i>
-                <span class="link-text">CalendÃ¡rio</span>
+                <span class="link-text">Calendário</span>
             </a>
             <a href="{% url 'tasks_view' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
@@ -214,10 +214,10 @@
             <a href="{% url 'verificacao_lojas' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
                 <i class="bi bi-shield-check"></i>
-                <span class="link-text">VerificaÃ§Ã£o de Lojas</span>
+                <span class="link-text">Verificação de Lojas</span>
             </a>
 
-            <div class="nav-group-title">InformaÃ§Ã£o</div>
+            <div class="nav-group-title">Informação</div>
             <a href="{% url 'base_conhecimento' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
                 <i class="bi bi-book"></i>
@@ -233,7 +233,7 @@
 
             {% elif current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
-            <div class="nav-group-title">ImplantaÃ§Ã£o</div>
+            <div class="nav-group-title">Implantação</div>
             <a href="{% url 'onboarding_dev_1' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
                 <i class="bi bi-hammer"></i>
@@ -253,7 +253,7 @@
             {% elif current_department.name == 'CS Clientes' %}
 
             <!-- CS Clientes -->
-            <div class="nav-group-title">OperaÃ§Ã£o</div>
+            <div class="nav-group-title">Operação</div>
             <a href="#reclameAquiSubmenuCS"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
                 data-bs-toggle="collapse"
@@ -274,9 +274,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="ReclamaÃ§Ãµes">
+                        title="Reclamações">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">ReclamaÃ§Ãµes</span>
+                        <span class="link-text">Reclamações</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -286,9 +286,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="RelatÃ³rios">
+                        title="Relatórios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">RelatÃ³rios</span>
+                        <span class="link-text">Relatórios</span>
                     </a>
                 </div>
             </div>
@@ -296,16 +296,16 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu NegÃ³cio">
+                title="Google Meu Negócio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu NegÃ³cio</span>
+                <span class="link-text">Google Meu Negócio</span>
             </a>
 
             <div class="nav-group-title">Atendimento</div>
             <a href="{% url 'solicitacoes' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
                 <i class="bi bi-receipt-cutoff"></i>
-                <span class="link-text">SolicitaÃ§Ãµes</span>
+                <span class="link-text">Solicitações</span>
             </a>
             {% endif %}
 
@@ -315,14 +315,14 @@
             {% if user.is_administrador %}
             <div class="nav-group-title">Sistema</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="UsuÃ¡rios">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
                 <i class="bi bi-people"></i>
-                <span class="link-text">UsuÃ¡rios</span>
+                <span class="link-text">Usuários</span>
             </a>
             {% elif user.is_gestor or user.is_administrador %}
-            <div class="nav-group-title">GestÃ£o</div>
+            <div class="nav-group-title">Gestão</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="UsuÃ¡rios">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
                 <i class="bi bi-people"></i>
                 <span class="link-text">Equipe</span>
             </a>
@@ -564,7 +564,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:"0" }};
+        const currentUserId = {{ user.id|default: "0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
