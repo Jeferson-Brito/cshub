@@ -1261,7 +1261,12 @@
 
                 // Botão de cancelamento para gestores
                 if (isManager && r.status === 'aberta' && !r.cancellation_requested) {
-                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
+                    footerButtons += `<button type="button" class="btn btn-warning ms-2" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
+                }
+
+                // Botão de exclusão para gestores e administradores
+                if (isManager) {
+                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="confirmDeleteRefund(${r.id})"><i class="bi bi-trash"></i> Excluir</button>`;
                 }
                 document.getElementById('refund-detail-footer').innerHTML = footerButtons;
 
@@ -1411,6 +1416,83 @@
         } catch (e) {
             console.error(e);
             if (window.showToast) window.showToast('Erro de conexão', 'error');
+        }
+    }
+
+    async function confirmDeleteRefund(id) {
+        // Fechar modal de detalhes primeiro
+        const detailModal = bootstrap.Modal.getInstance(document.getElementById('refundDetailModal'));
+        if (detailModal) {
+            detailModal.hide();
+        }
+
+        // Aguardar modal fechar
+        await new Promise(r => setTimeout(r, 300));
+
+        // Pedir confirmação com senha usando SweetAlert2
+        const { value: password, isConfirmed } = await Swal.fire({
+            title: 'Confirmar Exclusão',
+            html: `
+                <p class="text-danger"><strong>⚠️ Atenção:</strong> Esta ação é irreversível!</p>
+                <p>A solicitação #${id} será excluída permanentemente.</p>
+                <p>Digite sua senha para confirmar:</p>
+            `,
+            input: 'password',
+            inputPlaceholder: 'Digite sua senha',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocorrect: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-trash"></i> Excluir',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            focusCancel: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Você precisa digitar sua senha!';
+                }
+            }
+        });
+
+        if (isConfirmed && password) {
+            try {
+                const res = await fetch(`/api/refunds/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ password: password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Excluído!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    loadMyRefunds();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: data.error || 'Não foi possível excluir'
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Erro de conexão'
+                });
+            }
         }
     }
 

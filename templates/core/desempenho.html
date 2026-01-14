@@ -383,9 +383,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -1262,8 +1262,17 @@
             const npsIcon = item.nps_ok === true ? '🟢' : (item.nps_ok === false ? '🔴' : '⚪');
             const chatsIcon = item.chats_ok === true ? '🟢' : (item.chats_ok === false ? '🔴' : '⚪');
 
-            const rankBadge = item.posicao === 1 ? 'background: #fee2e2; color: #dc2626;' :
-                item.posicao === data.ranking.length ? 'background: #dcfce7; color: #16a34a;' : '';
+            // Cores do ranking: ouro, prata, bronze para top 3, vermelho para o último (pior)
+            let rankBadge = '';
+            if (item.posicao === 1) {
+                rankBadge = 'background: linear-gradient(135deg, #ffd700, #ffec8b); color: #7c5a00; box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);'; // Ouro
+            } else if (item.posicao === 2) {
+                rankBadge = 'background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #4a4a4a; box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);'; // Prata
+            } else if (item.posicao === 3) {
+                rankBadge = 'background: linear-gradient(135deg, #cd7f32, #daa06d); color: #4a2c00; box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);'; // Bronze
+            } else if (item.posicao === data.ranking.length) {
+                rankBadge = 'background: #fee2e2; color: #dc2626;'; // Vermelho para o pior
+            }
 
             html += `
                 <tr>
