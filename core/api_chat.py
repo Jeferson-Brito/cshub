@@ -379,13 +379,48 @@ def api_chat_upload(request):
 @login_required
 @require_http_methods(["GET"])
 def api_unread_count(request):
-    """Retorna contagem total de mensagens não lidas"""
-    count = Message.objects.filter(
+    """Retorna contagem total de mensagens não lidas e mensagens recentes para notificações"""
+    # Busca mensagens não lidas
+    unread_messages = Message.objects.filter(
         conversation__participants=request.user,
         is_read=False
-    ).exclude(sender=request.user).count()
+    ).exclude(sender=request.user).select_related('sender').order_by('-created_at')
     
-    return JsonResponse({'count': count})
+    count = unread_messages.count()
+    
+    # Verifica se deve retornar detalhes das mensagens (para notificações)
+    include_messages = request.GET.get('include_messages', 'false').lower() == 'true'
+    last_check = request.GET.get('last_check')
+    
+    response_data = {'count': count}
+    
+    if include_messages and count > 0:
+        # Filtra por mensagens após o último check (se fornecido)
+        if last_check:
+            try:
+                from datetime import datetime
+                last_check_dt = datetime.fromisoformat(last_check.replace('Z', '+00:00'))
+                unread_messages = unread_messages.filter(created_at__gt=last_check_dt)
+            except (ValueError, TypeError):
+                pass
+        
+        # Retorna até 5 mensagens mais recentes para notificação
+        recent_messages = []
+        for msg in unread_messages[:5]:
+            sender_name = msg.sender.get_full_name() or msg.sender.username
+            # Preview da mensagem (primeiros 80 caracteres)
+            preview = msg.content[:80] + '...' if len(msg.content) > 80 else msg.content
+            recent_messages.append({
+                'id': msg.id,
+                'sender_name': sender_name,
+                'preview': preview,
+                'created_at': msg.created_at.isoformat()
+            })
+        
+        response_data['messages'] = recent_messages
+        response_data['has_new'] = len(recent_messages) > 0
+    
+    return JsonResponse(response_data)
 
 
 @csrf_exempt

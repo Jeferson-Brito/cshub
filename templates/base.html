@@ -564,7 +564,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:"0" }};
+        const currentUserId = {{ user.id|default: "0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
@@ -597,10 +597,18 @@
             checkChatUnread();
         });
 
-        // Verifica mensagens nÃ£o lidas do chat
+        // Verifica mensagens não lidas do chat e exibe notificações
+        let lastChatCheck = null;
+        let notifiedMessageIds = new Set();
+
         async function checkChatUnread() {
             try {
-                const res = await fetch('/api/chat/unread-count/');
+                let url = '/api/chat/unread-count/?include_messages=true';
+                if (lastChatCheck) {
+                    url += `&last_check=${encodeURIComponent(lastChatCheck)}`;
+                }
+
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     const badge = document.getElementById('chatUnreadBadge');
@@ -612,6 +620,30 @@
                             badge.style.display = 'none';
                         }
                     }
+
+                    // Exibe notificações para novas mensagens
+                    if (data.has_new && data.messages && data.messages.length > 0) {
+                        let playedSound = false;
+
+                        data.messages.forEach(msg => {
+                            // Evita notificar a mesma mensagem duas vezes
+                            if (!notifiedMessageIds.has(msg.id)) {
+                                notifiedMessageIds.add(msg.id);
+
+                                // Exibe toast com nome do remetente e preview da mensagem
+                                showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
+
+                                // Toca som apenas uma vez mesmo com múltiplas mensagens
+                                if (!playedSound) {
+                                    playNotificationSound();
+                                    playedSound = true;
+                                }
+                            }
+                        });
+                    }
+
+                    // Atualiza o timestamp do último check
+                    lastChatCheck = new Date().toISOString();
                 }
             } catch (e) {
                 // Silently fail - chat might not be available
