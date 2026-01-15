@@ -659,13 +659,37 @@ def complaint_detail(request, pk):
 
 @login_required
 def complaint_create(request):
+    # Trava de segurança: apenas Administradores ou o departamento 'CS Clientes' podem criar reclamações
+    if not request.user.is_administrador():
+        if not request.user.department or request.user.department.name != 'CS Clientes':
+            messages.error(request, 'Apenas o departamento de CS Clientes e administradores podem criar reclamações.')
+            # Redirecionar para a lista de reclamações ou dashboard
+            return redirect('complaint_list')
+
     if request.method == 'POST':
         form = ComplaintForm(request.POST, user=request.user)
         if form.is_valid():
             complaint = form.save(commit=False)
+            
+            # Definir o departamento
+            if request.user.is_administrador():
+                selected_dept_id = request.session.get('selected_department_id')
+                if selected_dept_id:
+                    from .models import Department
+                    complaint.department = Department.objects.filter(id=selected_dept_id).first()
+                else:
+                    # Se for admin e não tiver depto na sessão, buscar o padrão NRS
+                    from .models import Department
+                    complaint.department = Department.objects.filter(name='NRS Suporte').first()
+            else:
+                # Outros usuários usam seu departamento fixo
+                complaint.department = request.user.department
+            
             if request.user.is_analista():
                 complaint.analista = request.user
+            
             complaint.save()
+            
             Activity.objects.create(
                 complaint=complaint,
                 usuario=request.user,

@@ -123,6 +123,13 @@ class Complaint(models.Model):
     
     def __str__(self):
         return f"{self.id_ra} - {self.nome_cliente}"
+    
+    def save(self, *args, **kwargs):
+        # Fallback: se o departamento não estiver definido mas houver um analista, 
+        # usar o departamento do analista.
+        if not self.department and self.analista:
+            self.department = self.analista.department
+        super().save(*args, **kwargs)
 
 
 class Activity(models.Model):
