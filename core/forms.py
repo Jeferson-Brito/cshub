@@ -7,7 +7,7 @@ class ComplaintForm(forms.ModelForm):
     class Meta:
         model = Complaint
         fields = [
-            'id_ra', 'cpf_cliente', 'nome_cliente', 'sobrenome',
+            'id_ra', 'cpf_cliente', 'nome_cliente',
             'email_cliente', 'telefone', 'loja_cod',
             'origem_contato', 'tipo_reclamacao', 'descricao', 'status', 'analista',
             'data_reclamacao', 'data_resposta', 'nota_satisfacao',
@@ -24,11 +24,7 @@ class ComplaintForm(forms.ModelForm):
             }),
             'nome_cliente': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nome do cliente'
-            }),
-            'sobrenome': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Sobrenome do cliente'
+                'placeholder': 'Nome e Sobrenome'
             }),
             'email_cliente': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -48,7 +44,7 @@ class ComplaintForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 6,
-                'placeholder': 'Descreva detalhadamente a reclamação do cliente...'
+                'placeholder': 'Adicione aqui a reclamação que o cliente fez no Reclame Aqui'
             }),
             'status': forms.Select(attrs={
                 'class': 'form-control'
@@ -56,15 +52,21 @@ class ComplaintForm(forms.ModelForm):
             'analista': forms.Select(attrs={
                 'class': 'form-control'
             }),
-            'data_reclamacao': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date',
-                'required': True
-            }),
-            'data_resposta': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
+            'data_reclamacao': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date',
+                    'required': True
+                }
+            ),
+            'data_resposta': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
             'tipo_reclamacao': forms.Select(attrs={
                 'class': 'form-control'
             }),
@@ -88,35 +90,33 @@ class ComplaintForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Configurar campo analista baseado no tipo de usuário e departamento
-        # Incluir também gestores como possíveis responsáveis
-        if user and not user.is_administrador():
-            responsaveis_queryset = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=user.department).order_by('first_name')
-        else:
-            responsaveis_queryset = User.objects.filter(role__in=['analista', 'gestor'], ativo=True).order_by('first_name')
+        # Nome e Sobrenome label
+        self.fields['nome_cliente'].label = "Nome e Sobrenome"
         
-        # Sempre definir o queryset primeiro
+        # Descrição não obrigatória
+        self.fields['descricao'].required = False
+        
+        # Filtro de analistas: apenas departamento 'CS Clientes'
+        responsaveis_queryset = User.objects.filter(
+            department__name='CS Clientes', 
+            role__in=['analista', 'gestor'], 
+            ativo=True
+        ).order_by('first_name')
+        
         self.fields['analista'].queryset = responsaveis_queryset
+        self.fields['analista'].required = True
+        self.fields['analista'].empty_label = "Selecione um responsável"
         
-        if user:
-            if user.is_gestor() or user.is_administrador():
-                # Gestor/Admin pode ver e alterar responsáveis
-                self.fields['analista'].required = False
-                self.fields['analista'].empty_label = "Selecione um responsável (opcional)"
-                self.fields['analista'].widget.attrs['class'] = 'form-control'
-            elif user.is_analista():
-                # Analista não pode alterar, mas o campo deve estar presente (oculto)
-                self.fields['analista'].initial = user
-                self.fields['analista'].widget = forms.HiddenInput()
-            else:
-                # Outros usuários
-                self.fields['analista'].required = False
-                self.fields['analista'].empty_label = "Selecione um responsável"
-                self.fields['analista'].widget.attrs['class'] = 'form-control'
-        else:
-            # Se não houver usuário, mostrar todos os responsáveis
-            self.fields['analista'].empty_label = "Selecione um responsável"
-            self.fields['analista'].widget.attrs['class'] = 'form-control'
+        # Campos obrigatórios
+        self.fields['telefone'].required = True
+        self.fields['tipo_reclamacao'].required = True
+        
+        # Origem do contato default
+        self.fields['origem_contato'].initial = 'RA'
+        
+        if user and user.is_analista() and user.department and user.department.name == 'CS Clientes':
+            # Se o próprio usuário for um analista de CS Clientes, pré-selecionar ele
+            self.fields['analista'].initial = user
     
     def clean_cpf_cliente(self):
         """Remove formatação do CPF antes de salvar (apenas números)"""
@@ -139,14 +139,6 @@ class ComplaintForm(forms.ModelForm):
             if nota < 0 or nota > 10:
                 raise forms.ValidationError('A nota de satisfação deve estar entre 0 e 10.')
         return nota
-    
-    def clean_data_reclamacao(self):
-        """Preservar data da reclamação se não for fornecida na edição"""
-        data = self.cleaned_data.get('data_reclamacao')
-        # Se estiver editando e a data não foi fornecida, manter a data existente
-        if self.instance and self.instance.pk and not data:
-            return self.instance.data_reclamacao
-        return data
 
 
 class StoreForm(forms.ModelForm):

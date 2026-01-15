@@ -79,22 +79,13 @@
                             <div class="text-danger small">{{ form.cpf_cliente.errors }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label">
-                                <i class="bi bi-person"></i> Nome <span class="text-danger">*</span>
+                                <i class="bi bi-person"></i> Nome e Sobrenome <span class="text-danger">*</span>
                             </label>
                             {{ form.nome_cliente }}
                             {% if form.nome_cliente.errors %}
                             <div class="text-danger small">{{ form.nome_cliente.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-person"></i> Sobrenome
-                            </label>
-                            {{ form.sobrenome }}
-                            {% if form.sobrenome.errors %}
-                            <div class="text-danger small">{{ form.sobrenome.errors }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -108,7 +99,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">
-                                <i class="bi bi-telephone"></i> Telefone
+                                <i class="bi bi-telephone"></i> Telefone <span class="text-danger">*</span>
                             </label>
                             {{ form.telefone }}
                             {% if form.telefone.errors %}
@@ -149,7 +140,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">
-                                <i class="bi bi-tag-fill"></i> Tipo de Reclamação
+                                <i class="bi bi-tag-fill"></i> Tipo de Reclamação <span class="text-danger">*</span>
                             </label>
                             {{ form.tipo_reclamacao }}
                             {% if form.tipo_reclamacao.errors %}
@@ -159,7 +150,7 @@
                         {% if user.is_gestor or user.is_administrador %}
                         <div class="col-md-6">
                             <label class="form-label">
-                                <i class="bi bi-person-badge"></i> Responsável
+                                <i class="bi bi-person-badge"></i> Responsável <span class="text-danger">*</span>
                             </label>
                             {{ form.analista }}
                             {% if form.analista.errors %}
@@ -180,13 +171,13 @@
                 </div>
                 <div class="card-body">
                     <label class="form-label">
-                        <i class="bi bi-file-text"></i> Descrição <span class="text-danger">*</span>
+                        <i class="bi bi-file-text"></i> Descrição
                     </label>
                     {{ form.descricao }}
                     {% if form.descricao.errors %}
                     <div class="text-danger small">{{ form.descricao.errors }}</div>
                     {% endif %}
-                    <small class="text-muted">Descreva detalhadamente a reclamação do cliente</small>
+                    <small class="text-muted">Adicione aqui a reclamação que o cliente fez no Reclame Aqui</small>
                 </div>
             </div>
 
