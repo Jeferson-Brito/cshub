@@ -450,6 +450,58 @@
     /* Labels */
     .card-labels-section {
         margin-bottom: 20px;
+        display: none;
+    }
+
+    .card-labels-section.show {
+        display: block;
+    }
+
+    .card-labels-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--medium-gray);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+
+    /* Cover Color Selector */
+    .card-cover-section {
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .card-cover-section.show {
+        display: block;
+    }
+
+    .cover-color-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .cover-color-option {
+        width: 50px;
+        height: 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: var(--transition);
+    }
+
+    .cover-color-option:hover {
+        transform: scale(1.05);
+    }
+
+    .cover-color-option.selected {
+        border-color: var(--dark-color);
+    }
+
+    .cover-color-none {
+        background: linear-gradient(135deg, #f3f4f6 45%, transparent 45%, transparent 55%, #f3f4f6 55%);
+        background-color: white;
+        border: 1px dashed var(--medium-gray) !important;
     }
 
     .card-labels-container {
@@ -911,7 +963,8 @@
                 </select>
             </div>
             <div class="card-modal-actions">
-                <button class="card-modal-action-btn" title="Adicionar capa"><i class="bi bi-image"></i></button>
+                <button class="card-modal-action-btn" onclick="toggleCoverPanel()" title="Adicionar capa"><i
+                        class="bi bi-image"></i></button>
                 <button class="card-modal-action-btn" title="Mais opções"><i class="bi bi-three-dots"></i></button>
                 <button class="card-modal-action-btn" onclick="closeCardModal()" title="Fechar"><i
                         class="bi bi-x-lg"></i></button>
@@ -941,8 +994,36 @@
                 </button>
             </div>
 
+            <!-- Seletor de Cor da Capa -->
+            <div class="card-cover-section" id="coverSection">
+                <div class="card-labels-section-title">Selecione uma cor para a capa</div>
+                <div class="cover-color-options" id="coverColorOptions">
+                    <div class="cover-color-option cover-color-none" data-color="" title="Sem capa"
+                        onclick="selectCoverColor('')"></div>
+                    <div class="cover-color-option" style="background: #22c55e;" data-color="#22c55e"
+                        onclick="selectCoverColor('#22c55e')"></div>
+                    <div class="cover-color-option" style="background: #eab308;" data-color="#eab308"
+                        onclick="selectCoverColor('#eab308')"></div>
+                    <div class="cover-color-option" style="background: #f97316;" data-color="#f97316"
+                        onclick="selectCoverColor('#f97316')"></div>
+                    <div class="cover-color-option" style="background: #ef4444;" data-color="#ef4444"
+                        onclick="selectCoverColor('#ef4444')"></div>
+                    <div class="cover-color-option" style="background: #a855f7;" data-color="#a855f7"
+                        onclick="selectCoverColor('#a855f7')"></div>
+                    <div class="cover-color-option" style="background: #3b82f6;" data-color="#3b82f6"
+                        onclick="selectCoverColor('#3b82f6')"></div>
+                    <div class="cover-color-option" style="background: #06b6d4;" data-color="#06b6d4"
+                        onclick="selectCoverColor('#06b6d4')"></div>
+                    <div class="cover-color-option" style="background: #ec4899;" data-color="#ec4899"
+                        onclick="selectCoverColor('#ec4899')"></div>
+                    <div class="cover-color-option" style="background: #6366f1;" data-color="#6366f1"
+                        onclick="selectCoverColor('#6366f1')"></div>
+                </div>
+            </div>
+
             <!-- Etiquetas selecionadas -->
             <div class="card-labels-section" id="labelsSection">
+                <div class="card-labels-section-title">Etiquetas</div>
                 <div class="card-labels-container" id="labelsContainer">
                     <!-- Labels serão inseridas dinamicamente -->
                 </div>
@@ -1143,7 +1224,9 @@
                     badge.style.display = 'none';
                 }
 
-                input.value = dueDate.slice(0, 16);
+                // dueDate pode ser string ISO ou objeto, garantir tratamento seguro
+                const dateStr = typeof dueDate === 'string' ? dueDate : dueDate.toISOString();
+                input.value = dateStr.slice(0, 16);
                 section.classList.add('show');
             } else {
                 section.classList.remove('show');
@@ -1272,10 +1355,65 @@
 
         // Toggle panels
         window.toggleLabelsPanel = function () {
-            document.getElementById('labelsSection').style.display =
-                document.getElementById('labelsSection').style.display === 'none' ? 'block' : 'block';
-            renderLabels();
+            const section = document.getElementById('labelsSection');
+            section.classList.toggle('show');
+            if (section.classList.contains('show')) {
+                renderLabels();
+            }
         };
+
+        window.toggleCoverPanel = function () {
+            const section = document.getElementById('coverSection');
+            section.classList.toggle('show');
+            if (section.classList.contains('show')) {
+                updateCoverSelection();
+            }
+        };
+
+        window.selectCoverColor = async function (color) {
+            if (!currentCard) return;
+
+            // Update visual selection
+            document.querySelectorAll('.cover-color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.color === color) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            // Update modal cover
+            const cover = document.getElementById('cardModalCover');
+            if (color) {
+                cover.style.background = color;
+            } else {
+                cover.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+            }
+
+            // Save to server
+            try {
+                await fetch('/api/kanban/cards/' + currentCard.id + '/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ cover_color: color })
+                });
+                currentCard.cover_color = color;
+            } catch (e) {
+                console.error('Erro ao salvar cor:', e);
+            }
+        };
+
+        function updateCoverSelection() {
+            const currentColor = currentCard ? currentCard.cover_color : '';
+            document.querySelectorAll('.cover-color-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.color === currentColor) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
 
         window.toggleDatePanel = function () {
             const section = document.getElementById('dueDateSection');
