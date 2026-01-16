@@ -1,4 +1,4 @@
-# CSHub - Sistema de Gestão de Reclamações
+# Nexus - Sistema de Gestão de Reclamações
 
 Sistema completo para gestão de reclamações desenvolvido em Django/Python com PostgreSQL.
 

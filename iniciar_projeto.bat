@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
-title CSHub - Sistema de Gestão de Reclamações
+title Nexus - Sistema de Gestão de Reclamações
 color 0A
 
 echo ========================================
-echo   CSHub - Iniciando o Projeto
+echo   Nexus - Iniciando o Projeto
 echo ========================================
 echo.
 
