@@ -971,6 +971,14 @@ class KanbanCard(models.Model):
         total = items.count()
         completed = items.filter(is_completed=True).count()
         return {'completed': completed, 'total': total}
+    
+    @property
+    def is_overdue(self):
+        """Verifica se o cartão está vencido"""
+        from django.utils import timezone
+        if self.due_date and not self.due_complete:
+            return self.due_date < timezone.now()
+        return False
 
 
 class Checklist(models.Model):

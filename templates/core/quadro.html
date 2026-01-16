@@ -126,9 +126,9 @@
         border-radius: 8px;
         border: 1px solid var(--light-gray);
         box-shadow: var(--shadow-sm);
-        padding: 12px;
         cursor: pointer;
         transition: var(--transition);
+        overflow: hidden;
     }
 
     .kanban-card:hover {
@@ -137,10 +137,103 @@
         border-color: var(--primary-color);
     }
 
+    .kanban-card-cover {
+        height: 8px;
+        width: 100%;
+    }
+
+    .kanban-card-content {
+        padding: 10px 12px;
+    }
+
+    .kanban-card-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .kanban-card-label {
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+    }
+
     .kanban-card-title {
         font-size: 14px;
         font-weight: 600;
         color: var(--dark-color);
+        margin-bottom: 8px;
+    }
+
+    .kanban-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .kanban-card-due {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .kanban-card-due.overdue {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .kanban-card-due.completed {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .kanban-card-due i {
+        font-size: 12px;
+    }
+
+    .kanban-card-icons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--medium-gray);
+        font-size: 12px;
+    }
+
+    .kanban-card-icon {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .kanban-card-icon i {
+        font-size: 13px;
+    }
+
+    .kanban-card-progress {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 500;
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .kanban-card-progress.complete {
+        background: #dcfce7;
+        color: #16a34a;
     }
 
     .kanban-add-card {
@@ -740,7 +833,43 @@
                 <div class="kanban-cards" data-list-id="{{ lista.id }}">
                     {% for card in lista.cards.all %}
                     <div class="kanban-card" data-card-id="{{ card.id }}">
-                        <div class="kanban-card-title">{{ card.title }}</div>
+                        {% if card.cover_color %}
+                        <div class="kanban-card-cover" style="background: {{ card.cover_color }};"></div>
+                        {% endif %}
+                        <div class="kanban-card-content">
+                            {% if card.labels.exists %}
+                            <div class="kanban-card-labels">
+                                {% for label in card.labels.all %}
+                                <span class="kanban-card-label" style="background: {{ label.color }};">{{ label.name
+                                    }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="kanban-card-title">{{ card.title }}</div>
+                            <div class="kanban-card-meta">
+                                {% if card.due_date %}
+                                <span
+                                    class="kanban-card-due {% if card.is_overdue %}overdue{% elif card.due_complete %}completed{% endif %}">
+                                    <i class="bi bi-clock"></i>
+                                    {{ card.due_date|date:"d M. H:i" }}
+                                </span>
+                                {% endif %}
+                                <div class="kanban-card-icons">
+                                    {% if card.description %}
+                                    <span class="kanban-card-icon" title="Tem descrição">
+                                        <i class="bi bi-text-left"></i>
+                                    </span>
+                                    {% endif %}
+                                    {% if card.checklist_progress.total > 0 %}
+                                    <span
+                                        class="kanban-card-progress {% if card.checklist_progress.completed == card.checklist_progress.total %}complete{% endif %}">
+                                        <i class="bi bi-check2-square"></i>
+                                        {{ card.checklist_progress.completed }}/{{ card.checklist_progress.total }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% empty %}
                     {% endfor %}
