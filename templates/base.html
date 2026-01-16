@@ -564,7 +564,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:"0" }};
+        const currentUserId = {{ user.id|default: "0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
@@ -598,17 +598,38 @@
         });
 
         // Verifica mensagens não lidas do chat e exibe notificações
-        let lastChatCheck = null;
-        let notifiedMessageIds = new Set();
+        // Usar localStorage para persistir IDs já notificados entre recarregamentos
+        function getNotifiedMessageIds() {
+            try {
+                const stored = localStorage.getItem('notifiedChatMsgIds');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    // Limpar IDs com mais de 24 horas
+                    const now = Date.now();
+                    const filtered = parsed.filter(item => now - item.time < 86400000);
+                    return new Set(filtered.map(item => item.id));
+                }
+            } catch (e) { }
+            return new Set();
+        }
+
+        function saveNotifiedMessageId(msgId) {
+            try {
+                const stored = localStorage.getItem('notifiedChatMsgIds');
+                let items = stored ? JSON.parse(stored) : [];
+                // Limpar IDs antigos (mais de 24 horas)
+                const now = Date.now();
+                items = items.filter(item => now - item.time < 86400000);
+                items.push({ id: msgId, time: now });
+                localStorage.setItem('notifiedChatMsgIds', JSON.stringify(items));
+            } catch (e) { }
+        }
+
+        let notifiedMessageIds = getNotifiedMessageIds();
 
         async function checkChatUnread() {
             try {
-                let url = '/api/chat/unread-count/?include_messages=true';
-                if (lastChatCheck) {
-                    url += `&last_check=${encodeURIComponent(lastChatCheck)}`;
-                }
-
-                const res = await fetch(url);
+                const res = await fetch('/api/chat/unread-count/?include_messages=true');
                 if (res.ok) {
                     const data = await res.json();
                     const badge = document.getElementById('chatUnreadBadge');
@@ -621,19 +642,24 @@
                         }
                     }
 
-                    // Exibe notificações para novas mensagens
-                    if (data.has_new && data.messages && data.messages.length > 0) {
+                    // Exibe notificações para novas mensagens (não lidas e não notificadas)
+                    if (data.messages && data.messages.length > 0) {
                         let playedSound = false;
+                        let delay = 0;
 
                         data.messages.forEach(msg => {
-                            // Evita notificar a mesma mensagem duas vezes
+                            // Evita notificar a mesma mensagem duas vezes (persiste entre recarregamentos)
                             if (!notifiedMessageIds.has(msg.id)) {
                                 notifiedMessageIds.add(msg.id);
+                                saveNotifiedMessageId(msg.id);
 
-                                // Exibe toast com nome do remetente e preview da mensagem
-                                showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
+                                // Exibe toasts com delay para não sobrepor
+                                setTimeout(() => {
+                                    showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
+                                }, delay);
+                                delay += 500; // 500ms entre cada toast
 
-                                // Toca som apenas uma vez mesmo com múltiplas mensagens
+                                // Toca som apenas uma vez
                                 if (!playedSound) {
                                     playNotificationSound();
                                     playedSound = true;
@@ -641,9 +667,6 @@
                             }
                         });
                     }
-
-                    // Atualiza o timestamp do último check
-                    lastChatCheck = new Date().toISOString();
                 }
             } catch (e) {
                 // Silently fail - chat might not be available
