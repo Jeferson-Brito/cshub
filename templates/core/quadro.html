@@ -229,11 +229,11 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         z-index: 1000;
         justify-content: center;
         align-items: flex-start;
-        padding-top: 60px;
+        padding-top: 40px;
         overflow-y: auto;
     }
 
@@ -245,100 +245,431 @@
         background: white;
         border-radius: 12px;
         width: 100%;
-        max-width: 600px;
+        max-width: 550px;
         box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-        margin-bottom: 60px;
+        margin-bottom: 40px;
+        overflow: hidden;
+    }
+
+    .card-modal-cover {
+        height: 100px;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     }
 
     .card-modal-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--light-gray);
+        padding: 16px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-bottom: 1px solid var(--light-gray);
     }
 
-    .card-modal-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--dark-color);
-        margin: 0;
+    .card-modal-list-selector {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
 
-    .card-modal-title i {
-        color: var(--primary-color);
+    .card-modal-list-selector select {
+        padding: 8px 12px;
+        border: 1px solid var(--light-gray);
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        background: white;
+        cursor: pointer;
     }
 
-    .card-modal-close {
+    .card-modal-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .card-modal-action-btn {
         background: none;
         border: none;
-        font-size: 24px;
         color: var(--medium-gray);
+        font-size: 18px;
         cursor: pointer;
-        padding: 4px 8px;
+        padding: 6px;
         border-radius: 6px;
         transition: var(--transition);
     }
 
-    .card-modal-close:hover {
+    .card-modal-action-btn:hover {
         background: var(--light-gray);
         color: var(--dark-color);
     }
 
     .card-modal-body {
-        padding: 24px;
+        padding: 20px;
     }
 
-    .card-form-group {
+    /* Title */
+    .card-modal-title-input {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--dark-color);
+        border: none;
+        width: 100%;
+        padding: 8px 0;
+        margin-bottom: 16px;
+        outline: none;
+        background: transparent;
+    }
+
+    .card-modal-title-input:focus {
+        border-bottom: 2px solid var(--primary-color);
+    }
+
+    /* Action Buttons */
+    .card-action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
         margin-bottom: 20px;
     }
 
-    .card-form-group label {
-        display: block;
+    .card-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border: 1px solid var(--light-gray);
+        border-radius: 6px;
+        background: white;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 500;
         color: var(--dark-color);
-        margin-bottom: 8px;
-    }
-
-    .card-form-group input,
-    .card-form-group textarea,
-    .card-form-group select {
-        width: 100%;
-        padding: 12px;
-        border: 2px solid var(--light-gray);
-        border-radius: 8px;
-        font-size: 14px;
+        cursor: pointer;
         transition: var(--transition);
     }
 
-    .card-form-group input:focus,
-    .card-form-group textarea:focus,
-    .card-form-group select:focus {
+    .card-action-btn:hover {
+        background: var(--light-gray);
+    }
+
+    .card-action-btn i {
+        font-size: 14px;
+    }
+
+    /* Labels */
+    .card-labels-section {
+        margin-bottom: 20px;
+    }
+
+    .card-labels-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .card-label {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .card-label:hover {
+        opacity: 0.85;
+        transform: scale(1.02);
+    }
+
+    .card-label.selected {
+        box-shadow: 0 0 0 2px white, 0 0 0 4px currentColor;
+    }
+
+    .label-urgente {
+        background: #ef4444;
+    }
+
+    .label-importante {
+        background: #f97316;
+    }
+
+    .label-normal {
+        background: #6b7280;
+    }
+
+    .label-baixa {
+        background: #3b82f6;
+    }
+
+    .label-reuniao {
+        background: #6366f1;
+    }
+
+    .label-documentacao {
+        background: #0891b2;
+    }
+
+    .label-bug {
+        background: #dc2626;
+    }
+
+    .label-feature {
+        background: #059669;
+    }
+
+    .label-concluido {
+        background: #22c55e;
+    }
+
+    /* Due Date */
+    .card-due-date-section {
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .card-due-date-section.show {
+        display: block;
+    }
+
+    .card-due-date-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #fef3c7;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #92400e;
+    }
+
+    .card-due-date-display.overdue {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .card-due-date-display i {
+        font-size: 14px;
+    }
+
+    .due-date-badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #dc2626;
+        color: white;
+        margin-left: 8px;
+    }
+
+    /* Description */
+    .card-description-section {
+        margin-bottom: 20px;
+    }
+
+    .card-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 10px;
+    }
+
+    .card-section-title i {
+        color: var(--medium-gray);
+    }
+
+    .card-description-textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid var(--light-gray);
+        border-radius: 8px;
+        font-size: 14px;
+        resize: vertical;
+        transition: var(--transition);
+    }
+
+    .card-description-textarea:focus {
         border-color: var(--primary-color);
         outline: none;
     }
 
-    .card-form-group textarea {
-        min-height: 100px;
-        resize: vertical;
+    /* Checklist */
+    .card-checklist-section {
+        margin-bottom: 20px;
+        display: none;
     }
 
-    .card-form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
+    .card-checklist-section.show {
+        display: block;
     }
 
+    .checklist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .checklist-delete-btn {
+        background: none;
+        border: none;
+        color: var(--medium-gray);
+        cursor: pointer;
+        padding: 4px;
+        font-size: 16px;
+    }
+
+    .checklist-delete-btn:hover {
+        color: var(--danger-color);
+    }
+
+    .checklist-progress {
+        margin-bottom: 12px;
+    }
+
+    .checklist-progress-text {
+        font-size: 12px;
+        color: var(--medium-gray);
+        margin-bottom: 4px;
+    }
+
+    .checklist-progress-bar {
+        height: 8px;
+        background: var(--light-gray);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .checklist-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #22c55e);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .checklist-items {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 6px;
+        transition: var(--transition);
+    }
+
+    .checklist-item:hover {
+        background: var(--light-gray);
+    }
+
+    .checklist-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+
+    .checklist-item-text {
+        flex: 1;
+        font-size: 14px;
+        color: var(--dark-color);
+    }
+
+    .checklist-item.completed .checklist-item-text {
+        text-decoration: line-through;
+        color: var(--medium-gray);
+    }
+
+    .checklist-add-item {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .checklist-add-input {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid var(--light-gray);
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .checklist-add-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+    }
+
+    .checklist-add-btn {
+        padding: 10px 16px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .checklist-add-btn:hover {
+        background: var(--primary-dark);
+    }
+
+    /* Labels Dropdown */
+    .labels-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid var(--light-gray);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: var(--shadow-lg);
+        z-index: 10;
+        min-width: 280px;
+    }
+
+    .labels-dropdown.show {
+        display: block;
+    }
+
+    .labels-dropdown-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--medium-gray);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+
+    /* Date Picker Dropdown */
+    .date-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        border: 1px solid var(--light-gray);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: var(--shadow-lg);
+        z-index: 10;
+    }
+
+    .date-dropdown.show {
+        display: block;
+    }
+
+    /* Footer */
     .card-modal-footer {
-        padding: 16px 24px;
+        padding: 16px 20px;
         border-top: 1px solid var(--light-gray);
         display: flex;
         justify-content: space-between;
-        gap: 12px;
     }
 
     .btn-modal {
@@ -349,6 +680,9 @@
         cursor: pointer;
         transition: var(--transition);
         border: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .btn-modal-primary {
@@ -361,12 +695,12 @@
     }
 
     .btn-modal-danger {
-        background: var(--danger-color);
-        color: white;
+        background: #fee2e2;
+        color: #dc2626;
     }
 
     .btn-modal-danger:hover {
-        opacity: 0.9;
+        background: #fecaca;
     }
 
     .btn-modal-secondary {
@@ -378,11 +712,7 @@
         background: #d1d5db;
     }
 
-    .modal-actions-left {
-        display: flex;
-        gap: 8px;
-    }
-
+    .modal-actions-left,
     .modal-actions-right {
         display: flex;
         gap: 8px;
@@ -439,28 +769,104 @@
 <!-- Modal de Edição do Cartão -->
 <div class="card-modal-overlay" id="cardModalOverlay">
     <div class="card-modal">
+        <!-- Cover colorido -->
+        <div class="card-modal-cover" id="cardModalCover"></div>
+
+        <!-- Header com seletor de lista e ações -->
         <div class="card-modal-header">
-            <h3 class="card-modal-title">
-                <i class="bi bi-pencil-square"></i>
-                Editar Cartão
-            </h3>
-            <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+            <div class="card-modal-list-selector">
+                <select id="cardListSelector">
+                    {% for lista in listas %}
+                    <option value="{{ lista.id }}">{{ lista.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="card-modal-actions">
+                <button class="card-modal-action-btn" title="Adicionar capa"><i class="bi bi-image"></i></button>
+                <button class="card-modal-action-btn" title="Mais opções"><i class="bi bi-three-dots"></i></button>
+                <button class="card-modal-action-btn" onclick="closeCardModal()" title="Fechar"><i
+                        class="bi bi-x-lg"></i></button>
+            </div>
         </div>
+
         <div class="card-modal-body">
             <input type="hidden" id="editCardId">
-            <div class="card-form-group">
-                <label for="editCardTitle">Título</label>
-                <input type="text" id="editCardTitle" placeholder="Digite o título do cartão">
+
+            <!-- Título editável -->
+            <input type="text" class="card-modal-title-input" id="editCardTitle"
+                placeholder="Digite o título do cartão...">
+
+            <!-- Botões de ação -->
+            <div class="card-action-buttons">
+                <button class="card-action-btn" onclick="saveCard()">
+                    <i class="bi bi-plus-lg"></i> Salvar
+                </button>
+                <button class="card-action-btn" onclick="toggleLabelsPanel()">
+                    <i class="bi bi-tag-fill"></i> Etiquetas
+                </button>
+                <button class="card-action-btn" onclick="toggleDatePanel()">
+                    <i class="bi bi-clock"></i> Datas
+                </button>
+                <button class="card-action-btn" onclick="toggleChecklist()">
+                    <i class="bi bi-check2-square"></i> Checklist
+                </button>
             </div>
-            <div class="card-form-group">
-                <label for="editCardDescription">Descrição</label>
-                <textarea id="editCardDescription" placeholder="Adicione uma descrição mais detalhada..."></textarea>
+
+            <!-- Etiquetas selecionadas -->
+            <div class="card-labels-section" id="labelsSection">
+                <div class="card-labels-container" id="labelsContainer">
+                    <!-- Labels serão inseridas dinamicamente -->
+                </div>
             </div>
-            <div class="card-form-group">
-                <label for="editCardDueDate">Data Limite</label>
-                <input type="date" id="editCardDueDate">
+
+            <!-- Data de vencimento -->
+            <div class="card-due-date-section" id="dueDateSection">
+                <div class="card-due-date-display" id="dueDateDisplay">
+                    <i class="bi bi-calendar-event"></i>
+                    <span id="dueDateText">18 de dez. de 2025, 12:00</span>
+                    <span class="due-date-badge" id="dueDateBadge" style="display: none;">Vencido</span>
+                </div>
+                <input type="datetime-local" id="editCardDueDate" style="margin-top: 8px; display: none;">
+            </div>
+
+            <!-- Descrição -->
+            <div class="card-description-section">
+                <div class="card-section-title">
+                    <i class="bi bi-text-left"></i> Descrição
+                </div>
+                <textarea class="card-description-textarea" id="editCardDescription"
+                    placeholder="Adicione uma descrição mais detalhada..."></textarea>
+            </div>
+
+            <!-- Checklist -->
+            <div class="card-checklist-section" id="checklistSection">
+                <div class="checklist-header">
+                    <div class="card-section-title">
+                        <i class="bi bi-check2-square"></i> Tarefas
+                    </div>
+                    <button class="checklist-delete-btn" onclick="deleteChecklist()" title="Excluir checklist">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="checklist-progress">
+                    <div class="checklist-progress-text" id="checklistProgressText">0%</div>
+                    <div class="checklist-progress-bar">
+                        <div class="checklist-progress-fill" id="checklistProgressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="checklist-items" id="checklistItems">
+                    <!-- Items serão inseridos dinamicamente -->
+                </div>
+                <div class="checklist-add-item">
+                    <input type="text" class="checklist-add-input" id="newChecklistItem"
+                        placeholder="Adicionar item...">
+                    <button class="checklist-add-btn" onclick="addChecklistItem()">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
             </div>
         </div>
+
         <div class="card-modal-footer">
             <div class="modal-actions-left">
                 <button class="btn-modal btn-modal-danger" onclick="deleteCard()">
@@ -476,6 +882,21 @@
         </div>
     </div>
 </div>
+
+<!-- Dados de etiquetas disponíveis -->
+<script id="labelsData" type="application/json">
+[
+    {"id": "urgente", "name": "Urgente", "color": "#ef4444", "class": "label-urgente"},
+    {"id": "importante", "name": "Importante", "color": "#f97316", "class": "label-importante"},
+    {"id": "normal", "name": "Normal", "color": "#6b7280", "class": "label-normal"},
+    {"id": "baixa", "name": "Baixa", "color": "#3b82f6", "class": "label-baixa"},
+    {"id": "reuniao", "name": "Reunião", "color": "#6366f1", "class": "label-reuniao"},
+    {"id": "documentacao", "name": "Documentação", "color": "#0891b2", "class": "label-documentacao"},
+    {"id": "bug", "name": "Bug", "color": "#dc2626", "class": "label-bug"},
+    {"id": "feature", "name": "Feature", "color": "#059669", "class": "label-feature"},
+    {"id": "concluido", "name": "Concluído", "color": "#22c55e", "class": "label-concluido"}
+]
+</script>
 {% endblock %}
 
 {% block scripts %}
@@ -483,6 +904,14 @@
 <script>
     (function () {
         const csrfToken = '{{ csrf_token }}';
+
+        // Estado do cartão atual
+        let currentCard = null;
+        let currentChecklists = [];
+        let selectedLabels = [];
+
+        // Labels disponíveis
+        const availableLabels = JSON.parse(document.getElementById('labelsData').textContent);
 
         window.showAddCard = function (listId) {
             document.getElementById('addCardForm-' + listId).classList.add('show');
@@ -527,13 +956,32 @@
                 if (!res.ok) throw new Error('Erro ao carregar cartão');
 
                 const data = await res.json();
+                currentCard = data;
 
                 document.getElementById('editCardId').value = cardId;
                 document.getElementById('editCardTitle').value = data.title || '';
                 document.getElementById('editCardDescription').value = data.description || '';
-                // O api_kanban não tem prioridade, vou usar o campo cover_color como alternativa ou deixar fixo
-                // document.getElementById('editCardPriority').value = 'baixa';
-                document.getElementById('editCardDueDate').value = data.due_date ? data.due_date.split('T')[0] : '';
+
+                // Selecionar lista atual
+                if (data.list && data.list.id) {
+                    document.getElementById('cardListSelector').value = data.list.id;
+                }
+
+                // Carregar data de vencimento
+                updateDueDateDisplay(data.due_date);
+
+                // Carregar labels
+                selectedLabels = data.labels ? data.labels.map(l => l.id) : [];
+                renderLabels();
+
+                // Carregar checklists
+                currentChecklists = data.checklists || [];
+                if (currentChecklists.length > 0) {
+                    document.getElementById('checklistSection').classList.add('show');
+                    renderChecklists();
+                } else {
+                    document.getElementById('checklistSection').classList.remove('show');
+                }
 
                 document.getElementById('cardModalOverlay').classList.add('show');
             } catch (e) {
@@ -542,12 +990,223 @@
             }
         };
 
-        // Função para fechar o modal
-        window.closeCardModal = function () {
-            document.getElementById('cardModalOverlay').classList.remove('show');
+        // Função para atualizar exibição da data de vencimento
+        function updateDueDateDisplay(dueDate) {
+            const section = document.getElementById('dueDateSection');
+            const display = document.getElementById('dueDateDisplay');
+            const text = document.getElementById('dueDateText');
+            const badge = document.getElementById('dueDateBadge');
+            const input = document.getElementById('editCardDueDate');
+
+            if (dueDate) {
+                const date = new Date(dueDate);
+                const now = new Date();
+                const isOverdue = date < now;
+
+                const options = { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                text.textContent = date.toLocaleDateString('pt-BR', options);
+
+                if (isOverdue) {
+                    display.classList.add('overdue');
+                    badge.style.display = 'inline';
+                } else {
+                    display.classList.remove('overdue');
+                    badge.style.display = 'none';
+                }
+
+                input.value = dueDate.slice(0, 16);
+                section.classList.add('show');
+            } else {
+                section.classList.remove('show');
+                input.value = '';
+            }
+        }
+
+        // Renderizar labels
+        function renderLabels() {
+            const container = document.getElementById('labelsContainer');
+            container.innerHTML = availableLabels.map(label => {
+                const isSelected = selectedLabels.includes(label.id);
+                return `<span class="card-label ${label.class} ${isSelected ? 'selected' : ''}" 
+                              data-label-id="${label.id}" 
+                              onclick="toggleLabel('${label.id}')">${label.name}</span>`;
+            }).join('');
+        }
+
+        // Toggle label
+        window.toggleLabel = function (labelId) {
+            const index = selectedLabels.indexOf(labelId);
+            if (index > -1) {
+                selectedLabels.splice(index, 1);
+            } else {
+                selectedLabels.push(labelId);
+            }
+            renderLabels();
         };
 
-        // Função para salvar o cartão
+        // Renderizar checklists
+        function renderChecklists() {
+            const container = document.getElementById('checklistItems');
+
+            if (currentChecklists.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('checklistProgressText').textContent = '0%';
+                document.getElementById('checklistProgressFill').style.width = '0%';
+                return;
+            }
+
+            // Pegar o primeiro checklist (simplificado)
+            const checklist = currentChecklists[0];
+            const items = checklist.items || [];
+
+            container.innerHTML = items.map(item => `
+                <div class="checklist-item ${item.is_completed ? 'completed' : ''}" data-item-id="${item.id}">
+                    <input type="checkbox" ${item.is_completed ? 'checked' : ''} 
+                           onchange="toggleChecklistItem(${checklist.id}, ${item.id}, this.checked)">
+                    <span class="checklist-item-text">${item.text}</span>
+                </div>
+            `).join('');
+
+            updateChecklistProgress(items);
+        }
+
+        // Atualizar progresso do checklist
+        function updateChecklistProgress(items) {
+            if (!items || items.length === 0) {
+                document.getElementById('checklistProgressText').textContent = '0%';
+                document.getElementById('checklistProgressFill').style.width = '0%';
+                return;
+            }
+
+            const completed = items.filter(i => i.is_completed).length;
+            const total = items.length;
+            const percent = Math.round((completed / total) * 100);
+
+            document.getElementById('checklistProgressText').textContent = percent + '%';
+            document.getElementById('checklistProgressFill').style.width = percent + '%';
+        }
+
+        // Toggle item do checklist
+        window.toggleChecklistItem = async function (checklistId, itemId, isCompleted) {
+            try {
+                await fetch('/api/kanban/checklists/' + checklistId + '/items/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ item_id: itemId, is_completed: isCompleted })
+                });
+
+                // Atualizar estado local
+                const checklist = currentChecklists.find(c => c.id === checklistId);
+                if (checklist) {
+                    const item = checklist.items.find(i => i.id === itemId);
+                    if (item) item.is_completed = isCompleted;
+                    renderChecklists();
+                }
+            } catch (e) {
+                console.error('Erro ao atualizar item:', e);
+            }
+        };
+
+        // Adicionar item ao checklist
+        window.addChecklistItem = async function () {
+            const input = document.getElementById('newChecklistItem');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (currentChecklists.length === 0) return;
+
+            const checklistId = currentChecklists[0].id;
+
+            try {
+                const res = await fetch('/api/kanban/checklists/' + checklistId + '/items/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (res.ok) {
+                    const newItem = await res.json();
+                    currentChecklists[0].items.push(newItem);
+                    renderChecklists();
+                    input.value = '';
+                }
+            } catch (e) {
+                console.error('Erro ao adicionar item:', e);
+            }
+        };
+
+        // Toggle panels
+        window.toggleLabelsPanel = function () {
+            document.getElementById('labelsSection').style.display =
+                document.getElementById('labelsSection').style.display === 'none' ? 'block' : 'block';
+            renderLabels();
+        };
+
+        window.toggleDatePanel = function () {
+            const section = document.getElementById('dueDateSection');
+            const input = document.getElementById('editCardDueDate');
+
+            if (section.classList.contains('show')) {
+                input.style.display = input.style.display === 'none' ? 'block' : 'none';
+            } else {
+                section.classList.add('show');
+                input.style.display = 'block';
+            }
+        };
+
+        window.toggleChecklist = async function () {
+            const section = document.getElementById('checklistSection');
+
+            if (section.classList.contains('show')) {
+                section.classList.remove('show');
+            } else {
+                // Criar checklist se não existir
+                if (currentChecklists.length === 0 && currentCard) {
+                    try {
+                        const res = await fetch('/api/kanban/cards/' + currentCard.id + '/checklists/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({ title: 'Tarefas' })
+                        });
+
+                        if (res.ok) {
+                            const newChecklist = await res.json();
+                            currentChecklists.push(newChecklist);
+                        }
+                    } catch (e) {
+                        console.error('Erro ao criar checklist:', e);
+                    }
+                }
+
+                section.classList.add('show');
+                renderChecklists();
+            }
+        };
+
+        window.deleteChecklist = function () {
+            if (confirm('Excluir esta lista de tarefas?')) {
+                document.getElementById('checklistSection').classList.remove('show');
+                currentChecklists = [];
+            }
+        };
+
+        // Funções principais
+        window.closeCardModal = function () {
+            document.getElementById('cardModalOverlay').classList.remove('show');
+            currentCard = null;
+            currentChecklists = [];
+            selectedLabels = [];
+        };
+
         window.saveCard = async function () {
             const cardId = document.getElementById('editCardId').value;
             const title = document.getElementById('editCardTitle').value.trim();
@@ -585,7 +1244,6 @@
             }
         };
 
-        // Função para excluir o cartão
         window.deleteCard = async function () {
             if (!confirm('Tem certeza que deseja excluir este cartão?')) return;
 
@@ -611,6 +1269,13 @@
             }
         };
 
+        // Enter para adicionar item ao checklist
+        document.getElementById('newChecklistItem').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addChecklistItem();
+            }
+        });
+
         // Fechar modal ao clicar fora
         document.getElementById('cardModalOverlay').addEventListener('click', function (e) {
             if (e.target === this) {
@@ -621,7 +1286,6 @@
         // Adicionar event listeners para clicar nos cards
         document.querySelectorAll('.kanban-card').forEach(function (card) {
             card.addEventListener('click', function (e) {
-                // Evitar que o clique acione durante o drag
                 if (e.defaultPrevented) return;
                 const cardId = this.dataset.cardId;
                 openCardModal(cardId);
