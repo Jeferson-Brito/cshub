@@ -170,43 +170,50 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        let currentView = 'cards';
-        let currentCategory = '';
-        let articles = [];
-        let tools = [];
-        const canEdit = {{ can_edit| yesno: "true,false"
-    }};
+    // --- Navegação (Disponível Globalmente) ---
+    window.switchView = function (view, category = '') {
+        console.log('Switching to view:', view, 'category:', category);
+        currentView = view;
+        currentCategory = category;
+
+        const cardsGrid = document.getElementById('view-cards');
+        const listView = document.getElementById('view-list');
+        const toolsView = document.getElementById('view-tools');
+
+        if (cardsGrid) cardsGrid.classList.add('d-none');
+        if (listView) listView.classList.add('d-none');
+        if (toolsView) toolsView.classList.add('d-none');
+
+        if (view === 'cards') {
+            if (cardsGrid) cardsGrid.classList.remove('d-none');
+            updateCounts();
+        } else if (view === 'list') {
+            if (listView) listView.classList.remove('d-none');
+            const listTitle = document.getElementById('list-title');
+            if (listTitle) {
+                listTitle.textContent = category === 'search' ? 'Resultados da Busca' : (categoryNames[category] || 'Artigos');
+            }
+            renderArticles();
+        } else if (view === 'tools') {
+            if (toolsView) toolsView.classList.remove('d-none');
+            renderTools();
+        }
+    };
+
+    // Variáveis globais
+    let currentView = 'cards';
+    let currentCategory = '';
+    let articles = [];
+    let tools = [];
+    const canEdit = {% if can_edit %}true{% else %} false{% endif %};
 
     const categoryNames = {
         'tutorials': 'Tutoriais e Guias',
         'solutions': 'Soluções Comuns',
         'faq': 'Perguntas Frequentes',
         'troubleshooting': 'Resolução de Problemas'
-    };
-
-    // --- Navegação ---
-    window.switchView = function (view, category = '') {
-        currentView = view;
-        currentCategory = category;
-
-        document.getElementById('view-cards').classList.add('d-none');
-        document.getElementById('view-list').classList.add('d-none');
-        document.getElementById('view-tools').classList.add('d-none');
-
-        if (view === 'cards') {
-            document.getElementById('view-cards').classList.remove('d-none');
-            updateCounts();
-        } else if (view === 'list') {
-            document.getElementById('view-list').classList.remove('d-none');
-            document.getElementById('list-title').textContent = category === 'search' ? 'Resultados da Busca' : categoryNames[category];
-            renderArticles();
-        } else if (view === 'tools') {
-            document.getElementById('view-tools').classList.remove('d-none');
-            renderTools();
-        }
     };
 
     // --- Fetch Data ---
@@ -228,29 +235,29 @@
         const counts = { tutorials: 0, solutions: 0, faq: 0, troubleshooting: 0 };
         articles.forEach(a => { if (counts[a.categoria] !== undefined) counts[a.categoria]++; });
 
-        document.getElementById('count-tutorials').textContent = `${counts.tutorials} artigos`;
-        document.getElementById('count-solutions').textContent = `${counts.solutions} artigos`;
-        document.getElementById('count-faq').textContent = `${counts.faq} artigos`;
-        if (document.getElementById('count-troubleshooting')) {
-            document.getElementById('count-troubleshooting').textContent = `${counts.troubleshooting || 0} artigos`;
-        }
-        document.getElementById('count-tools').textContent = `${tools.length} ferramentas`;
+        const setCnt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+        setCnt('count-tutorials', `${counts.tutorials} artigos`);
+        setCnt('count-solutions', `${counts.solutions} artigos`);
+        setCnt('count-faq', `${counts.faq} artigos`);
+        setCnt('count-troubleshooting', `${counts.troubleshooting} artigos`);
+        setCnt('count-tools', `${tools.length} ferramentas`);
     }
 
     // --- Renderers ---
     function renderArticles() {
         const container = document.getElementById('articles-list');
+        if (!container) return;
         container.innerHTML = '';
 
         let filtered = articles;
-        if (currentCategory !== 'search') {
+        if (currentCategory !== 'search' && currentCategory !== '') {
             filtered = articles.filter(a => a.categoria === currentCategory);
-        } else {
-            const term = document.getElementById('kb-search-input').value.toLowerCase();
+        } else if (currentCategory === 'search') {
+            const term = document.getElementById('kb-search-input')?.value.toLowerCase() || '';
             filtered = articles.filter(a =>
                 a.titulo.toLowerCase().includes(term) ||
                 a.conteudo.toLowerCase().includes(term) ||
-                a.tags.some(t => t.toLowerCase().includes(term))
+                (a.tags && a.tags.some(t => t.toLowerCase().includes(term)))
             );
         }
 
@@ -262,36 +269,38 @@
         filtered.forEach(a => {
             const item = document.createElement('div');
             item.className = 'kb-article-item';
+
+            // Renderização de Conteúdo Simplificada
+            let renderedContent = a.conteudo || "";
+            renderedContent = renderedContent.replace(/### (.*?)\n/g, '<h5 class="mt-3 mb-2 fw-bold text-primary">$1</h5>');
+            renderedContent = renderedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            renderedContent = renderedContent.replace(/^- (.*?)$/gm, '<div class="d-flex mb-1"><i class="bi bi-dot me-2"></i><span>$1</span></div>');
+            renderedContent = renderedContent.replace(/^[⚠️❗] (.*?)$/gm, '<div class="alert alert-warning py-2 px-3 my-2 d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle-fill"></i><span>$1</span></div>');
+            renderedContent = renderedContent.replace(/\n/g, '<br>');
+
             item.innerHTML = `
-                    <div class="kb-article-header">
-                        <div class="kb-article-title-content">
-                            <h4>${a.titulo}</h4>
-                            <div class="kb-article-meta">
-                                <span class="kb-article-views"><i class="bi bi-eye"></i> ${a.views}</span>
-                                <div class="kb-article-tags">
-                                    ${a.tags.map(t => `<span class="kb-tag">${t}</span>`).join('')}
-                                </div>
+                <div class="kb-article-header">
+                    <div class="kb-article-title-content">
+                        <h4>${a.titulo}</h4>
+                        <div class="kb-article-meta">
+                            <span class="kb-article-views"><i class="bi bi-eye"></i> ${a.views || 0}</span>
+                            <div class="kb-article-tags">
+                                ${(a.tags || []).map(t => `<span class="kb-tag">${t}</span>`).join('')}
                             </div>
                         </div>
-                        <div class="kb-article-actions">
-                            ${canEdit ? `
-                                <button class="kb-btn-action edit-btn" title="Editar"><i class="bi bi-pencil"></i></button>
-                                <button class="kb-btn-action danger delete-btn" title="Excluir"><i class="bi bi-trash"></i></button>
-                            ` : ''}
-                            <i class="bi bi-chevron-down ms-2 text-muted chevron-icon"></i>
-                        </div>
                     </div>
-                    <div class="kb-article-content d-none">
-                        <div class="kb-article-text">
-                            ${a.conteudo
-                    .replace(/### (.*?)\n/g, '<h5 class="mt-3 mb-2 fw-bold text-primary">$1</h5>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/^- (.*?)$/gm, '<div class="d-flex mb-1"><i class="bi bi-dot me-2"></i><span>$1</span></div>')
-                    .replace(/^[⚠️❗] (.*?)$/gm, '<div class="alert alert-warning py-2 px-3 my-2 d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle-fill"></i><span>$1</span></div>')
-                    .replace(/\n/g, '<br>')}
-                        </div>
+                    <div class="kb-article-actions">
+                        ${canEdit ? `
+                            <button class="kb-btn-action edit-btn" title="Editar"><i class="bi bi-pencil"></i></button>
+                            <button class="kb-btn-action danger delete-btn" title="Excluir"><i class="bi bi-trash"></i></button>
+                        ` : ''}
+                        <i class="bi bi-chevron-down ms-2 text-muted chevron-icon"></i>
                     </div>
-                `;
+                </div>
+                <div class="kb-article-content d-none">
+                    <div class="kb-article-text">${renderedContent}</div>
+                </div>
+            `;
 
             const header = item.querySelector('.kb-article-header');
             const content = item.querySelector('.kb-article-content');
@@ -301,8 +310,7 @@
                 if (e.target.closest('.kb-btn-action')) return;
                 const isExpanded = !content.classList.contains('d-none');
                 if (!isExpanded) {
-                    // Incrementar view via API (opcional, já faz no detail se quisermos)
-                    fetch(`/api/kb/articles/${a.id}/`).then(res => res.json()).then(data => a.views = data.views);
+                    fetch(`/api/kb/articles/${a.id}/`).then(res => res.json()).then(data => { a.views = data.views; });
                 }
                 content.classList.toggle('d-none');
                 chevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
@@ -310,8 +318,10 @@
             };
 
             if (canEdit) {
-                item.querySelector('.edit-btn').onclick = () => openModal(a);
-                item.querySelector('.delete-btn').onclick = () => deleteArticle(a.id);
+                const editBtn = item.querySelector('.edit-btn');
+                const deleteBtn = item.querySelector('.delete-btn');
+                if (editBtn) editBtn.onclick = () => openModal(a);
+                if (deleteBtn) deleteBtn.onclick = () => deleteArticle(a.id);
             }
 
             container.appendChild(item);
@@ -320,6 +330,7 @@
 
     function renderTools() {
         const container = document.getElementById('tools-grid');
+        if (!container) return;
         container.innerHTML = '';
 
         tools.forEach(t => {
@@ -327,19 +338,21 @@
             card.className = 'kb-tool-card';
             card.onclick = () => window.open(t.url, '_blank');
             card.innerHTML = `
-                    <div class="kb-tool-icon"><i class="bi bi-robot"></i></div>
-                    <h4>${t.titulo}</h4>
-                    <p>${t.descricao}</p>
-                    <div class="kb-tool-link">Acessar <i class="bi bi-box-arrow-up-right"></i></div>
-                `;
+                <div class="kb-tool-icon"><i class="bi bi-robot"></i></div>
+                <h4>${t.titulo}</h4>
+                <p>${t.descricao}</p>
+                <div class="kb-tool-link">Acessar <i class="bi bi-box-arrow-up-right"></i></div>
+            `;
             container.appendChild(card);
         });
     }
 
     // --- Artigo Actions ---
     function openModal(article = null) {
+        console.log('Opening modal for article:', article);
         const modal = document.getElementById('article-modal');
         const form = document.getElementById('article-form');
+        if (!modal || !form) return;
         form.reset();
 
         if (article) {
@@ -348,43 +361,15 @@
             document.getElementById('article-category').value = article.categoria;
             document.getElementById('article-title').value = article.titulo;
             document.getElementById('article-text').value = article.conteudo;
-            document.getElementById('article-tags').value = article.tags.join(', ');
+            document.getElementById('article-tags').value = (article.tags || []).join(', ');
         } else {
             document.getElementById('modal-title').textContent = 'Novo Artigo';
             document.getElementById('article-id').value = '';
-            document.getElementById('article-category').value = currentCategory === 'search' ? 'tutorials' : (currentCategory || 'tutorials');
+            document.getElementById('article-category').value = (currentCategory === 'search' || currentCategory === '') ? 'tutorials' : currentCategory;
         }
 
         modal.classList.remove('d-none');
     }
-
-    document.getElementById('article-form').onsubmit = async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('article-id').value;
-        const data = {
-            titulo: document.getElementById('article-title').value,
-            conteudo: document.getElementById('article-text').value,
-            categoria: document.getElementById('article-category').value,
-            tags: document.getElementById('article-tags').value
-        };
-
-        const url = id ? `/api/kb/articles/${id}/` : '/api/kb/articles/create/';
-        const method = id ? 'PUT' : 'POST';
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify(data)
-            });
-            if (response.ok) {
-                document.getElementById('article-modal').classList.add('d-none');
-                loadData().then(() => { if (currentView === 'list') renderArticles(); });
-            }
-        } catch (err) {
-            console.error('Erro ao salvar:', err);
-        }
-    };
 
     async function deleteArticle(id) {
         if (!confirm('Deseja excluir este artigo?')) return;
@@ -401,23 +386,63 @@
         }
     }
 
-    // --- Event Listeners ---
-    document.getElementById('btn-search').onclick = () => switchView('list', 'search');
-    document.getElementById('kb-search-input').onkeydown = (e) => { if (e.key === 'Enter') switchView('list', 'search'); };
+    // --- Inicialização ---
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
 
-    if (canEdit) document.getElementById('btn-new-article').onclick = () => openModal();
+        // Event Listeners
+        const btnSearch = document.getElementById('btn-search');
+        if (btnSearch) btnSearch.onclick = () => switchView('list', 'search');
 
-    document.getElementById('close-modal').onclick = () => document.getElementById('article-modal').classList.add('d-none');
-    document.getElementById('btn-cancel').onclick = () => document.getElementById('article-modal').classList.add('d-none');
+        const searchInput = document.getElementById('kb-search-input');
+        if (searchInput) searchInput.onkeydown = (e) => { if (e.key === 'Enter') switchView('list', 'search'); };
 
-    // Overlay close
-    document.getElementById('article-modal').onclick = (e) => {
-        if (e.target === document.getElementById('article-modal')) document.getElementById('article-modal').classList.add('d-none');
-    };
+        const btnNew = document.getElementById('btn-new-article');
+        if (btnNew && canEdit) btnNew.onclick = () => openModal();
 
-    // Popular (opcional, igual ao React) - Vou simplificar e não adicionar a "PopularSection" separada agora para manter limpo, mas os artigos já são ordenados por views na API.
+        const btnClose = document.getElementById('close-modal');
+        if (btnClose) btnClose.onclick = () => document.getElementById('article-modal').classList.add('d-none');
 
-    loadData();
+        const btnCancel = document.getElementById('btn-cancel');
+        if (btnCancel) btnCancel.onclick = () => document.getElementById('article-modal').classList.add('d-none');
+
+        const modalOverlay = document.getElementById('article-modal');
+        if (modalOverlay) {
+            modalOverlay.onclick = (e) => {
+                if (e.target === modalOverlay) modalOverlay.classList.add('d-none');
+            };
+        }
+
+        const articleForm = document.getElementById('article-form');
+        if (articleForm) {
+            articleForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('article-id').value;
+                const data = {
+                    titulo: document.getElementById('article-title').value,
+                    conteudo: document.getElementById('article-text').value,
+                    categoria: document.getElementById('article-category').value,
+                    tags: document.getElementById('article-tags').value
+                };
+
+                const url = id ? `/api/kb/articles/${id}/` : '/api/kb/articles/create/';
+                const method = id ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify(data)
+                    });
+                    if (response.ok) {
+                        modalOverlay.classList.add('d-none');
+                        loadData().then(() => { if (currentView === 'list') renderArticles(); });
+                    }
+                } catch (err) {
+                    console.error('Erro ao salvar:', err);
+                }
+            };
+        }
     });
 </script>
 {% endblock %}
