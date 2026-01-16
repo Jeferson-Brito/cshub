@@ -220,6 +220,173 @@
         opacity: 0.4;
         background: rgba(37, 99, 235, 0.1) !important;
     }
+
+    /* Modal Styles */
+    .card-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 60px;
+        overflow-y: auto;
+    }
+
+    .card-modal-overlay.show {
+        display: flex;
+    }
+
+    .card-modal {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        margin-bottom: 60px;
+    }
+
+    .card-modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--light-gray);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-modal-title i {
+        color: var(--primary-color);
+    }
+
+    .card-modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--medium-gray);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: var(--transition);
+    }
+
+    .card-modal-close:hover {
+        background: var(--light-gray);
+        color: var(--dark-color);
+    }
+
+    .card-modal-body {
+        padding: 24px;
+    }
+
+    .card-form-group {
+        margin-bottom: 20px;
+    }
+
+    .card-form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 8px;
+    }
+
+    .card-form-group input,
+    .card-form-group textarea,
+    .card-form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--light-gray);
+        border-radius: 8px;
+        font-size: 14px;
+        transition: var(--transition);
+    }
+
+    .card-form-group input:focus,
+    .card-form-group textarea:focus,
+    .card-form-group select:focus {
+        border-color: var(--primary-color);
+        outline: none;
+    }
+
+    .card-form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .card-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .card-modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--light-gray);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .btn-modal {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+    }
+
+    .btn-modal-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-modal-primary:hover {
+        background: var(--primary-dark);
+    }
+
+    .btn-modal-danger {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .btn-modal-danger:hover {
+        opacity: 0.9;
+    }
+
+    .btn-modal-secondary {
+        background: var(--light-gray);
+        color: var(--dark-color);
+    }
+
+    .btn-modal-secondary:hover {
+        background: #d1d5db;
+    }
+
+    .modal-actions-left {
+        display: flex;
+        gap: 8px;
+    }
+
+    .modal-actions-right {
+        display: flex;
+        gap: 8px;
+    }
 </style>
 {% endblock %}
 
@@ -268,6 +435,58 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Edição do Cartão -->
+<div class="card-modal-overlay" id="cardModalOverlay">
+    <div class="card-modal">
+        <div class="card-modal-header">
+            <h3 class="card-modal-title">
+                <i class="bi bi-pencil-square"></i>
+                Editar Cartão
+            </h3>
+            <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+        </div>
+        <div class="card-modal-body">
+            <input type="hidden" id="editCardId">
+            <div class="card-form-group">
+                <label for="editCardTitle">Título</label>
+                <input type="text" id="editCardTitle" placeholder="Digite o título do cartão">
+            </div>
+            <div class="card-form-group">
+                <label for="editCardDescription">Descrição</label>
+                <textarea id="editCardDescription" placeholder="Adicione uma descrição mais detalhada..."></textarea>
+            </div>
+            <div class="card-form-row">
+                <div class="card-form-group">
+                    <label for="editCardPriority">Prioridade</label>
+                    <select id="editCardPriority">
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div class="card-form-group">
+                    <label for="editCardDueDate">Data Limite</label>
+                    <input type="date" id="editCardDueDate">
+                </div>
+            </div>
+        </div>
+        <div class="card-modal-footer">
+            <div class="modal-actions-left">
+                <button class="btn-modal btn-modal-danger" onclick="deleteCard()">
+                    <i class="bi bi-trash"></i> Excluir
+                </button>
+            </div>
+            <div class="modal-actions-right">
+                <button class="btn-modal btn-modal-secondary" onclick="closeCardModal()">Cancelar</button>
+                <button class="btn-modal btn-modal-primary" onclick="saveCard()">
+                    <i class="bi bi-check-lg"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -311,6 +530,115 @@
                 alert('Erro ao criar cartão');
             }
         };
+
+        // Função para abrir o modal de edição
+        window.openCardModal = async function (cardId) {
+            try {
+                const res = await fetch('/api/quadro/cartao/' + cardId + '/details/');
+                if (!res.ok) throw new Error('Erro ao carregar cartão');
+
+                const data = await res.json();
+
+                document.getElementById('editCardId').value = cardId;
+                document.getElementById('editCardTitle').value = data.titulo || '';
+                document.getElementById('editCardDescription').value = data.descricao || '';
+                document.getElementById('editCardPriority').value = data.prioridade || 'baixa';
+                document.getElementById('editCardDueDate').value = data.data_limite || '';
+
+                document.getElementById('cardModalOverlay').classList.add('show');
+            } catch (e) {
+                console.error('Erro ao abrir cartão:', e);
+                alert('Erro ao carregar dados do cartão');
+            }
+        };
+
+        // Função para fechar o modal
+        window.closeCardModal = function () {
+            document.getElementById('cardModalOverlay').classList.remove('show');
+        };
+
+        // Função para salvar o cartão
+        window.saveCard = async function () {
+            const cardId = document.getElementById('editCardId').value;
+            const titulo = document.getElementById('editCardTitle').value.trim();
+            const descricao = document.getElementById('editCardDescription').value.trim();
+            const prioridade = document.getElementById('editCardPriority').value;
+            const data_limite = document.getElementById('editCardDueDate').value;
+
+            if (!titulo) {
+                alert('O título é obrigatório');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/quadro/cartao/' + cardId + '/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        titulo: titulo,
+                        descricao: descricao,
+                        prioridade: prioridade,
+                        data_limite: data_limite || null
+                    })
+                });
+
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Erro: ' + (err.error || 'Não foi possível salvar o cartão'));
+                }
+            } catch (e) {
+                console.error('Erro ao salvar:', e);
+                alert('Erro ao salvar cartão');
+            }
+        };
+
+        // Função para excluir o cartão
+        window.deleteCard = async function () {
+            if (!confirm('Tem certeza que deseja excluir este cartão?')) return;
+
+            const cardId = document.getElementById('editCardId').value;
+
+            try {
+                const res = await fetch('/api/quadro/cartao/' + cardId + '/delete/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Erro: ' + (err.error || 'Não foi possível excluir o cartão'));
+                }
+            } catch (e) {
+                console.error('Erro ao excluir:', e);
+                alert('Erro ao excluir cartão');
+            }
+        };
+
+        // Fechar modal ao clicar fora
+        document.getElementById('cardModalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeCardModal();
+            }
+        });
+
+        // Adicionar event listeners para clicar nos cards
+        document.querySelectorAll('.kanban-card').forEach(function (card) {
+            card.addEventListener('click', function (e) {
+                // Evitar que o clique acione durante o drag
+                if (e.defaultPrevented) return;
+                const cardId = this.dataset.cardId;
+                openCardModal(cardId);
+            });
+        });
 
         // Inicializar Sortable para drag-and-drop
         document.querySelectorAll('.kanban-cards').forEach(function (container) {

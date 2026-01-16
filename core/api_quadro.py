@@ -102,6 +102,10 @@ def api_cartao_details(request, cartao_id):
 
         return JsonResponse({
             'id': cartao.id,
+            'titulo': cartao.titulo,
+            'descricao': cartao.descricao or '',
+            'prioridade': cartao.prioridade or 'baixa',
+            'data_limite': cartao.data_limite.strftime('%Y-%m-%d') if cartao.data_limite else '',
             'comentarios': comentarios,
             'anexos': anexos
         })
