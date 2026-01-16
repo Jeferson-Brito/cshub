@@ -503,38 +503,3 @@ def api_nrs_analysts(request):
     except Exception as e:
         return JsonResponse({'analysts': [], 'error': str(e)})
 
-
-@login_required
-@require_http_methods(["POST"])
-def api_refund_delete(request, pk):
-    """Excluir solicitação de estorno (apenas gestor/admin com confirmação de senha)"""
-    user = request.user
-    
-    # Apenas gestores e administradores podem excluir
-    if user.role not in ['gestor', 'administrador']:
-        return JsonResponse({'success': False, 'error': 'Sem permissão para excluir'}, status=403)
-    
-    try:
-        data = json.loads(request.body)
-        password = data.get('password')
-        
-        if not password:
-            return JsonResponse({'success': False, 'error': 'Senha é obrigatória'}, status=400)
-        
-        # Verificar senha
-        if not user.check_password(password):
-            return JsonResponse({'success': False, 'error': 'Senha incorreta'}, status=401)
-        
-        # Buscar e excluir
-        refund = RefundRequest.objects.get(id=pk)
-        refund_id = refund.id
-        refund.delete()
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Solicitação #{refund_id} excluída com sucesso'
-        })
-    except RefundRequest.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Solicitação não encontrada'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=400)
