@@ -62,6 +62,15 @@
                 <div class="kb-card-count" id="count-faq">... artigos</div>
             </div>
 
+            <div class="kb-card" onclick="switchView('list', 'troubleshooting')">
+                <div class="kb-card-icon troubleshooting">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <h3>Resolução de Problemas</h3>
+                <p>Guias de suporte técnico e resolução de problemas comuns (Treinamentos).</p>
+                <div class="kb-card-count" id="count-troubleshooting">... artigos</div>
+            </div>
+
             <div class="kb-card" onclick="switchView('tools')">
                 <div class="kb-card-icon tools">
                     <i class="bi bi-robot"></i>
@@ -134,6 +143,7 @@
                         <option value="tutorials">Tutoriais e Guias</option>
                         <option value="solutions">Soluções Comuns</option>
                         <option value="faq">Perguntas Frequentes</option>
+                        <option value="troubleshooting">Resolução de Problemas</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -173,7 +183,8 @@
     const categoryNames = {
         'tutorials': 'Tutoriais e Guias',
         'solutions': 'Soluções Comuns',
-        'faq': 'Perguntas Frequentes'
+        'faq': 'Perguntas Frequentes',
+        'troubleshooting': 'Resolução de Problemas'
     };
 
     // --- Navegação ---
@@ -214,12 +225,15 @@
     }
 
     function updateCounts() {
-        const counts = { tutorials: 0, solutions: 0, faq: 0 };
+        const counts = { tutorials: 0, solutions: 0, faq: 0, troubleshooting: 0 };
         articles.forEach(a => { if (counts[a.categoria] !== undefined) counts[a.categoria]++; });
 
         document.getElementById('count-tutorials').textContent = `${counts.tutorials} artigos`;
         document.getElementById('count-solutions').textContent = `${counts.solutions} artigos`;
         document.getElementById('count-faq').textContent = `${counts.faq} artigos`;
+        if (document.getElementById('count-troubleshooting')) {
+            document.getElementById('count-troubleshooting').textContent = `${counts.troubleshooting || 0} artigos`;
+        }
         document.getElementById('count-tools').textContent = `${tools.length} ferramentas`;
     }
 
@@ -269,7 +283,12 @@
                     </div>
                     <div class="kb-article-content d-none">
                         <div class="kb-article-text">
-                            ${a.conteudo.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}
+                            ${a.conteudo
+                    .replace(/### (.*?)\n/g, '<h5 class="mt-3 mb-2 fw-bold text-primary">$1</h5>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/^- (.*?)$/gm, '<div class="d-flex mb-1"><i class="bi bi-dot me-2"></i><span>$1</span></div>')
+                    .replace(/^[⚠️❗] (.*?)$/gm, '<div class="alert alert-warning py-2 px-3 my-2 d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle-fill"></i><span>$1</span></div>')
+                    .replace(/\n/g, '<br>')}
                         </div>
                     </div>
                 `;

@@ -296,6 +296,7 @@ class ArtigoBaseConhecimento(models.Model):
         ('tutorials', 'Tutoriais e Guias'),
         ('solutions', 'Soluções Comuns'),
         ('faq', 'Perguntas Frequentes'),
+        ('troubleshooting', 'Resolução de Problemas'),
     ]
     
     titulo = models.CharField(max_length=200)
