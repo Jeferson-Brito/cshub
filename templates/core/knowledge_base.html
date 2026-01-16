@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Suporte - GRS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/knowledge_base.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="knowledge-base-page">
+    <div class="kb-header">
+        <div class="kb-header-content">
+            <h1 class="kb-title">Suporte</h1>
+            <p class="kb-subtitle">Centralize e compartilhe conhecimento da equipe</p>
+        </div>
+        {% if can_edit %}
+        <button class="kb-btn-create" id="btn-new-article">
+            <i class="bi bi-plus-lg"></i> Novo Artigo
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Barra de Busca -->
+    <div class="kb-search-container">
+        <div class="kb-search-bar">
+            <i class="bi bi-search"></i>
+            <input type="text" id="kb-search-input"
+                placeholder="Busque por tutoriais, soluções ou perguntas frequentes...">
+            <button class="kb-search-btn" id="btn-search">Buscar</button>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div id="kb-content-area">
+        <!-- Cards Iniciais (View: 'cards') -->
+        <div id="view-cards" class="kb-cards-grid">
+            <div class="kb-card" onclick="switchView('list', 'tutorials')">
+                <div class="kb-card-icon tutorials">
+                    <i class="bi bi-book"></i>
+                </div>
+                <h3>Tutoriais e Guias</h3>
+                <p>Aprenda a usar todas as funcionalidades do sistema com guias passo a passo.</p>
+                <div class="kb-card-count" id="count-tutorials">... artigos</div>
+            </div>
+
+            <div class="kb-card" onclick="switchView('list', 'solutions')">
+                <div class="kb-card-icon solutions">
+                    <i class="bi bi-lightbulb"></i>
+                </div>
+                <h3>Soluções Comuns</h3>
+                <p>Respostas rápidas para problemas e dúvidas frequentes do dia a dia.</p>
+                <div class="kb-card-count" id="count-solutions">... artigos</div>
+            </div>
+
+            <div class="kb-card" onclick="switchView('list', 'faq')">
+                <div class="kb-card-icon faq">
+                    <i class="bi bi-question-circle"></i>
+                </div>
+                <h3>Perguntas Frequentes</h3>
+                <p>Dúvidas comuns e suas respostas para facilitar o uso do sistema.</p>
+                <div class="kb-card-count" id="count-faq">... artigos</div>
+            </div>
+
+            <div class="kb-card" onclick="switchView('tools')">
+                <div class="kb-card-icon tools">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <h3>Ferramentas de IA</h3>
+                <p>Explore as melhores ferramentas de inteligência artificial disponíveis na internet.</p>
+                <div class="kb-card-count" id="count-tools">... ferramentas</div>
+            </div>
+
+            <div class="kb-card" onclick="window.location.href='{% url 'sites' %}'">
+                <div class="kb-card-icon sites">
+                    <i class="bi bi-globe"></i>
+                </div>
+                <h3>Sites & Sistemas</h3>
+                <p>Acesso rápido a todos os sites e sistemas corporativos.</p>
+                <div class="kb-card-count">Acessar</div>
+            </div>
+
+            <div class="kb-card" onclick="window.location.href='{% url 'localizacao' %}'">
+                <div class="kb-card-icon location">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <h3>Localização das Lojas</h3>
+                <p>Mapa e lista de todas as lojas da rede.</p>
+                <div class="kb-card-count">Acessar</div>
+            </div>
+        </div>
+
+        <!-- Listagem de Artigos (View: 'list') -->
+        <div id="view-list" class="kb-list-container d-none">
+            <div class="kb-list-header">
+                <button class="kb-btn-back" onclick="switchView('cards')">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </button>
+                <h2 id="list-title">Tutoriais e Guias</h2>
+            </div>
+            <div class="kb-articles-list" id="articles-list">
+                <!-- Artigos injetados via JS -->
+            </div>
+        </div>
+
+        <!-- Ferramentas de IA (View: 'tools') -->
+        <div id="view-tools" class="kb-list-container d-none">
+            <div class="kb-list-header">
+                <button class="kb-btn-back" onclick="switchView('cards')">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </button>
+                <h2>Ferramentas de IA</h2>
+            </div>
+            <div class="kb-tools-grid" id="tools-grid">
+                <!-- Ferramentas injetadas via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Artigo -->
+<div class="kb-modal-overlay d-none" id="article-modal">
+    <div class="kb-modal">
+        <div class="kb-modal-header">
+            <h3 id="modal-title">Novo Artigo</h3>
+            <button class="btn-close" id="close-modal"></button>
+        </div>
+        <div class="kb-modal-content">
+            <form id="article-form">
+                <input type="hidden" id="article-id">
+                <div class="mb-3">
+                    <label class="form-label">Categoria</label>
+                    <select class="form-select" id="article-category">
+                        <option value="tutorials">Tutoriais e Guias</option>
+                        <option value="solutions">Soluções Comuns</option>
+                        <option value="faq">Perguntas Frequentes</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Título</label>
+                    <input type="text" class="form-control" id="article-title" required
+                        placeholder="Digite o título do artigo...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Conteúdo</label>
+                    <textarea class="form-control" id="article-text" rows="8" required
+                        placeholder="Digite o conteúdo... (Use **texto** para negrito)"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tags (separadas por vírgula)</label>
+                    <input type="text" class="form-control" id="article-tags" placeholder="ex: tutorial, sistema, guia">
+                </div>
+            </form>
+        </div>
+        <div class="kb-modal-footer">
+            <button class="btn btn-light" id="btn-cancel">Cancelar</button>
+            <button type="submit" form="article-form" class="btn btn-primary">Salvar Artigo</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentView = 'cards';
+        let currentCategory = '';
+        let articles = [];
+        let tools = [];
+        const canEdit = {{ can_edit| yesno: "true,false"
+    }};
+
+    const categoryNames = {
+        'tutorials': 'Tutoriais e Guias',
+        'solutions': 'Soluções Comuns',
+        'faq': 'Perguntas Frequentes'
+    };
+
+    // --- Navegação ---
+    window.switchView = function (view, category = '') {
+        currentView = view;
+        currentCategory = category;
+
+        document.getElementById('view-cards').classList.add('d-none');
+        document.getElementById('view-list').classList.add('d-none');
+        document.getElementById('view-tools').classList.add('d-none');
+
+        if (view === 'cards') {
+            document.getElementById('view-cards').classList.remove('d-none');
+            updateCounts();
+        } else if (view === 'list') {
+            document.getElementById('view-list').classList.remove('d-none');
+            document.getElementById('list-title').textContent = category === 'search' ? 'Resultados da Busca' : categoryNames[category];
+            renderArticles();
+        } else if (view === 'tools') {
+            document.getElementById('view-tools').classList.remove('d-none');
+            renderTools();
+        }
+    };
+
+    // --- Fetch Data ---
+    async function loadData() {
+        try {
+            const [artRes, toolRes] = await Promise.all([
+                fetch('/api/kb/articles/'),
+                fetch('/api/kb/tools/')
+            ]);
+            articles = await artRes.json();
+            tools = await toolRes.json();
+            updateCounts();
+        } catch (err) {
+            console.error('Erro ao carregar dados:', err);
+        }
+    }
+
+    function updateCounts() {
+        const counts = { tutorials: 0, solutions: 0, faq: 0 };
+        articles.forEach(a => { if (counts[a.categoria] !== undefined) counts[a.categoria]++; });
+
+        document.getElementById('count-tutorials').textContent = `${counts.tutorials} artigos`;
+        document.getElementById('count-solutions').textContent = `${counts.solutions} artigos`;
+        document.getElementById('count-faq').textContent = `${counts.faq} artigos`;
+        document.getElementById('count-tools').textContent = `${tools.length} ferramentas`;
+    }
+
+    // --- Renderers ---
+    function renderArticles() {
+        const container = document.getElementById('articles-list');
+        container.innerHTML = '';
+
+        let filtered = articles;
+        if (currentCategory !== 'search') {
+            filtered = articles.filter(a => a.categoria === currentCategory);
+        } else {
+            const term = document.getElementById('kb-search-input').value.toLowerCase();
+            filtered = articles.filter(a =>
+                a.titulo.toLowerCase().includes(term) ||
+                a.conteudo.toLowerCase().includes(term) ||
+                a.tags.some(t => t.toLowerCase().includes(term))
+            );
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-3"></i>Nenhum artigo encontrado</div>';
+            return;
+        }
+
+        filtered.forEach(a => {
+            const item = document.createElement('div');
+            item.className = 'kb-article-item';
+            item.innerHTML = `
+                    <div class="kb-article-header">
+                        <div class="kb-article-title-content">
+                            <h4>${a.titulo}</h4>
+                            <div class="kb-article-meta">
+                                <span class="kb-article-views"><i class="bi bi-eye"></i> ${a.views}</span>
+                                <div class="kb-article-tags">
+                                    ${a.tags.map(t => `<span class="kb-tag">${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kb-article-actions">
+                            ${canEdit ? `
+                                <button class="kb-btn-action edit-btn" title="Editar"><i class="bi bi-pencil"></i></button>
+                                <button class="kb-btn-action danger delete-btn" title="Excluir"><i class="bi bi-trash"></i></button>
+                            ` : ''}
+                            <i class="bi bi-chevron-down ms-2 text-muted chevron-icon"></i>
+                        </div>
+                    </div>
+                    <div class="kb-article-content d-none">
+                        <div class="kb-article-text">
+                            ${a.conteudo.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+
+            const header = item.querySelector('.kb-article-header');
+            const content = item.querySelector('.kb-article-content');
+            const chevron = item.querySelector('.chevron-icon');
+
+            header.onclick = (e) => {
+                if (e.target.closest('.kb-btn-action')) return;
+                const isExpanded = !content.classList.contains('d-none');
+                if (!isExpanded) {
+                    // Incrementar view via API (opcional, já faz no detail se quisermos)
+                    fetch(`/api/kb/articles/${a.id}/`).then(res => res.json()).then(data => a.views = data.views);
+                }
+                content.classList.toggle('d-none');
+                chevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+                item.classList.toggle('expanded');
+            };
+
+            if (canEdit) {
+                item.querySelector('.edit-btn').onclick = () => openModal(a);
+                item.querySelector('.delete-btn').onclick = () => deleteArticle(a.id);
+            }
+
+            container.appendChild(item);
+        });
+    }
+
+    function renderTools() {
+        const container = document.getElementById('tools-grid');
+        container.innerHTML = '';
+
+        tools.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'kb-tool-card';
+            card.onclick = () => window.open(t.url, '_blank');
+            card.innerHTML = `
+                    <div class="kb-tool-icon"><i class="bi bi-robot"></i></div>
+                    <h4>${t.titulo}</h4>
+                    <p>${t.descricao}</p>
+                    <div class="kb-tool-link">Acessar <i class="bi bi-box-arrow-up-right"></i></div>
+                `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- Artigo Actions ---
+    function openModal(article = null) {
+        const modal = document.getElementById('article-modal');
+        const form = document.getElementById('article-form');
+        form.reset();
+
+        if (article) {
+            document.getElementById('modal-title').textContent = 'Editar Artigo';
+            document.getElementById('article-id').value = article.id;
+            document.getElementById('article-category').value = article.categoria;
+            document.getElementById('article-title').value = article.titulo;
+            document.getElementById('article-text').value = article.conteudo;
+            document.getElementById('article-tags').value = article.tags.join(', ');
+        } else {
+            document.getElementById('modal-title').textContent = 'Novo Artigo';
+            document.getElementById('article-id').value = '';
+            document.getElementById('article-category').value = currentCategory === 'search' ? 'tutorials' : (currentCategory || 'tutorials');
+        }
+
+        modal.classList.remove('d-none');
+    }
+
+    document.getElementById('article-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('article-id').value;
+        const data = {
+            titulo: document.getElementById('article-title').value,
+            conteudo: document.getElementById('article-text').value,
+            categoria: document.getElementById('article-category').value,
+            tags: document.getElementById('article-tags').value
+        };
+
+        const url = id ? `/api/kb/articles/${id}/` : '/api/kb/articles/create/';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                document.getElementById('article-modal').classList.add('d-none');
+                loadData().then(() => { if (currentView === 'list') renderArticles(); });
+            }
+        } catch (err) {
+            console.error('Erro ao salvar:', err);
+        }
+    };
+
+    async function deleteArticle(id) {
+        if (!confirm('Deseja excluir este artigo?')) return;
+        try {
+            const response = await fetch(`/api/kb/articles/${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            if (response.ok) {
+                loadData().then(() => renderArticles());
+            }
+        } catch (err) {
+            console.error('Erro ao excluir:', err);
+        }
+    }
+
+    // --- Event Listeners ---
+    document.getElementById('btn-search').onclick = () => switchView('list', 'search');
+    document.getElementById('kb-search-input').onkeydown = (e) => { if (e.key === 'Enter') switchView('list', 'search'); };
+
+    if (canEdit) document.getElementById('btn-new-article').onclick = () => openModal();
+
+    document.getElementById('close-modal').onclick = () => document.getElementById('article-modal').classList.add('d-none');
+    document.getElementById('btn-cancel').onclick = () => document.getElementById('article-modal').classList.add('d-none');
+
+    // Overlay close
+    document.getElementById('article-modal').onclick = (e) => {
+        if (e.target === document.getElementById('article-modal')) document.getElementById('article-modal').classList.add('d-none');
+    };
+
+    // Popular (opcional, igual ao React) - Vou simplificar e não adicionar a "PopularSection" separada agora para manter limpo, mas os artigos já são ordenados por views na API.
+
+    loadData();
+    });
+</script>
+{% endblock %}
