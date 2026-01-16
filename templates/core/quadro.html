@@ -456,20 +456,9 @@
                 <label for="editCardDescription">Descrição</label>
                 <textarea id="editCardDescription" placeholder="Adicione uma descrição mais detalhada..."></textarea>
             </div>
-            <div class="card-form-row">
-                <div class="card-form-group">
-                    <label for="editCardPriority">Prioridade</label>
-                    <select id="editCardPriority">
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
-                        <option value="urgente">Urgente</option>
-                    </select>
-                </div>
-                <div class="card-form-group">
-                    <label for="editCardDueDate">Data Limite</label>
-                    <input type="date" id="editCardDueDate">
-                </div>
+            <div class="card-form-group">
+                <label for="editCardDueDate">Data Limite</label>
+                <input type="date" id="editCardDueDate">
             </div>
         </div>
         <div class="card-modal-footer">
@@ -534,16 +523,17 @@
         // Função para abrir o modal de edição
         window.openCardModal = async function (cardId) {
             try {
-                const res = await fetch('/api/quadro/cartao/' + cardId + '/details/');
+                const res = await fetch('/api/kanban/cards/' + cardId + '/');
                 if (!res.ok) throw new Error('Erro ao carregar cartão');
 
                 const data = await res.json();
 
                 document.getElementById('editCardId').value = cardId;
-                document.getElementById('editCardTitle').value = data.titulo || '';
-                document.getElementById('editCardDescription').value = data.descricao || '';
-                document.getElementById('editCardPriority').value = data.prioridade || 'baixa';
-                document.getElementById('editCardDueDate').value = data.data_limite || '';
+                document.getElementById('editCardTitle').value = data.title || '';
+                document.getElementById('editCardDescription').value = data.description || '';
+                // O api_kanban não tem prioridade, vou usar o campo cover_color como alternativa ou deixar fixo
+                // document.getElementById('editCardPriority').value = 'baixa';
+                document.getElementById('editCardDueDate').value = data.due_date ? data.due_date.split('T')[0] : '';
 
                 document.getElementById('cardModalOverlay').classList.add('show');
             } catch (e) {
@@ -560,28 +550,26 @@
         // Função para salvar o cartão
         window.saveCard = async function () {
             const cardId = document.getElementById('editCardId').value;
-            const titulo = document.getElementById('editCardTitle').value.trim();
-            const descricao = document.getElementById('editCardDescription').value.trim();
-            const prioridade = document.getElementById('editCardPriority').value;
-            const data_limite = document.getElementById('editCardDueDate').value;
+            const title = document.getElementById('editCardTitle').value.trim();
+            const description = document.getElementById('editCardDescription').value.trim();
+            const due_date = document.getElementById('editCardDueDate').value;
 
-            if (!titulo) {
+            if (!title) {
                 alert('O título é obrigatório');
                 return;
             }
 
             try {
-                const res = await fetch('/api/quadro/cartao/' + cardId + '/update/', {
-                    method: 'POST',
+                const res = await fetch('/api/kanban/cards/' + cardId + '/', {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({
-                        titulo: titulo,
-                        descricao: descricao,
-                        prioridade: prioridade,
-                        data_limite: data_limite || null
+                        title: title,
+                        description: description,
+                        due_date: due_date || null
                     })
                 });
 
@@ -604,7 +592,7 @@
             const cardId = document.getElementById('editCardId').value;
 
             try {
-                const res = await fetch('/api/quadro/cartao/' + cardId + '/delete/', {
+                const res = await fetch('/api/kanban/cards/' + cardId + '/', {
                     method: 'DELETE',
                     headers: {
                         'X-CSRFToken': csrfToken
