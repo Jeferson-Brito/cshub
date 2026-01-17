@@ -1,0 +1,2098 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Escala - Nexus{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+    /* ============================================
+   ESTILOS DA ESCALA
+   ============================================ */
+    .app-escala {
+        max-width: 1800px;
+        margin: 0;
+        width: 100%;
+    }
+
+    /* Header da Página */
+    .page-header-escala {
+        background: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        width: 100%;
+        position: relative;
+    }
+
+    .page-title-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .page-title {
+        font-size: 1.8em;
+        color: #222;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .page-month-display {
+        font-size: 1.4em;
+        color: #3b82f6;
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .page-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .input-group-mes {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    .icon-mes {
+        color: #0d6efd;
+    }
+
+    .input-group-mes input[type="month"] {
+        border: none;
+        outline: none;
+        font-size: 16px;
+        padding: 5px;
+    }
+
+    .btn-escala {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-escala:hover {
+        background: #5c636a;
+    }
+
+    .btn-escala.primary {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .btn-escala.primary:hover {
+        background: #0b5ed7;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* Tabela de Escala */
+    .tabelas {
+        margin-top: 30px;
+    }
+
+    .semana-title {
+        text-align: center;
+        font-size: 1.1rem;
+        background: #334155;
+        color: white;
+        margin: 0;
+        padding: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        margin-bottom: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        background: white;
+        border: 1px solid #334155;
+    }
+
+    .escala-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .escala-table th {
+        background: #334155;
+        color: #ffffff !important;
+        padding: 12px 8px;
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        border: 1px solid #1e293b;
+        text-align: center;
+    }
+
+    .escala-table td {
+        border: 1px solid #cbd5e1;
+        padding: 10px 6px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 13px;
+        color: #1e293b;
+    }
+
+    .escala-table td.trabalho {
+        color: #222;
+        cursor: pointer;
+    }
+
+    .escala-table td.trabalho:hover {
+        background: #f0f0f0;
+    }
+
+    .escala-table td.turno {
+        color: #fff;
+        font-weight: 700;
+        width: 120px;
+        font-size: 13px;
+        border: 1px solid #1e293b;
+    }
+
+    .escala-table td.analista {
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        text-align: center;
+        padding: 8px;
+        border: 1px solid #1e293b;
+        min-width: 140px;
+    }
+
+    .escala-table td.folga {
+        background: #9df99b !important;
+        color: #166534 !important;
+        font-weight: 700;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+    }
+
+    .escala-table td.folga:hover {
+        background: #157347;
+    }
+
+    .escala-table td.pausa {
+        background: #334155;
+        color: #fff;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .escala-table td.ferias {
+        background: #ffc107;
+        color: #000;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .escala-table td.ferias:hover {
+        background: #ffb300;
+    }
+
+    .escala-table td.atestado {
+        background: #dc3545;
+        color: #fff;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .escala-table td.atestado:hover {
+        background: #bb2d3b;
+    }
+
+    .escala-table td.dia-vazio {
+        background: #f5f5f5;
+    }
+
+    .separator-row td {
+        height: 20px;
+        background-color: #ffffff;
+        border: none;
+        padding: 0;
+    }
+
+    /* Loading */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        gap: 20px;
+    }
+
+    .loading-spinner {
+        font-size: 3rem;
+        color: #3b82f6;
+    }
+
+    .loading-text {
+        font-size: 1.1rem;
+        color: #64748b;
+    }
+
+    /* Empty State */
+    .empty-state-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        text-align: center;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #94a3b8;
+        margin-bottom: 20px;
+    }
+
+    .empty-state-container h3 {
+        font-size: 1.5rem;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+
+    .empty-state-container p {
+        color: #64748b;
+        max-width: 400px;
+    }
+
+    /* Modal */
+    .modal-escala {
+        display: none;
+        position: fixed !important;
+        z-index: 99999 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-y: auto !important;
+        /* Allow scrolling of the modal container */
+        background-color: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .modal-escala.show {
+        display: flex !important;
+        align-items: center !important;
+        /* Revert to center (safer with max-height correction) or keep flex-start? User wants smaller. Center looks better if small. */
+        justify-content: center !important;
+        padding: 20px !important;
+    }
+
+    .modal-content-escala {
+        background-color: #ffffff;
+        margin: auto !important;
+        /* Enable flex centering and scroll behavior */
+        padding: 0;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+        width: 95%;
+        max-width: 450px;
+        /* Reduced from 500px */
+        position: relative;
+        animation: slideIn 0.3s ease-out;
+        overflow: hidden;
+    }
+
+    .modal-content-escala.large {
+        max-width: 650px;
+        /* Reduced from 700px */
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header-escala {
+        background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%);
+        color: #1e293b;
+        padding: 25px 20px 20px 20px;
+        /* Significantly reduced padding */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+    }
+
+    .modal-header-escala .modal-icon {
+        width: 50px;
+        /* Reduced from 70px */
+        height: 50px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        /* Reduced margin */
+        color: white;
+        font-size: 1.4rem;
+        /* Reduced font size */
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .modal-header-escala h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        /* Reduced from 1.5rem */
+        color: #1e3a5f;
+        font-weight: 700;
+    }
+
+    .modal-header-escala p {
+        margin: 10px 0 0 0;
+        color: #64748b;
+        font-size: 0.95rem;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        font-size: 1.2rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+
+    .modal-body-escala {
+        padding: 25px;
+        background: #f1f5f9;
+        min-height: 200px;
+    }
+
+    .modal-actions-bar {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        /* Reduced padding */
+        background: white;
+        border-radius: 50px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .form-group-escala {
+        margin-bottom: 20px;
+    }
+
+    .form-group-escala label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .form-group-escala input,
+    .form-group-escala select {
+        width: 100%;
+        padding: 10px 12px;
+        /* Reduced padding */
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        font-size: 14px;
+        transition: all 0.3s;
+        box-sizing: border-box;
+    }
+
+    .form-group-escala input[type="color"] {
+        width: 100%;
+        height: 50px;
+        padding: 5px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        background: white;
+    }
+
+    .form-group-escala input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .form-group-escala input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 6px;
+    }
+
+    .form-group-escala input[type="color"]::-moz-color-swatch {
+        border: none;
+        border-radius: 6px;
+    }
+
+    .form-group-escala input:focus,
+    .form-group-escala select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .modal-footer-escala {
+        padding: 15px 25px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: white;
+    }
+
+    /* Cards de Analistas/Turnos - Novo Design */
+    .item-list-container {
+        position: relative;
+    }
+
+    .item-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        /* Reduced gap */
+        max-height: 55vh;
+        /* Responsive max-height */
+        overflow-y: auto;
+        /* Restore scroll */
+        padding: 5px;
+    }
+
+    .item-list::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .item-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .item-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .item-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 15px;
+        /* Reduced padding */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .item-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.06);
+        border-color: #3b82f6;
+    }
+
+    .item-card-left {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .item-drag-handle {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+    }
+
+    .item-color-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .item-card-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .item-card-info h4 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .item-card-info p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .item-card-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Agrupamento por Turno */
+    .shift-group {
+        margin-bottom: 25px;
+    }
+
+    .shift-group-header {
+        background: #f8fafc;
+        padding: 10px 15px;
+        font-weight: 700;
+        color: #1e293b;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .shift-analysts-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 20px;
+    }
+
+    .empty-shift-msg {
+        text-align: center;
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.85rem;
+        padding: 10px;
+        background: #fff;
+        border: 1px dashed #e2e8f0;
+        border-radius: 8px;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #eff6ff;
+        border: 2px dashed #3b82f6;
+    }
+
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .btn-icon.edit {
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-icon.edit:hover {
+        background: #2563eb;
+        transform: scale(1.05);
+    }
+
+    .btn-icon.delete {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-icon.delete:hover {
+        background: #dc2626;
+        transform: scale(1.05);
+    }
+
+    /* Turno Badge */
+    .turno-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Export Options */
+    .export-options {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-escala {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .page-controls,
+        .page-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .input-group-mes,
+        .btn-escala {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-escala">
+    <div class="page-header-escala">
+        <div class="page-title-section">
+            <h1 class="page-title"><i class="fa-solid fa-calendar-alt"></i> Gerador de Escala</h1>
+            <h2 class="page-month-display" id="mesDisplay">-</h2>
+        </div>
+        <div class="page-controls">
+            <div class="input-group-mes">
+                <i class="fa-solid fa-calendar-day icon-mes"></i>
+                <input type="month" id="mesInput">
+                <button class="btn-escala primary" onclick="generateTables()">
+                    <i class="fa-solid fa-calendar-plus"></i> Gerar
+                </button>
+            </div>
+        </div>
+        {% if is_admin %}
+        <div class="page-actions">
+            <button class="btn-escala" onclick="openAnalystModal()">
+                <i class="fa-solid fa-users-gear"></i> Gerenciar Analistas
+            </button>
+            <button class="btn-escala" onclick="openShiftModal()">
+                <i class="fa-solid fa-clock"></i> Turnos
+            </button>
+            <button class="btn-escala" onclick="openExportModal()">
+                <i class="fa-solid fa-download"></i> Exportar
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-container" id="loadingContainer" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+        <p class="loading-text">Gerando escala do mês atual...</p>
+    </div>
+
+    <!-- Empty States -->
+    <div class="empty-state-container" id="emptyShifts" style="display: none;">
+        <div class="empty-state-icon">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+        <h3>Nenhum turno cadastrado</h3>
+        <p>Para gerar a escala, você precisa cadastrar pelo menos um turno.</p>
+        {% if is_admin %}
+        <button class="btn-escala primary" onclick="openShiftModal()" style="margin-top: 20px;">
+            <i class="fa-solid fa-plus"></i> Cadastrar Turno
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="empty-state-container" id="emptyAnalysts" style="display: none;">
+        <div class="empty-state-icon">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <h3>Nenhum analista cadastrado</h3>
+        <p>Para gerar a escala, você precisa cadastrar pelo menos um analista.</p>
+        {% if is_admin %}
+        <button class="btn-escala primary" onclick="openAnalystModal()" style="margin-top: 20px;">
+            <i class="fa-solid fa-plus"></i> Cadastrar Analista
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Tabelas da Escala -->
+    <div id="tabelas" class="tabelas"></div>
+</div>
+
+<!-- Modal de Gerenciamento de Turnos -->
+<div class="modal-escala" id="shiftModal">
+    <div class="modal-content-escala large">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closeShiftModal()">&times;</button>
+            <div class="modal-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <h2>Gerenciar Turnos</h2>
+            <p>Configure os turnos de trabalho e seus horários</p>
+        </div>
+        <div class="modal-body-escala">
+            <div class="modal-actions-bar">
+                <button class="btn-escala primary" onclick="showAddShiftForm()">
+                    <i class="fa-solid fa-plus"></i> Novo Turno
+                </button>
+            </div>
+            <div class="item-list-container">
+                <div class="item-list" id="shiftList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Formulário de Turno -->
+<div class="modal-escala" id="shiftFormModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closeShiftFormModal()">&times;</button>
+            <div class="modal-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <h2 id="shiftFormTitle">Novo Turno</h2>
+            <p>Preencha os dados abaixo para configurar o turno</p>
+        </div>
+        <div class="modal-body-escala">
+            <form id="shiftForm">
+                <input type="hidden" id="shiftId">
+                <div class="form-group-escala">
+                    <label for="shiftName">Nome do Turno</label>
+                    <input type="text" id="shiftName" placeholder="Ex: Manhã" required>
+                </div>
+                <div class="form-group-escala">
+                    <label class="d-block mb-2 font-weight-bold">Horário</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="small text-muted text-uppercase mb-1">Início</label>
+                            <div class="custom-timepicker-container">
+                                <input type="text" class="custom-timepicker-input" id="shiftTimeStart"
+                                    placeholder="--:--" readonly>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted text-uppercase mb-1">Fim</label>
+                            <div class="custom-timepicker-container">
+                                <input type="text" class="custom-timepicker-input" id="shiftTimeEnd" placeholder="--:--"
+                                    readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group-escala">
+                    <label for="shiftColor">Cor</label>
+                    <input type="color" id="shiftColor" value="#2563eb">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="closeShiftFormModal()">Cancelar</button>
+            <button class="btn-escala primary" onclick="saveShift()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Gerenciamento de Analistas -->
+<div class="modal-escala" id="analystModal">
+    <div class="modal-content-escala large">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closeAnalystModal()">&times;</button>
+            <div class="modal-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <h2>Gerenciar Analistas</h2>
+            <p>Configure os analistas e suas escalas de trabalho</p>
+        </div>
+        <div class="modal-body-escala">
+            <div class="modal-actions-bar">
+                <button class="btn-escala primary" onclick="showAddAnalystForm()">
+                    <i class="fa-solid fa-plus"></i> Novo Analista
+                </button>
+            </div>
+            <div class="item-list-container">
+                <div class="item-list" id="analystList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Formulário de Analista -->
+<div class="modal-escala" id="analystFormModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closeAnalystFormModal()">&times;</button>
+            <div class="modal-icon">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <h2 id="analystFormTitle">Novo Analista</h2>
+            <p>Preencha os dados básicos do colaborador</p>
+        </div>
+        <div class="modal-body-escala">
+            <form id="analystForm">
+                <input type="hidden" id="analystId">
+                <div class="form-group-escala">
+                    <label for="analystName">Nome</label>
+                    <input type="text" id="analystName" placeholder="Nome completo" required>
+                </div>
+                <div class="form-group-escala">
+                    <label for="analystShift">Turno</label>
+                    <select id="analystShift" required></select>
+                </div>
+                <div class="form-group-escala">
+                    <label class="d-block mb-2 font-weight-bold">Pausa</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="small text-muted text-uppercase mb-1">Início</label>
+                            <div class="custom-timepicker-container">
+                                <input type="text" class="custom-timepicker-input" id="analystBreakStart"
+                                    placeholder="--:--" readonly>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="small text-muted text-uppercase mb-1">Fim</label>
+                            <div class="custom-timepicker-container">
+                                <input type="text" class="custom-timepicker-input" id="analystBreakEnd"
+                                    placeholder="--:--" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group-escala">
+                    <label for="analystStartDate">Data da Primeira Folga</label>
+                    <input type="date" id="analystStartDate">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="closeAnalystFormModal()">Cancelar</button>
+            <button class="btn-escala primary" onclick="saveAnalyst()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição de Célula -->
+<div class="modal-escala" id="editCellModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <h2><i class="fa-solid fa-edit"></i> Editar Dia</h2>
+            <button class="modal-close" onclick="closeEditCellModal()">&times;</button>
+        </div>
+        <div class="modal-body-escala">
+            <form id="editCellForm">
+                <input type="hidden" id="cellAnalistaId">
+                <input type="hidden" id="cellDia">
+                <input type="hidden" id="cellMes">
+                <input type="hidden" id="cellAno">
+                <div class="form-group-escala">
+                    <label for="cellType">Tipo</label>
+                    <select id="cellType" onchange="onCellTypeChange()">
+                        <option value="trabalho">Trabalho</option>
+                        <option value="folga">Folga</option>
+                        <option value="ferias">Férias</option>
+                        <option value="atestado">Atestado</option>
+                    </select>
+                </div>
+                <div class="form-group-escala" id="periodoContainer" style="display: none;">
+                    <label><i class="fa-solid fa-calendar-range"></i> Período</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="flex: 1;">
+                            <label for="cellDataInicio" style="font-size: 12px; color: #64748b;">Data Início</label>
+                            <input type="date" id="cellDataInicio">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="cellDataFim" style="font-size: 12px; color: #64748b;">Data Fim</label>
+                            <input type="date" id="cellDataFim">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group-escala">
+                    <label for="cellMotivo">Motivo (opcional)</label>
+                    <input type="text" id="cellMotivo" placeholder="Ex: Folga extra">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="closeEditCellModal()">Cancelar</button>
+            <button class="btn-escala primary" onclick="saveCellEdit()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Exportação -->
+<div class="modal-escala" id="exportModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <h2><i class="fa-solid fa-download"></i> Exportar Escala</h2>
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+        </div>
+        <div class="modal-body-escala">
+            <p style="text-align: center; color: #64748b;">Selecione o formato de exportação desejado.</p>
+            <div class="export-options">
+                <button class="btn-escala primary" onclick="exportToExcel()">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+                <button class="btn-escala" onclick="exportToPDF()" style="background: #dc3545;">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // DADOS INICIAIS
+    // ========================================
+    let turnos = {{ turnos_json| safe }};
+    let analistas = {{ analistas_json| safe }};
+    let folgasManuais = {{ folgas_json| safe }};
+    const isAdmin = {{ is_admin_json }};
+    const csrfToken = '{{ csrf_token }}';
+
+    // ========================================
+    // INICIALIZAÇÃO
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mover todos os modais para o body para garantir posicionamento correto
+        const modals = document.querySelectorAll('.modal-escala');
+        modals.forEach(modal => {
+            document.body.appendChild(modal);
+        });
+
+        // Definir mês atual
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        document.getElementById('mesInput').value = `${year}-${month}`;
+        updateMonthDisplay();
+
+        // Gerar tabelas automaticamente se houver dados
+        if (turnos.length > 0 && analistas.length > 0) {
+            generateTables();
+        } else {
+            checkEmptyStates();
+        }
+
+        // Listener para mudança de mês
+        document.getElementById('mesInput').addEventListener('change', function () {
+            updateMonthDisplay();
+        });
+    });
+
+    function updateMonthDisplay() {
+        const mes = document.getElementById('mesInput').value;
+        if (!mes) return;
+
+        const [anoStr, mesStr] = mes.split('-');
+        const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const mesNome = meses[parseInt(mesStr, 10) - 1];
+        document.getElementById('mesDisplay').textContent = `${mesNome} de ${anoStr}`;
+    }
+
+    function checkEmptyStates() {
+        document.getElementById('emptyShifts').style.display = turnos.length === 0 ? 'flex' : 'none';
+        document.getElementById('emptyAnalysts').style.display = (turnos.length > 0 && analistas.length === 0) ? 'flex' : 'none';
+    }
+
+    // ========================================
+    // GERAÇÃO DE TABELAS
+    // ========================================
+    function generateTables() {
+        const inputVal = document.getElementById('mesInput').value;
+        if (!inputVal) {
+            alert('Selecione um mês');
+            return;
+        }
+
+        if (turnos.length === 0 || analistas.length === 0) {
+            checkEmptyStates();
+            return;
+        }
+
+        const [ano, mesNum] = inputVal.split('-').map(Number);
+        const monthIndex = mesNum - 1;
+        const totalDays = new Date(ano, monthIndex + 1, 0).getDate();
+
+        // Encontrar a primeira SEGUNDA-FEIRA que engloba o dia 1 do mês
+        const primeiroDia = new Date(ano, monthIndex, 1);
+        let diaSemana = primeiroDia.getDay(); // 0=Dom, 1=Seg... 6=Sab
+        let diff = (diaSemana === 0 ? 6 : diaSemana - 1); // Dias para voltar até Segunda
+
+        let dataInicio = new Date(primeiroDia);
+        dataInicio.setDate(primeiroDia.getDate() - diff);
+
+        document.getElementById('loadingContainer').style.display = 'flex';
+        document.getElementById('tabelas').innerHTML = '';
+
+        setTimeout(() => {
+            let html = '';
+            let dataCorrente = new Date(dataInicio);
+            let semana = 1;
+
+            // Gerar semanas enquanto houver dias do mês alvo
+            while (dataCorrente < new Date(ano, monthIndex + 1, 1)) {
+                // Se a semana inteira começar em outro mês e for APÓS o mês alvo, paramos
+                if (dataCorrente.getMonth() !== monthIndex && dataCorrente > primeiroDia) {
+                    break;
+                }
+
+                html += createTableBlockByWeek(ano, monthIndex, new Date(dataCorrente), semana);
+                dataCorrente.setDate(dataCorrente.getDate() + 7);
+                semana++;
+            }
+
+            document.getElementById('tabelas').innerHTML = html;
+            document.getElementById('loadingContainer').style.display = 'none';
+        }, 100);
+    }
+
+    function createTableBlockByWeek(anoTarget, mesTarget, dataInicioSemana, semana) {
+        const diasSemanaNomes = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+
+        // Calcular os 7 dias da semana
+        const diasDaSemana = [];
+        for (let i = 0; i < 7; i++) {
+            let d = new Date(dataInicioSemana);
+            d.setDate(dataInicioSemana.getDate() + i);
+            diasDaSemana.push(d);
+        }
+
+        // Headers
+        let headers = '<th>Turno</th><th>Analista</th>';
+        diasDaSemana.forEach((d, i) => {
+            if (d.getMonth() === mesTarget) {
+                headers += `<th>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</th>`;
+            } else {
+                headers += `<th style="background: #1e293b; color: rgba(255,255,255,0.4) !important;">${diasSemanaNomes[i]}</th>`;
+            }
+        });
+        headers += '<th>PAUSA</th>';
+
+        // Rows
+        let rows = '';
+        const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+        turnosOrdenados.forEach((turno, turnoIndex) => {
+            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+
+            if (analistasDoTurno.length > 0) {
+                analistasDoTurno.forEach((analista, idx) => {
+                    rows += '<tr>';
+
+                    // Célula de turno (só na primeira linha do turno)
+                    if (idx === 0) {
+                        rows += `<td class="turno" rowspan="${analistasDoTurno.length}" style="background-color: ${turno.cor};">
+                        <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">${turno.nome}</div>
+                        <div style="font-size: 10px; background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">${turno.horario}</div>
+                    </td>`;
+                    }
+
+                    // Célula de analista
+                    rows += `<td class="analista" style="background-color: ${turno.cor}; border-left: 1px solid #1e293b;">${analista.nome}</td>`;
+
+                    // Células de dias
+                    diasDaSemana.forEach(d => {
+                        if (d.getMonth() === mesTarget) {
+                            const dia = d.getDate();
+                            const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
+                            const clickHandler = isAdmin ? `onclick="openEditCellModal(${analista.id}, ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"` : '';
+                            rows += `<td class="${cellData.class}" ${clickHandler}>${cellData.text}</td>`;
+                        } else {
+                            rows += '<td class="dia-vazio"></td>';
+                        }
+                    });
+
+                    // Célula de pausa
+                    rows += `<td class="pausa">${analista.pausa || ''}</td>`;
+                    rows += '</tr>';
+                });
+            } else {
+                rows += `<tr>
+                <td class="turno" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">${turno.nome}</td>
+                <td class="analista" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">(Nenhum analista)</td>
+                ${diasDaSemana.map(() => '<td class="dia-vazio"></td>').join('')}
+                <td class="pausa"></td>
+            </tr>`;
+            }
+
+            // Separador entre turnos
+            if (turnoIndex < turnosOrdenados.length - 1) {
+                rows += `<tr class="separator-row"><td colspan="10"></td></tr>`;
+            }
+        });
+
+        return `
+        <div class="table-wrap">
+            <h2 class="semana-title">Semana ${semana}</h2>
+            <table class="escala-table">
+                <thead><tr>${headers}</tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `;
+    }
+
+    function getCellData(analista, turno, ano, mes, dia) {
+        // Verificar folga manual
+        const key = `${analista.id}-${ano}-${mes + 1}-${dia}`;
+        const folgaManual = folgasManuais[key];
+
+        if (folgaManual) {
+            if (folgaManual.tipo === 'trabalho') {
+                return { class: 'trabalho', text: turno.horario };
+            }
+
+            let text = '';
+            switch (folgaManual.tipo) {
+                case 'folga': text = 'FOLGA'; break;
+                case 'ferias': text = 'FÉRIAS'; break;
+                case 'atestado': text = 'ATESTADO'; break;
+            }
+            if (folgaManual.motivo) {
+                text += ` (${folgaManual.motivo})`;
+            }
+            return { class: folgaManual.tipo, text: text };
+        }
+
+        // Cálculo automático do ciclo 6x2
+        const dataAtual = new Date(ano, mes, dia);
+        dataAtual.setHours(0, 0, 0, 0);
+
+        let dataPrimeiraFolga;
+        if (analista.data_primeira_folga) {
+            const [anoFolga, mesFolga, diaFolga] = analista.data_primeira_folga.split('-').map(Number);
+            dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+        } else {
+            // Padrão: próximo domingo
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            dataPrimeiraFolga = new Date(hoje);
+            dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+        }
+        dataPrimeiraFolga.setHours(0, 0, 0, 0);
+
+        // Calcular diferença em dias
+        const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        // Posição no ciclo de 8 dias (6 trabalho + 2 folga)
+        let posicaoNoCiclo = ((diffDays % 8) + 8) % 8;
+
+        // Se a posição é 0 ou 1, são os 2 dias de folga
+        if (posicaoNoCiclo === 0 || posicaoNoCiclo === 1) {
+            return { class: 'folga', text: 'FOLGA' };
+        }
+
+        return { class: 'trabalho', text: turno.horario };
+    }
+
+    // ========================================
+    // MODAIS DE TURNOS
+    // ========================================
+    function openShiftModal() {
+        renderShiftList();
+        document.getElementById('shiftModal').classList.add('show');
+    }
+
+    function closeShiftModal() {
+        document.getElementById('shiftModal').classList.remove('show');
+    }
+
+    function renderShiftList() {
+        const list = document.getElementById('shiftList');
+        if (turnos.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px 0;">Nenhum turno cadastrado.</p>';
+            return;
+        }
+
+        list.innerHTML = turnos.map(t => `
+        <div class="item-card" data-id="${t.id}">
+            <div class="item-card-left">
+                <span class="item-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                <span class="item-color-dot" style="background: ${t.cor};"></span>
+                <div class="item-card-info">
+                    <h4>${t.nome}</h4>
+                    <p>${t.horario}</p>
+                </div>
+            </div>
+            <div class="item-card-actions">
+                <button class="btn-icon edit" onclick="editShift(${t.id})"><i class="fa-solid fa-edit"></i></button>
+                <button class="btn-icon delete" onclick="deleteShift(${t.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+
+        // Inicializar Sortable se for admin
+        if (isAdmin) {
+            new Sortable(list, {
+                animation: 150,
+                handle: '.item-drag-handle',
+                onEnd: async function () {
+                    const ids = Array.from(list.querySelectorAll('.item-card')).map(card => card.dataset.id);
+                    await reorderShifts(ids);
+                }
+            });
+        }
+    }
+
+    async function reorderShifts(ids) {
+        try {
+            await fetch('/api/escala/turnos/reorder/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ ids })
+            });
+
+            // Atualizar ordens localmente
+            ids.forEach((id, index) => {
+                const turno = turnos.find(t => t.id == id);
+                if (turno) turno.ordem = index;
+            });
+
+            // Reordenar array original
+            turnos.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+            generateTables();
+        } catch (error) {
+            console.error('Erro ao reordenar turnos:', error);
+        }
+    }
+
+    function showAddShiftForm() {
+        document.getElementById('shiftFormTitle').innerText = 'Novo Turno';
+        document.getElementById('shiftId').value = '';
+        document.getElementById('shiftName').value = '';
+        document.getElementById('shiftName').value = '';
+        document.getElementById('shiftTimeStart').value = '';
+        document.getElementById('shiftTimeEnd').value = '';
+        // Reset picker visuals if function is available or just rely on value
+        document.querySelectorAll('.custom-timepicker-container').forEach(c => {
+            const header = c.querySelector('.custom-timepicker-header');
+            if (header) header.textContent = '--:--';
+            c.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
+        });
+        document.getElementById('shiftColor').value = '#2563eb';
+        closeShiftModal();
+        document.getElementById('shiftFormModal').classList.add('show');
+    }
+
+    function editShift(id) {
+        const turno = turnos.find(t => t.id === id);
+        if (!turno) return;
+
+        document.getElementById('shiftFormTitle').innerText = 'Editar Turno';
+        document.getElementById('shiftId').value = turno.id;
+        document.getElementById('shiftName').value = turno.nome;
+        document.getElementById('shiftName').value = turno.nome;
+
+        // Parse time: "07:00 - 15:20"
+        const times = turno.horario ? turno.horario.split(' - ') : ['', ''];
+        const start = times[0] || '';
+        const end = times[1] || '';
+
+        const startInput = document.getElementById('shiftTimeStart');
+        const endInput = document.getElementById('shiftTimeEnd');
+
+        startInput.value = start;
+        endInput.value = end;
+
+        // Update visuals manually
+        if (typeof updateSelectionVisuals === 'function') {
+            const containerStart = startInput.closest('.custom-timepicker-container');
+            const containerEnd = endInput.closest('.custom-timepicker-container');
+            if (containerStart) updateSelectionVisuals(containerStart, start);
+            if (containerEnd) updateSelectionVisuals(containerEnd, end);
+        }
+
+        document.getElementById('shiftColor').value = turno.cor;
+        closeShiftModal();
+        document.getElementById('shiftFormModal').classList.add('show');
+    }
+
+    function closeShiftFormModal() {
+        document.getElementById('shiftFormModal').classList.remove('show');
+        openShiftModal();
+    }
+
+    async function saveShift() {
+        const id = document.getElementById('shiftId').value;
+        const data = {
+            nome: document.getElementById('shiftName').value,
+            horario: document.getElementById('shiftTimeStart').value && document.getElementById('shiftTimeEnd').value ?
+                `${document.getElementById('shiftTimeStart').value} - ${document.getElementById('shiftTimeEnd').value}` : '',
+            cor: document.getElementById('shiftColor').value,
+            ordem: turnos.length
+        };
+
+        try {
+            let response;
+            if (id) {
+                // Update
+                response = await fetch(`/api/escala/turnos/${id}/`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                // Create
+                response = await fetch('/api/escala/turnos/create/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                });
+            }
+
+            const result = await response.json();
+
+            if (id) {
+                const index = turnos.findIndex(t => t.id == id);
+                turnos[index] = result;
+            } else {
+                turnos.push(result);
+            }
+
+            closeShiftFormModal();
+            checkEmptyStates();
+            if (analistas.length > 0) {
+                generateTables();
+            }
+        } catch (error) {
+            alert('Erro ao salvar turno: ' + error.message);
+        }
+    }
+
+    async function deleteShift(id) {
+        if (!confirm('Tem certeza que deseja excluir este turno?')) return;
+
+        try {
+            await fetch(`/api/escala/turnos/${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+
+            turnos = turnos.filter(t => t.id !== id);
+            renderShiftList();
+            checkEmptyStates();
+            generateTables();
+        } catch (error) {
+            alert('Erro ao excluir turno: ' + error.message);
+        }
+    }
+
+    // ========================================
+    // MODAIS DE ANALISTAS
+    // ========================================
+    function openAnalystModal() {
+        renderAnalystList();
+        document.getElementById('analystModal').classList.add('show');
+    }
+
+    function closeAnalystModal() {
+        document.getElementById('analystModal').classList.remove('show');
+    }
+
+    function renderAnalystList() {
+        const list = document.getElementById('analystList');
+        if (analistas.length === 0) {
+            list.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px 0;">Nenhum analista cadastrado.</p>';
+            return;
+        }
+
+        let html = '';
+
+        // --- SEÇÃO SEM TURNO ---
+        const analistasSemTurno = analistas.filter(a => !a.turno);
+        if (analistasSemTurno.length > 0) {
+            html += `
+                <div class="shift-group">
+                    <div class="shift-group-header" style="border-left: 4px solid #ef4444; background-color: #fef2f2; color: #b91c1c; border: 1px solid #ef4444;">
+                        <i class="fa-solid fa-triangle-exclamation me-2" style="color: #ef4444"></i>
+                        SEM TURNO (CONFIGURAR)
+                        <span class="badge bg-danger ms-2" style="font-size: 0.7rem;">
+                            ${analistasSemTurno.length}
+                        </span>
+                    </div>
+                    <div class="shift-analysts-container" data-shift-id="" data-shift-name="">
+                        ${analistasSemTurno.map(a => `
+                            <div class="item-card" data-id="${a.id}" style="border-left: 3px solid #ef4444;">
+                                <div class="item-card-left">
+                                    <span class="item-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                                    <span class="item-color-dot" style="background: #ef4444;"></span>
+                                    <div class="item-card-info">
+                                        <h4 style="color: #b91c1c;">${a.nome}</h4>
+                                        <p>Pausa: ${a.pausa || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="item-card-actions">
+                                    <button class="btn-icon edit" onclick="editAnalyst(${a.id})"><i class="fa-solid fa-edit"></i></button>
+                                    <button class="btn-icon delete" onclick="deleteAnalyst(${a.id})"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+        turnosOrdenados.forEach(turno => {
+            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+
+            html += `
+                <div class="shift-group">
+                    <div class="shift-group-header" style="border-left: 4px solid ${turno.cor};">
+                        <i class="fa-solid fa-clock me-2" style="color: ${turno.cor}"></i>
+                        ${turno.nome} 
+                        <span class="badge bg-light text-dark ms-2" style="font-size: 0.7rem; border: 1px solid #e2e8f0;">
+                            ${analistasDoTurno.length}
+                        </span>
+                    </div>
+                    <div class="shift-analysts-container" data-shift-id="${turno.id}" data-shift-name="${turno.nome}">
+                        ${analistasDoTurno.map(a => `
+                            <div class="item-card" data-id="${a.id}">
+                                <div class="item-card-left">
+                                    <span class="item-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                                    <span class="item-color-dot" style="background: ${turno.cor};"></span>
+                                    <div class="item-card-info">
+                                        <h4>${a.nome}</h4>
+                                        <p>Pausa: ${a.pausa || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="item-card-actions">
+                                    <button class="btn-icon edit" onclick="editAnalyst(${a.id})"><i class="fa-solid fa-edit"></i></button>
+                                    <button class="btn-icon delete" onclick="deleteAnalyst(${a.id})"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${analistasDoTurno.length === 0 ? '<div class="empty-shift-msg">Nenhum analista neste turno</div>' : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+
+        if (isAdmin) {
+            const containers = list.querySelectorAll('.shift-analysts-container');
+            containers.forEach(container => {
+                new Sortable(container, {
+                    group: 'analysts',
+                    animation: 150,
+                    handle: '.item-drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: async function (evt) {
+                        const analistaId = evt.item.dataset.id;
+                        const toContainer = evt.to;
+                        let newShiftId = toContainer.dataset.shiftId;
+                        const newShiftName = toContainer.dataset.shiftName;
+
+                        // Handle empty shift ID (null turn)
+                        if (!newShiftId) newShiftId = null;
+
+                        const analista = analistas.find(a => a.id == analistaId);
+                        // Convert null string to real null for proper comparison/assignment
+                        const finalShiftName = newShiftName || null;
+
+                        if (analista && analista.turno !== finalShiftName) {
+                            analista.turno = finalShiftName;
+                            analista.turno_id = newShiftId ? parseInt(newShiftId) : null;
+                            await updateAnalystShift(analistaId, analista.turno_id);
+                        }
+
+                        const allIds = Array.from(list.querySelectorAll('.item-card')).map(card => card.dataset.id);
+                        await reorderAnalysts(allIds);
+                    }
+                });
+            });
+        }
+    }
+
+    async function updateAnalystShift(analistaId, turnoId) {
+        try {
+            await fetch(`/api/escala/analistas/${analistaId}/`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ turno_id: turnoId })
+            });
+        } catch (error) {
+            console.error('Erro ao atualizar turno do analista:', error);
+        }
+    }
+
+    async function reorderAnalysts(ids) {
+        try {
+            await fetch('/api/escala/analistas/reorder/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ ids })
+            });
+
+            // Atualizar ordens localmente
+            ids.forEach((id, index) => {
+                const analista = analistas.find(a => a.id == id);
+                if (analista) analista.ordem = index;
+            });
+
+            // Reordenar array original
+            analistas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+            generateTables();
+        } catch (error) {
+            console.error('Erro ao reordenar analistas:', error);
+        }
+    }
+
+    function showAddAnalystForm() {
+        document.getElementById('analystFormTitle').innerText = 'Novo Analista';
+        document.getElementById('analystId').value = '';
+        document.getElementById('analystName').value = '';
+        document.getElementById('analystName').value = '';
+        document.getElementById('analystBreakStart').value = '';
+        document.getElementById('analystBreakEnd').value = '';
+        // Reset visuals
+        document.querySelectorAll('.custom-timepicker-container').forEach(c => {
+            const header = c.querySelector('.custom-timepicker-header');
+            if (header) header.textContent = '--:--';
+            c.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
+        });
+        document.getElementById('analystStartDate').value = '';
+
+        // Preencher select de turnos
+        const select = document.getElementById('analystShift');
+        select.innerHTML = turnos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
+
+        closeAnalystModal();
+        document.getElementById('analystFormModal').classList.add('show');
+    }
+
+    function editAnalyst(id) {
+        const analista = analistas.find(a => a.id === id);
+        if (!analista) return;
+
+        document.getElementById('analystFormTitle').innerText = 'Editar Analista';
+        document.getElementById('analystId').value = analista.id;
+        document.getElementById('analystName').value = analista.nome;
+
+        // Parse break: "12:00 - 13:00"
+        const times = analista.pausa ? analista.pausa.split(' - ') : ['', ''];
+        const start = times[0] || '';
+        const end = times[1] || '';
+
+        const startInput = document.getElementById('analystBreakStart');
+        const endInput = document.getElementById('analystBreakEnd');
+
+        startInput.value = start;
+        endInput.value = end;
+
+        if (typeof updateSelectionVisuals === 'function') {
+            const containerStart = startInput.closest('.custom-timepicker-container');
+            const containerEnd = endInput.closest('.custom-timepicker-container');
+            if (containerStart) updateSelectionVisuals(containerStart, start);
+            if (containerEnd) updateSelectionVisuals(containerEnd, end);
+        }
+
+        document.getElementById('analystStartDate').value = analista.data_primeira_folga || '';
+
+        // Preencher select de turnos
+        const select = document.getElementById('analystShift');
+        select.innerHTML = turnos.map(t => `<option value="${t.nome}" ${t.nome === analista.turno ? 'selected' : ''}>${t.nome}</option>`).join('');
+
+        closeAnalystModal();
+        document.getElementById('analystFormModal').classList.add('show');
+    }
+
+    function closeAnalystFormModal() {
+        document.getElementById('analystFormModal').classList.remove('show');
+        openAnalystModal();
+    }
+
+    async function saveAnalyst() {
+        const id = document.getElementById('analystId').value;
+        const data = {
+            nome: document.getElementById('analystName').value,
+            turno: document.getElementById('analystShift').value,
+            pausa: document.getElementById('analystBreakStart').value && document.getElementById('analystBreakEnd').value ?
+                `${document.getElementById('analystBreakStart').value} - ${document.getElementById('analystBreakEnd').value}` : '',
+            data_primeira_folga: document.getElementById('analystStartDate').value || null,
+            ordem: analistas.length
+        };
+
+        try {
+            let response;
+            if (id) {
+                response = await fetch(`/api/escala/analistas/${id}/`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                response = await fetch('/api/escala/analistas/create/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                });
+            }
+
+            const result = await response.json();
+
+            if (id) {
+                const index = analistas.findIndex(a => a.id == id);
+                analistas[index] = result;
+            } else {
+                analistas.push(result);
+            }
+
+            closeAnalystFormModal();
+            checkEmptyStates();
+            generateTables();
+        } catch (error) {
+            alert('Erro ao salvar analista: ' + error.message);
+        }
+    }
+
+    async function deleteAnalyst(id) {
+        if (!confirm('Tem certeza que deseja excluir este analista?')) return;
+
+        try {
+            await fetch(`/api/escala/analistas/${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+
+            analistas = analistas.filter(a => a.id !== id);
+            renderAnalystList();
+            checkEmptyStates();
+            generateTables();
+        } catch (error) {
+            alert('Erro ao excluir analista: ' + error.message);
+        }
+    }
+
+    // ========================================
+    // EDIÇÃO DE CÉLULAS
+    // ========================================
+    function onCellTypeChange() {
+        const tipo = document.getElementById('cellType').value;
+        const periodoContainer = document.getElementById('periodoContainer');
+
+        if (tipo === 'ferias' || tipo === 'atestado') {
+            periodoContainer.style.display = 'block';
+        } else {
+            periodoContainer.style.display = 'none';
+        }
+    }
+
+    function openEditCellModal(analistaId, dia, mes, ano) {
+        document.getElementById('cellAnalistaId').value = analistaId;
+        document.getElementById('cellDia').value = dia;
+        document.getElementById('cellMes').value = mes;
+        document.getElementById('cellAno').value = ano;
+
+        // Verificar se já existe folga manual
+        const key = `${analistaId}-${ano}-${mes}-${dia}`;
+        const folgaManual = folgasManuais[key];
+
+        document.getElementById('cellType').value = folgaManual ? folgaManual.tipo : 'trabalho';
+        document.getElementById('cellMotivo').value = folgaManual ? (folgaManual.motivo || '') : '';
+
+        // Definir data inicial para o período
+        const dataClicada = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        document.getElementById('cellDataInicio').value = dataClicada;
+        document.getElementById('cellDataFim').value = dataClicada;
+
+        // Mostrar/ocultar campos de período
+        onCellTypeChange();
+
+        document.getElementById('editCellModal').classList.add('show');
+    }
+
+    function closeEditCellModal() {
+        document.getElementById('editCellModal').classList.remove('show');
+    }
+
+    async function saveCellEdit() {
+        const analistaId = document.getElementById('cellAnalistaId').value;
+        const tipo = document.getElementById('cellType').value;
+        const motivo = document.getElementById('cellMotivo').value;
+
+        // Se for férias ou atestado, usar período
+        if (tipo === 'ferias' || tipo === 'atestado') {
+            const dataInicio = document.getElementById('cellDataInicio').value;
+            const dataFim = document.getElementById('cellDataFim').value;
+
+            if (!dataInicio || !dataFim) {
+                alert('Por favor, selecione o período de início e fim.');
+                return;
+            }
+
+            // Calcular todos os dias do período
+            // Usar split para evitar problemas de fuso horário
+            const [anoI, mesI, diaI] = dataInicio.split('-').map(Number);
+            const [anoF, mesF, diaF] = dataFim.split('-').map(Number);
+
+            const inicio = new Date(anoI, mesI - 1, diaI);
+            const fim = new Date(anoF, mesF - 1, diaF);
+
+            if (fim < inicio) {
+                alert('A data de fim deve ser maior ou igual à data de início.');
+                return;
+            }
+
+            const diasParaSalvar = [];
+            let dataAtual = new Date(inicio);
+            while (dataAtual <= fim) {
+                diasParaSalvar.push({
+                    analista_id: analistaId,
+                    dia: dataAtual.getDate(),
+                    mes: dataAtual.getMonth() + 1,
+                    ano: dataAtual.getFullYear(),
+                    tipo: tipo,
+                    motivo: motivo
+                });
+                dataAtual.setDate(dataAtual.getDate() + 1);
+            }
+
+            try {
+                // Salvar todos os dias
+                for (const data of diasParaSalvar) {
+                    const response = await fetch('/api/escala/folgas/save/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    // Atualizar folgas localmente
+                    const key = `${data.analista_id}-${data.ano}-${data.mes}-${data.dia}`;
+                    folgasManuais[key] = {
+                        id: result.id,
+                        tipo: data.tipo,
+                        motivo: data.motivo
+                    };
+                }
+
+                closeEditCellModal();
+                generateTables();
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+            }
+        } else {
+            // Salvar apenas o dia selecionado
+            const data = {
+                analista_id: analistaId,
+                dia: document.getElementById('cellDia').value,
+                mes: document.getElementById('cellMes').value,
+                ano: document.getElementById('cellAno').value,
+                tipo: tipo,
+                motivo: motivo
+            };
+
+            try {
+                const response = await fetch('/api/escala/folgas/save/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                // Atualizar folgas localmente
+                const key = `${data.analista_id}-${data.ano}-${data.mes}-${data.dia}`;
+                folgasManuais[key] = {
+                    id: result.id,
+                    tipo: data.tipo,
+                    motivo: data.motivo
+                };
+
+                closeEditCellModal();
+                generateTables();
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+            }
+        }
+    }
+
+    // ========================================
+    // EXPORTAÇÃO
+    // ========================================
+    function openExportModal() {
+        document.getElementById('exportModal').classList.add('show');
+    }
+
+    function closeExportModal() {
+        document.getElementById('exportModal').classList.remove('show');
+    }
+
+    function exportToExcel() {
+        const tabelas = document.getElementById('tabelas');
+        const tables = tabelas.querySelectorAll('.table-wrap');
+
+        // Estilos inline para Excel
+        let excelContent = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    table { border-collapse: collapse; width: 100%; }
+                    th { 
+                        background-color: #334155; 
+                        color: #ffffff; 
+                        padding: 12px 8px; 
+                        font-weight: bold; 
+                        font-size: 11px; 
+                        text-align: center;
+                        border: 1px solid #1e293b;
+                    }
+                    td { 
+                        border: 1px solid #cbd5e1; 
+                        padding: 10px 6px; 
+                        text-align: center; 
+                        font-size: 13px; 
+                    }
+                    .semana-title { 
+                        background-color: #334155; 
+                        color: #ffffff; 
+                        text-align: center; 
+                        font-weight: bold;
+                        padding: 12px;
+                        font-size: 14px;
+                    }
+                    .turno { 
+                        color: #ffffff; 
+                        font-weight: bold; 
+                        font-size: 13px;
+                    }
+                    .analista { 
+                        color: #ffffff; 
+                        font-weight: bold; 
+                        font-size: 14px;
+                    }
+                    .folga { 
+                        background-color: #9df99b; 
+                        color: #166534; 
+                        font-weight: bold; 
+                    }
+                    .ferias { 
+                        background-color: #ffc107; 
+                        color: #000000; 
+                        font-weight: bold; 
+                    }
+                    .atestado { 
+                        background-color: #dc3545; 
+                        color: #ffffff; 
+                        font-weight: bold; 
+                    }
+                    .pausa {
+                        background-color: #334155;
+                        color: #ffffff;
+                        font-weight: bold;
+                    }
+                    h2 {
+                        background-color: #334155;
+                        color: #ffffff;
+                        padding: 12px;
+                        text-align: center;
+                        font-size: 14px;
+                        margin: 20px 0 0 0;
+                    }
+                </style>
+            </head>
+            <body>
+        `;
+
+        tables.forEach((tableWrap, index) => {
+            const title = tableWrap.querySelector('.semana-title');
+            const table = tableWrap.querySelector('table');
+
+            if (title) {
+                excelContent += `<h2>${title.textContent}</h2>`;
+            }
+            if (table) {
+                // Clonar a tabela e adicionar estilos inline
+                const clonedTable = table.cloneNode(true);
+
+                // Adicionar estilos inline em cada célula para garantir cores no Excel
+                clonedTable.querySelectorAll('td, th').forEach(cell => {
+                    const computedStyle = window.getComputedStyle(cell);
+                    const bgColor = computedStyle.backgroundColor;
+                    const color = computedStyle.color;
+
+                    // Converter rgb para hex para melhor compatibilidade com Excel
+                    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
+                        cell.style.backgroundColor = bgColor;
+                    }
+                    if (color) {
+                        cell.style.color = color;
+                    }
+                    cell.style.fontWeight = computedStyle.fontWeight;
+                });
+
+                excelContent += clonedTable.outerHTML;
+            }
+            excelContent += '<br/>';
+        });
+
+        excelContent += '</body></html>';
+
+        const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `escala-${document.getElementById('mesInput').value}.xls`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        closeExportModal();
+    }
+
+    async function exportToPDF() {
+        const tabelas = document.getElementById('tabelas');
+        if (!tabelas || tabelas.children.length === 0) {
+            alert('Por favor, gere a escala primeiro.');
+            return;
+        }
+
+        closeExportModal();
+
+        // Mostrar loading
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'pdfLoadingOverlay';
+        loadingOverlay.innerHTML = `
+            <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                        background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
+                        align-items: center; justify-content: center; z-index: 99999; color: white;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <p style="font-size: 1.2rem;">Gerando PDF...</p>
+                <p style="font-size: 0.9rem; color: #ccc;">Isso pode levar alguns segundos</p>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10;
+
+            const tables = tabelas.querySelectorAll('.table-wrap');
+            let isFirstPage = true;
+
+            for (let i = 0; i < tables.length; i++) {
+                const tableWrap = tables[i];
+
+                // Captura a tabela como imagem
+                const canvas = await html2canvas(tableWrap, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = pageWidth - (margin * 2);
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (!isFirstPage) {
+                    pdf.addPage();
+                }
+                isFirstPage = false;
+
+                // Se a imagem for maior que a pagina, ajusta
+                if (imgHeight > pageHeight - (margin * 2)) {
+                    const ratio = (pageHeight - (margin * 2)) / imgHeight;
+                    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth * ratio, (pageHeight - (margin * 2)));
+                } else {
+                    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+                }
+            }
+
+            // Salva o PDF
+            const mesInput = document.getElementById('mesInput').value || 'escala';
+            pdf.save(`escala-${mesInput}.pdf`);
+
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            alert('Erro ao gerar PDF: ' + error.message);
+        } finally {
+            document.getElementById('pdfLoadingOverlay')?.remove();
+        }
+    }
+</script>
+{% endblock %}
