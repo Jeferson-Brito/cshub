@@ -62,12 +62,21 @@
                 <div class="kb-card-count" id="count-faq">... artigos</div>
             </div>
 
+            <div class="kb-card" onclick="switchView('list', 'training')">
+                <div class="kb-card-icon training">
+                    <i class="bi bi-mortarboard"></i>
+                </div>
+                <h3>Treinamentos</h3>
+                <p>Módulos completos de treinamento para capacitação da equipe.</p>
+                <div class="kb-card-count" id="count-training">... cursos</div>
+            </div>
+
             <div class="kb-card" onclick="switchView('list', 'troubleshooting')">
                 <div class="kb-card-icon troubleshooting">
                     <i class="bi bi-tools"></i>
                 </div>
                 <h3>Resolução de Problemas</h3>
-                <p>Guias de suporte técnico e resolução de problemas comuns (Treinamentos).</p>
+                <p>Guias práticos para solucionar falhas e erros comuns na operação.</p>
                 <div class="kb-card-count" id="count-troubleshooting">... artigos</div>
             </div>
 
@@ -213,7 +222,8 @@
         'tutorials': 'Tutoriais e Guias',
         'solutions': 'Soluções Comuns',
         'faq': 'Perguntas Frequentes',
-        'troubleshooting': 'Resolução de Problemas'
+        'troubleshooting': 'Resolução de Problemas',
+        'training': 'Treinamentos'
     };
 
     // --- Fetch Data ---
