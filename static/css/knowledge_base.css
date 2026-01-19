@@ -460,3 +460,49 @@
     justify-content: flex-end;
     gap: 12px;
 }
+
+/* AI Tools Specific Layout */
+#view-tools {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 280px);
+    /* Increased offset to account for page margins/padding */
+    overflow: hidden;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    /* Remove margin to avoid page scroll */
+}
+
+#view-tools .kb-list-header,
+#view-tools .kb-tools-filters {
+    flex-shrink: 0;
+    /* Prevent headers from shrinking */
+}
+
+#tools-grid {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 8px;
+    /* Space for scrollbar */
+    padding-bottom: 24px;
+    /* Add padding at bottom of scroll area */
+}
+
+/* Custom Scrollbar for tools grid */
+#tools-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+#tools-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#tools-grid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+#tools-grid::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
