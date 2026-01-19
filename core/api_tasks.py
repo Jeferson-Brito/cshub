@@ -152,6 +152,18 @@ def api_task_toggle(request, pk):
     task.save()
     return JsonResponse({'status': 'success', 'new_status': task.status})
 
+@csrf_exempt
+@login_required
+@require_http_methods(["DELETE"])
+def api_task_delete(request, pk):
+    """Exclui uma tarefa (apenas gestores/admins)"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'error': 'Apenas gestores e administradores podem excluir tarefas.'}, status=403)
+    
+    task = get_object_or_404(Task, pk=pk)
+    task.delete()
+    return JsonResponse({'status': 'success', 'message': 'Tarefa excluída com sucesso.'})
+
 # --- ROTINAS ---
 
 @login_required

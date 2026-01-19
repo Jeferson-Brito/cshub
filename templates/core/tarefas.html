@@ -719,10 +719,14 @@
                 const dateFormatted = t.due_date ? new Date(t.due_date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
                 const isLate = isOverdue(t.due_date, t.status);
 
-                const editBtn = isManager ? `
+                const actionBtns = isManager ? `
                     <button class="btn btn-sm btn-outline-secondary" title="Editar"
                         onclick="openEditTaskModal('${t.id}', '${t.title}', \`${t.description || ''}\`, '${t.due_date}', '${t.priority}')">
                         <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir"
+                        onclick="deleteTask(${t.id})">
+                        <i class="bi bi-trash"></i>
                     </button>
                 ` : '';
 
@@ -743,11 +747,32 @@
                         ${isLate ? '<br><span class="badge bg-danger">Atrasada</span>' : ''}
                     </td>
                     <td>${priorityBadge}</td>
-                    ${isManager ? `<td>${editBtn}</td>` : ''}
+                    ${isManager ? `<td class="text-nowrap">${actionBtns}</td>` : ''}
                 </tr>
             `}).join('');
         } catch (e) {
             console.error(e);
+        }
+    }
+
+    async function deleteTask(taskId) {
+        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+        try {
+            const res = await fetch(`/api/tasks/${taskId}/delete/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            });
+
+            if (res.ok) {
+                loadTasks();
+            } else {
+                const err = await res.json();
+                alert('Erro: ' + (err.error || 'Não foi possível excluir a tarefa'));
+            }
+        } catch (e) {
+            console.error('Erro ao excluir tarefa:', e);
+            alert('Erro ao excluir tarefa');
         }
     }
 

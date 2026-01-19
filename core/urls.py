@@ -130,6 +130,7 @@ urlpatterns = [
     path('api/tasks/create/', api_tasks.api_task_create, name='api_task_create'),
     path('api/tasks/<int:pk>/toggle/', api_tasks.api_task_toggle, name='api_task_toggle'),
     path('api/tasks/<int:pk>/edit/', api_tasks.api_task_edit, name='api_task_edit'),
+    path('api/tasks/<int:pk>/delete/', api_tasks.api_task_delete, name='api_task_delete'),
     path('api/notifications/check/', api_tasks.api_notifications_check, name='api_notifications_check'),
     
     path('api/routines/daily/', api_tasks.api_routines_daily, name='api_routines_daily'),
