@@ -2182,7 +2182,7 @@ def performance_view(request):
 @login_required
 def quadro_view(request):
     """Visualização do Quadro Kanban"""
-    from .models import KanbanBoard, KanbanList
+    from .models import KanbanBoard, KanbanList, CardLabel
     
     # Obter o quadro principal do usuário (ou criar se não existir)
     board = KanbanBoard.objects.filter(owner=request.user).first()
@@ -2203,11 +2203,32 @@ def quadro_view(request):
         KanbanList.objects.create(board=board, name='Em Andamento', position=1)
         KanbanList.objects.create(board=board, name='Concluído', position=2)
     
+    # Criar labels padrão se não existirem
+    if not board.labels.exists():
+        default_labels = [
+            ('Urgente', '#ef4444'),
+            ('Importante', '#f97316'),
+            ('Normal', '#6b7280'),
+            ('Baixa', '#3b82f6'),
+            ('Reunião', '#6366f1'),
+            ('Documentação', '#0891b2'),
+            ('Bug', '#dc2626'),
+            ('Feature', '#059669'),
+            ('Concluído', '#22c55e'),
+        ]
+        for name, color in default_labels:
+            CardLabel.objects.create(board=board, name=name, color=color)
+    
     listas = board.lists.filter(is_archived=False).order_by('position')
+    labels = board.labels.all()
+    
+    import json
+    labels_data = [{'id': l.id, 'name': l.name, 'color': l.color} for l in labels]
     
     context = {
         'board': board,
         'listas': listas,
+        'labels_json': json.dumps(labels_data),
     }
     return render(request, 'core/quadro.html', context)
 

@@ -1192,17 +1192,7 @@
 
 <!-- Dados de etiquetas disponíveis -->
 <script id="labelsData" type="application/json">
-[
-    {"id": "urgente", "name": "Urgente", "color": "#ef4444", "class": "label-urgente"},
-    {"id": "importante", "name": "Importante", "color": "#f97316", "class": "label-importante"},
-    {"id": "normal", "name": "Normal", "color": "#6b7280", "class": "label-normal"},
-    {"id": "baixa", "name": "Baixa", "color": "#3b82f6", "class": "label-baixa"},
-    {"id": "reuniao", "name": "Reunião", "color": "#6366f1", "class": "label-reuniao"},
-    {"id": "documentacao", "name": "Documentação", "color": "#0891b2", "class": "label-documentacao"},
-    {"id": "bug", "name": "Bug", "color": "#dc2626", "class": "label-bug"},
-    {"id": "feature", "name": "Feature", "color": "#059669", "class": "label-feature"},
-    {"id": "concluido", "name": "Concluído", "color": "#22c55e", "class": "label-concluido"}
-]
+{{ labels_json|safe }}
 </script>
 {% endblock %}
 
@@ -1374,22 +1364,49 @@
         function renderLabels() {
             const container = document.getElementById('labelsContainer');
             container.innerHTML = availableLabels.map(label => {
-                const isSelected = selectedLabels.includes(label.id);
-                return `<span class="card-label ${label.class} ${isSelected ? 'selected' : ''}" 
+                const isSelected = selectedLabels.some(l => l === label.id || l.id === label.id);
+                return `<span class="card-label ${isSelected ? 'selected' : ''}" 
+                              style="background: ${label.color}"
                               data-label-id="${label.id}" 
-                              onclick="toggleLabel('${label.id}')">${label.name}</span>`;
+                              onclick="toggleLabel(${label.id})">${label.name}</span>`;
             }).join('');
         }
 
-        // Toggle label
-        window.toggleLabel = function (labelId) {
-            const index = selectedLabels.indexOf(labelId);
-            if (index > -1) {
-                selectedLabels.splice(index, 1);
-            } else {
-                selectedLabels.push(labelId);
+        // Toggle label - saves to server
+        window.toggleLabel = async function (labelId) {
+            if (!currentCard) return;
+
+            const isCurrentlySelected = selectedLabels.some(l => l === labelId || l.id === labelId);
+            const action = isCurrentlySelected ? 'remove' : 'add';
+
+            try {
+                const res = await fetch('/api/kanban/cards/' + currentCard.id + '/labels/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ label_id: labelId, action: action })
+                });
+
+                if (res.ok) {
+                    // Update local state
+                    if (action === 'add') {
+                        const label = availableLabels.find(l => l.id === labelId);
+                        if (label) selectedLabels.push(label);
+                    } else {
+                        selectedLabels = selectedLabels.filter(l => l !== labelId && l.id !== labelId);
+                    }
+                    renderLabels();
+                    // Reload to show labels on cards
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Erro: ' + (err.error || 'Não foi possível salvar etiqueta'));
+                }
+            } catch (e) {
+                console.error('Erro ao salvar etiqueta:', e);
             }
-            renderLabels();
         };
 
         // Renderizar checklists
@@ -1497,53 +1514,6 @@
                 renderLabels();
             }
         };
-
-        // Renderizar etiquetas disponíveis
-        function renderLabels() {
-            const container = document.getElementById('labelsContainer');
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            availableLabels.forEach(label => {
-                const isSelected = selectedLabels.some(l => l.id === label.id);
-                const labelEl = document.createElement('span');
-                labelEl.className = 'card-label' + (isSelected ? ' selected' : '');
-                labelEl.style.background = label.color;
-                labelEl.textContent = label.name;
-                labelEl.onclick = () => toggleLabel(label);
-                container.appendChild(labelEl);
-            });
-        }
-
-        // Toggle seleção de etiqueta
-        async function toggleLabel(label) {
-            const index = selectedLabels.findIndex(l => l.id === label.id);
-
-            if (index >= 0) {
-                selectedLabels.splice(index, 1);
-            } else {
-                selectedLabels.push(label);
-            }
-
-            renderLabels();
-
-            // Salvar no servidor se tiver um card selecionado
-            if (currentCard) {
-                try {
-                    await fetch('/api/kanban/cards/' + currentCard.id + '/labels/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({ labels: selectedLabels.map(l => l.id) })
-                    });
-                } catch (e) {
-                    console.error('Erro ao salvar etiquetas:', e);
-                }
-            }
-        }
 
         window.toggleCoverPanel = function () {
             const section = document.getElementById('coverSection');
