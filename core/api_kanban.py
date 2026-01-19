@@ -424,7 +424,12 @@ def api_card_detail(request, card_id):
             if 'cover_color' in data:
                 card.cover_color = data['cover_color']
             if 'due_date' in data:
-                card.due_date = data['due_date']
+                due_date_value = data['due_date']
+                if due_date_value:
+                    from dateutil import parser
+                    card.due_date = parser.parse(due_date_value)
+                else:
+                    card.due_date = None
                 log_activity(card, request.user, 'due_date', 'alterou a data de entrega')
             if 'due_complete' in data:
                 card.due_complete = data['due_complete']
