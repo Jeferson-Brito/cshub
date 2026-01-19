@@ -123,49 +123,72 @@
 
     .kanban-card {
         background: white;
-        border-radius: 8px;
-        border: 1px solid var(--light-gray);
-        box-shadow: var(--shadow-sm);
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         cursor: pointer;
-        transition: var(--transition);
+        transition: all 0.2s ease;
         overflow: hidden;
+        position: relative;
+    }
+
+    .kanban-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+        transition: height 0.2s ease;
+        opacity: 0.1;
     }
 
     .kanban-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         border-color: var(--primary-color);
     }
 
+    .kanban-card:hover::before {
+        height: 100%;
+    }
+
     .kanban-card-cover {
-        height: 8px;
+        height: 6px;
         width: 100%;
+        border-radius: 10px 10px 0 0;
     }
 
     .kanban-card-content {
-        padding: 10px 12px;
+        padding: 12px 14px;
+        position: relative;
+        z-index: 1;
     }
 
     .kanban-card-labels {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 8px;
+        gap: 5px;
+        margin-bottom: 10px;
     }
 
     .kanban-card-label {
-        padding: 3px 8px;
-        border-radius: 3px;
-        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 10px;
         font-weight: 600;
         color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .kanban-card-title {
         font-size: 14px;
         font-weight: 600;
         color: var(--dark-color);
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        line-height: 1.4;
     }
 
     .kanban-card-meta {
@@ -178,22 +201,22 @@
     .kanban-card-due {
         display: flex;
         align-items: center;
-        gap: 4px;
-        padding: 3px 6px;
-        border-radius: 4px;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 6px;
         font-size: 11px;
-        font-weight: 500;
-        background: #f3f4f6;
-        color: #6b7280;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: #64748b;
     }
 
     .kanban-card-due.overdue {
-        background: #fee2e2;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
         color: #dc2626;
     }
 
     .kanban-card-due.completed {
-        background: #dcfce7;
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         color: #16a34a;
     }
 
@@ -205,34 +228,36 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        color: var(--medium-gray);
+        color: #94a3b8;
         font-size: 12px;
+        margin-left: auto;
     }
 
     .kanban-card-icon {
         display: flex;
         align-items: center;
         gap: 3px;
+        opacity: 0.7;
     }
 
     .kanban-card-icon i {
-        font-size: 13px;
+        font-size: 14px;
     }
 
     .kanban-card-progress {
         display: flex;
         align-items: center;
-        gap: 4px;
-        padding: 2px 6px;
-        border-radius: 3px;
+        gap: 5px;
+        padding: 3px 8px;
+        border-radius: 6px;
         font-size: 11px;
-        font-weight: 500;
-        background: #e0f2fe;
+        font-weight: 600;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
         color: #0369a1;
     }
 
     .kanban-card-progress.complete {
-        background: #dcfce7;
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         color: #16a34a;
     }
 
@@ -1502,8 +1527,14 @@
                 if (res.ok) {
                     location.reload();
                 } else {
-                    const err = await res.json();
-                    alert('Erro: ' + (err.error || 'Não foi possível salvar o cartão'));
+                    let errMsg = 'Não foi possível salvar o cartão';
+                    try {
+                        const err = await res.json();
+                        errMsg = err.error || errMsg;
+                    } catch (jsonErr) {
+                        console.error('Erro ao parsear resposta:', jsonErr);
+                    }
+                    alert('Erro: ' + errMsg);
                 }
             } catch (e) {
                 console.error('Erro ao salvar:', e);
@@ -1515,24 +1546,40 @@
             if (!confirm('Tem certeza que deseja excluir este cartão?')) return;
 
             const cardId = document.getElementById('editCardId').value;
+            if (!cardId) {
+                alert('ID do cartão não encontrado');
+                return;
+            }
+
+            console.log('Excluindo cartão ID:', cardId);
 
             try {
                 const res = await fetch('/api/kanban/cards/' + cardId + '/', {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRFToken': csrfToken
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
                     }
                 });
 
+                console.log('Resposta da exclusão:', res.status, res.statusText);
+
                 if (res.ok) {
+                    closeCardModal();
                     location.reload();
                 } else {
-                    const err = await res.json();
-                    alert('Erro: ' + (err.error || 'Não foi possível excluir o cartão'));
+                    let errMsg = 'Não foi possível excluir o cartão';
+                    try {
+                        const err = await res.json();
+                        errMsg = err.error || errMsg;
+                    } catch (jsonErr) {
+                        console.error('Erro ao parsear resposta:', jsonErr);
+                    }
+                    alert('Erro: ' + errMsg);
                 }
             } catch (e) {
                 console.error('Erro ao excluir:', e);
-                alert('Erro ao excluir cartão');
+                alert('Erro ao excluir cartão: ' + e.message);
             }
         };
 
