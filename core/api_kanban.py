@@ -426,8 +426,12 @@ def api_card_detail(request, card_id):
             if 'due_date' in data:
                 due_date_value = data['due_date']
                 if due_date_value:
-                    from dateutil import parser
-                    card.due_date = parser.parse(due_date_value)
+                    from datetime import datetime
+                    # Handle both ISO format and datetime-local format
+                    try:
+                        card.due_date = datetime.fromisoformat(due_date_value.replace('Z', '+00:00'))
+                    except ValueError:
+                        card.due_date = datetime.strptime(due_date_value, '%Y-%m-%dT%H:%M')
                 else:
                     card.due_date = None
                 log_activity(card, request.user, 'due_date', 'alterou a data de entrega')
