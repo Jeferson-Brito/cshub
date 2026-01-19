@@ -421,9 +421,9 @@
         max-width: 900px;
         box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
         margin-bottom: 40px;
-        overflow: hidden;
+        overflow: visible;
+        /* Mudado de hidden para permitir popups */
         position: relative;
-        /* Para os botões absolutos */
     }
 
     .card-modal-cover {
@@ -431,6 +431,8 @@
         background: #f1f5f9;
         display: none;
         position: relative;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
     }
 
     .card-modal-cover.no-cover {
@@ -1410,7 +1412,7 @@
 <!-- Modal de Edição do Cartão -->
 <div class="card-modal-overlay" id="cardModalOverlay">
     <div class="card-modal">
-        <!-- Floating actions at the top -->
+        <!-- Botões do Topo (Capa, Opções, Fechar) -->
         <div class="modal-top-actions">
             <button class="modal-top-btn" onclick="toggleCoverPanel()" title="Capa">
                 <i class="bi bi-image"></i>
@@ -1423,36 +1425,36 @@
             </button>
         </div>
 
-        <!-- Cover Area -->
-        <div class="card-modal-cover" id="cardModalCover">
-            <!-- Dropdown de Capa (Popup) -->
-            <div class="cover-dropdown" id="coverSection">
-                <div class="labels-dropdown-title">Capa</div>
-                <div class="card-labels-section-title" style="margin-top: 10px;">Cores</div>
-                <div class="cover-color-options" id="coverColorOptions">
-                    <div class="cover-color-option cover-color-none" data-color="" title="Sem capa"
-                        onclick="selectCoverColor('')"></div>
-                    <div class="cover-color-option" style="background: #22c55e;" data-color="#22c55e"
-                        onclick="selectCoverColor('#22c55e')"></div>
-                    <div class="cover-color-option" style="background: #eab308;" data-color="#eab308"
-                        onclick="selectCoverColor('#eab308')"></div>
-                    <div class="cover-color-option" style="background: #f97316;" data-color="#f97316"
-                        onclick="selectCoverColor('#f97316')"></div>
-                    <div class="cover-color-option" style="background: #ef4444;" data-color="#ef4444"
-                        onclick="selectCoverColor('#ef4444')"></div>
-                    <div class="cover-color-option" style="background: #a855f7;" data-color="#a855f7"
-                        onclick="selectCoverColor('#a855f7')"></div>
-                    <div class="cover-color-option" style="background: #3b82f6;" data-color="#3b82f6"
-                        onclick="selectCoverColor('#3b82f6')"></div>
-                    <div class="cover-color-option" style="background: #06b6d4;" data-color="#06b6d4"
-                        onclick="selectCoverColor('#06b6d4')"></div>
-                    <div class="cover-color-option" style="background: #ec4899;" data-color="#ec4899"
-                        onclick="selectCoverColor('#ec4899')"></div>
-                    <div class="cover-color-option" style="background: #6366f1;" data-color="#6366f1"
-                        onclick="selectCoverColor('#6366f1')"></div>
-                </div>
+        <!-- Dropdown de Capa (Popup) -->
+        <div class="cover-dropdown" id="coverSection">
+            <div class="labels-dropdown-title">Capa</div>
+            <div class="card-labels-section-title" style="margin-top: 10px;">Cores</div>
+            <div class="cover-color-options" id="coverColorOptions">
+                <div class="cover-color-option cover-color-none" data-color="" title="Sem capa"
+                    onclick="selectCoverColor('')"></div>
+                <div class="cover-color-option" style="background: #22c55e;" data-color="#22c55e"
+                    onclick="selectCoverColor('#22c55e')"></div>
+                <div class="cover-color-option" style="background: #eab308;" data-color="#eab308"
+                    onclick="selectCoverColor('#eab308')"></div>
+                <div class="cover-color-option" style="background: #f97316;" data-color="#f97316"
+                    onclick="selectCoverColor('#f97316')"></div>
+                <div class="cover-color-option" style="background: #ef4444;" data-color="#ef4444"
+                    onclick="selectCoverColor('#ef4444')"></div>
+                <div class="cover-color-option" style="background: #a855f7;" data-color="#a855f7"
+                    onclick="selectCoverColor('#a855f7')"></div>
+                <div class="cover-color-option" style="background: #3b82f6;" data-color="#3b82f6"
+                    onclick="selectCoverColor('#3b82f6')"></div>
+                <div class="cover-color-option" style="background: #06b6d4;" data-color="#06b6d4"
+                    onclick="selectCoverColor('#06b6d4')"></div>
+                <div class="cover-color-option" style="background: #ec4899;" data-color="#ec4899"
+                    onclick="selectCoverColor('#ec4899')"></div>
+                <div class="cover-color-option" style="background: #6366f1;" data-color="#6366f1"
+                    onclick="selectCoverColor('#6366f1')"></div>
             </div>
         </div>
+
+        <!-- Área da Capa -->
+        <div class="card-modal-cover" id="cardModalCover"></div>
 
         <div class="card-modal-content">
             <!-- Coluna Principal (Esquerda) -->
