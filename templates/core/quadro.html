@@ -1464,12 +1464,30 @@
 
     <!-- Dropdown de Data (Popup) -->
     <div class="date-dropdown" id="dateSection">
-        <div class="labels-dropdown-title">Data de Entrega</div>
-        <input type="datetime-local" id="editCardDueDate" class="form-control">
-        <div style="margin-top: 12px; display: flex; gap: 8px;">
-            <button class="btn-add" onclick="saveCard()" style="width: auto; padding: 6px 15px;">Salvar</button>
-            <button class="btn-cancel" onclick="toggleDatePanel()"
-                style="width: auto; padding: 6px 15px;">Cancelar</button>
+        <div class="labels-dropdown-title" style="margin-bottom: 16px;">Data de Entrega</div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; gap: 8px;">
+                <div style="flex: 1.5;">
+                    <label
+                        style="font-size: 11px; font-weight: 700; color: var(--medium-gray); text-transform: uppercase; display: block; margin-bottom: 4px;">Data</label>
+                    <input type="date" id="popupDateInput" class="comment-input" style="padding: 6px 10px;">
+                </div>
+                <div style="flex: 1;">
+                    <label
+                        style="font-size: 11px; font-weight: 700; color: var(--medium-gray); text-transform: uppercase; display: block; margin-bottom: 4px;">Hora</label>
+                    <input type="time" id="popupTimeInput" class="comment-input" style="padding: 6px 10px;">
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn-modal btn-modal-primary" onclick="saveDueDate()"
+                    style="justify-content: center; width: 100%; padding: 8px;">Salvar</button>
+                <button class="btn-modal" onclick="removeDueDate()"
+                    style="justify-content: center; width: 100%; background: #f1f5f9; color: var(--dark-color); padding: 8px;">Remover</button>
+            </div>
+
+            <input type="hidden" id="editCardDueDate"> <!-- Fallback hidden input for compatibility -->
         </div>
     </div>
 </div>
@@ -1628,7 +1646,9 @@
             const metaSection = document.getElementById('dueDateMetaSection');
             const text = document.getElementById('dueDateText');
             const badge = document.getElementById('dueDateBadge');
-            const input = document.getElementById('editCardDueDate');
+
+            const pDateInput = document.getElementById('popupDateInput');
+            const pTimeInput = document.getElementById('popupTimeInput');
 
             if (dueDate) {
                 const date = new Date(dueDate);
@@ -1645,13 +1665,17 @@
                     badge.style.display = 'none';
                 }
 
-                // dueDate pode ser string ISO ou objeto, garantir tratamento seguro
-                const dateStr = typeof dueDate === 'string' ? dueDate : dueDate.toISOString();
-                input.value = dateStr.slice(0, 16);
+                // Preencher inputs do popup
+                const datePart = date.toISOString().split('T')[0];
+                const timePart = date.toTimeString().split(' ')[0].slice(0, 5);
+                pDateInput.value = datePart;
+                pTimeInput.value = timePart;
+
                 metaSection.style.display = 'flex';
             } else {
                 metaSection.style.display = 'none';
-                input.value = '';
+                pDateInput.value = '';
+                pTimeInput.value = '12:00';
             }
         }
 
@@ -1934,13 +1958,83 @@
             section.classList.toggle('show');
 
             if (section.classList.contains('show')) {
+                // Se estiver abrindo e tiver data, garantir que os inputs estão atuais
+                if (currentCard && currentCard.due_date) {
+                    const date = new Date(currentCard.due_date);
+                    document.getElementById('popupDateInput').value = date.toISOString().split('T')[0];
+                    document.getElementById('popupTimeInput').value = date.toTimeString().split(' ')[0].slice(0, 5);
+                } else {
+                    // Data padrão: hoje
+                    if (!document.getElementById('popupDateInput').value) {
+                        document.getElementById('popupDateInput').value = new Date().toISOString().split('T')[0];
+                        document.getElementById('popupTimeInput').value = "12:00";
+                    }
+                }
+
                 // Posicionar perto do botão (se disparado por evento)
-                if (window.event) {
+                if (window.event && event.currentTarget) {
                     const btn = event.currentTarget;
                     const rect = btn.getBoundingClientRect();
                     section.style.top = (rect.bottom + window.scrollY + 5) + 'px';
                     section.style.left = (rect.left + window.scrollX) + 'px';
                 }
+            }
+        };
+
+        window.saveDueDate = async function () {
+            if (!currentCard) return;
+
+            const dateVal = document.getElementById('popupDateInput').value;
+            const timeVal = document.getElementById('popupTimeInput').value || "12:00";
+
+            if (!dateVal) {
+                alert("Selecione uma data");
+                return;
+            }
+
+            const isoString = `${dateVal}T${timeVal}`;
+
+            try {
+                const res = await fetch('/api/kanban/cards/' + currentCard.id + '/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ due_date: isoString })
+                });
+
+                if (res.ok) {
+                    const updatedData = await res.json();
+                    currentCard.due_date = updatedData.due_date;
+                    updateDueDateDisplay(currentCard.due_date);
+                    toggleDatePanel();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        window.removeDueDate = async function () {
+            if (!currentCard) return;
+
+            try {
+                const res = await fetch('/api/kanban/cards/' + currentCard.id + '/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ due_date: null })
+                });
+
+                if (res.ok) {
+                    currentCard.due_date = null;
+                    updateDueDateDisplay(null);
+                    toggleDatePanel();
+                }
+            } catch (e) {
+                console.error(e);
             }
         };
 
