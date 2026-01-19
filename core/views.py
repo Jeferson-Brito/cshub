@@ -1944,31 +1944,24 @@ def escala_view(request):
             
     from .models import Turno, AnalistaEscala, FolgaManual
     
-    # --- Sincronização de Usuários Otimizada ---
-    try:
-        # Busca usuários do NRS Suporte que são analistas, estão ativos e NÃO têm perfil de escala
-        users_missing_profile = User.objects.filter(
-            department__name='NRS Suporte', 
-            role='analista', 
-            ativo=True,
-            escala_perfil__isnull=True
-        )
-        
-        for user in users_missing_profile:
-            formatted_name = AnalistaEscala.format_schedule_name(user.first_name, user.last_name)
-            # Tenta encontrar analista desvinculado com mesmo nome para evitar duplicidade
-            existing = AnalistaEscala.objects.filter(nome=formatted_name, user__isnull=True).first()
-            if existing:
-                existing.user = user
-                existing.save()
-            else:
-                AnalistaEscala.objects.create(
-                    user=user,
-                    nome=formatted_name,
-                    ativo=True
-                )
-    except Exception as e:
-        print(f"Erro ao sincronizar analistas na escala: {e}")
+    # --- Sincronização de Usuários (Comentada para performance, rodar via management command se necessário) ---
+    # try:
+    #     users_missing_profile = User.objects.filter(
+    #         department__name='NRS Suporte', 
+    #         role='analista', 
+    #         ativo=True,
+    #         escala_perfil__isnull=True
+    #     )
+    #     for user in users_missing_profile:
+    #         formatted_name = AnalistaEscala.format_schedule_name(user.first_name, user.last_name)
+    #         existing = AnalistaEscala.objects.filter(nome=formatted_name, user__isnull=True).first()
+    #         if existing:
+    #             existing.user = user
+    #             existing.save()
+    #         else:
+    #             AnalistaEscala.objects.create(user=user, nome=formatted_name, ativo=True)
+    # except Exception as e:
+    #     print(f"Erro ao sincronizar analistas na escala: {e}")
     # ---------------------------------------------------
 
     turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')

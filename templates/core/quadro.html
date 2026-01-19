@@ -109,6 +109,66 @@
         border-radius: 10px;
         font-size: 12px;
         font-weight: 600;
+        margin-right: auto;
+        margin-left: 8px;
+    }
+
+    .kanban-list-menu-btn {
+        background: none;
+        border: none;
+        color: var(--medium-gray);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .kanban-list-menu-btn:hover {
+        background: var(--light-gray);
+        color: var(--dark-color);
+    }
+
+    /* List Action Menu Dropdown */
+    .list-menu-dropdown {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid var(--light-gray);
+        border-radius: 8px;
+        padding: 8px 0;
+        box-shadow: var(--shadow-lg);
+        z-index: 100;
+        min-width: 180px;
+    }
+
+    .list-menu-dropdown.show {
+        display: block;
+    }
+
+    .list-menu-item {
+        padding: 8px 16px;
+        font-size: 13px;
+        color: var(--dark-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background 0.2s;
+    }
+
+    .list-menu-item:hover {
+        background: #f1f5f9;
+    }
+
+    .list-menu-item.danger {
+        color: #ef4444;
+    }
+
+    .list-menu-item.danger:hover {
+        background: #fee2e2;
     }
 
     .kanban-cards {
@@ -1326,6 +1386,17 @@
                 <div class="kanban-list-header">
                     <h3 class="kanban-list-title">{{ lista.name }}</h3>
                     <span class="kanban-list-count">{{ lista.cards.count }}</span>
+                    <button class="kanban-list-menu-btn" onclick="toggleListMenu(event, {{ lista.id }})">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <div class="list-menu-dropdown" id="listMenu-{{ lista.id }}">
+                        <div class="list-menu-item" onclick="renameList({{ lista.id }}, '{{ lista.name }}')">
+                            <i class="bi bi-pencil"></i> Renomear lista
+                        </div>
+                        <div class="list-menu-item danger" onclick="deleteList({{ lista.id }})">
+                            <i class="bi bi-trash"></i> Excluir lista
+                        </div>
+                    </div>
                 </div>
                 <div class="kanban-cards" data-list-id="{{ lista.id }}">
                     {% for card in lista.cards.all %}
@@ -1339,8 +1410,8 @@
                             {% if card.labels.exists %}
                             <div class="kanban-card-labels">
                                 {% for label in card.labels.all %}
-                                <span class="kanban-card-label" style="background: {{ label.color }};">{{ label.name
-                                    }}</span>
+                                <span class="kanban-card-label" style="background: {{ label.color }};">{{
+                                    label.name|default:"Etiqueta" }}</span>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -1730,6 +1801,72 @@
             } catch (e) {
                 console.error('Erro:', e);
                 alert('Erro ao criar lista');
+            }
+        };
+
+        // Menu de Lista
+        window.toggleListMenu = function (event, listId) {
+            event.stopPropagation();
+            const menus = document.querySelectorAll('.list-menu-dropdown');
+            menus.forEach(m => {
+                if (m.id !== 'listMenu-' + listId) m.classList.remove('show');
+            });
+
+            const menu = document.getElementById('listMenu-' + listId);
+            menu.classList.toggle('show');
+
+            // Fechar ao clicar fora
+            const closeMenu = (e) => {
+                if (!menu.contains(e.target)) {
+                    menu.classList.remove('show');
+                    document.removeEventListener('click', closeMenu);
+                }
+            };
+            if (menu.classList.contains('show')) {
+                setTimeout(() => document.addEventListener('click', closeMenu), 0);
+            }
+        };
+
+        window.renameList = async function (listId, currentName) {
+            const newName = prompt('Novo nome para a lista:', currentName);
+            if (!newName || newName === currentName) return;
+
+            try {
+                const res = await fetch('/api/kanban/lists/' + listId + '/', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ name: newName })
+                });
+
+                if (res.ok) {
+                    location.reload();
+                }
+            } catch (e) {
+                console.error('Erro ao renomear lista:', e);
+            }
+        };
+
+        window.deleteList = async function (listId) {
+            if (!confirm('Tem certeza que deseja excluir esta lista e todos os seus cartões?')) return;
+
+            try {
+                const res = await fetch('/api/kanban/lists/' + listId + '/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir lista');
+                }
+            } catch (e) {
+                console.error('Erro ao excluir lista:', e);
             }
         };
 

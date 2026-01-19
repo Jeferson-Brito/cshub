@@ -29,13 +29,14 @@ def get_env(key, default=None):
 # ==============================
 SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
-DEBUG = get_env("DEBUG", "True").lower() == "true"
+DEBUG = get_env("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "cshub-deploy.onrender.com,localhost,127.0.0.1").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
     "https://cshub-deploy.onrender.com",
     "https://cshub-l8jg.onrender.com",
+    "https://*.onrender.com",
 ]
 
 
@@ -185,7 +186,7 @@ CSRF_COOKIE_HTTPONLY = True
 # SESSION
 # ==============================
 SESSION_COOKIE_AGE = 86400  # 24h
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # ==============================

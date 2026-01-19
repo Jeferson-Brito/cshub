@@ -562,7 +562,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:"0" }};
+        const currentUserId = {{ user.id|default: "0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
@@ -574,25 +574,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Check notifications every 60 seconds (optimized from 30s)
-            // and only if the page is visible to save server resources
-            setInterval(() => {
+            // Check notifications/chat every 60 seconds (optimized)
+            // only if the page is visible to save server resources
+            const pollAll = () => {
                 if (document.visibilityState === 'visible') {
                     checkNotifications();
-                    checkChatUnread();
+                    if (window.chatWidget && typeof window.chatWidget.updateTotalUnread === 'function') {
+                        window.chatWidget.updateTotalUnread();
+                    } else {
+                        checkChatUnread();
+                    }
                 }
-            }, 60000);
+            };
 
-            // Also check immediately when tab becomes visible
+            setInterval(pollAll, 60000);
+
+            // Check when tab becomes visible
             document.addEventListener("visibilitychange", () => {
                 if (document.visibilityState === "visible") {
-                    checkNotifications();
-                    checkChatUnread();
+                    pollAll();
                 }
             });
 
-            checkNotifications();
-            checkChatUnread();
+            // Initial calls
+            pollAll();
         });
 
         // Verifica mensagens não lidas do chat e exibe notificações
