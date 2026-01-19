@@ -422,6 +422,8 @@
         box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
         margin-bottom: 40px;
         overflow: hidden;
+        position: relative;
+        /* Para os botões absolutos */
     }
 
     .card-modal-cover {
@@ -429,21 +431,22 @@
         background: #f1f5f9;
         display: none;
         position: relative;
-        justify-content: flex-end;
-        align-items: flex-start;
-        padding: 8px;
     }
 
     .card-modal-cover.no-cover {
         display: none;
     }
 
-    .cover-actions {
+    .modal-top-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
         display: flex;
         gap: 8px;
+        z-index: 1010;
     }
 
-    .cover-action-btn {
+    .modal-top-btn {
         width: 32px;
         height: 32px;
         border-radius: 4px;
@@ -454,12 +457,22 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background 0.2s;
-        font-size: 18px;
+        transition: all 0.2s;
+        font-size: 16px;
     }
 
-    .cover-action-btn:hover {
+    /* Se não tiver capa, botões ficam escuros para contraste */
+    .card-modal:not(.has-cover) .modal-top-btn {
+        background: #f1f5f9;
+        color: var(--dark-color);
+    }
+
+    .modal-top-btn:hover {
         background: rgba(255, 255, 255, 0.5);
+    }
+
+    .card-modal:not(.has-cover) .modal-top-btn:hover {
+        background: #e2e8f0;
     }
 
     /* Cover Selection Dropdown */
@@ -1397,20 +1410,21 @@
 <!-- Modal de Edição do Cartão -->
 <div class="card-modal-overlay" id="cardModalOverlay">
     <div class="card-modal">
-        <!-- Cover -->
-        <div class="card-modal-cover" id="cardModalCover">
-            <div class="cover-actions">
-                <button class="cover-action-btn" onclick="toggleCoverPanel()" title="Capa">
-                    <i class="bi bi-image"></i>
-                </button>
-                <button class="cover-action-btn" title="Mais opções">
-                    <i class="bi bi-three-dots"></i>
-                </button>
-                <button class="cover-action-btn" onclick="closeCardModal()" title="Fechar">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
+        <!-- Floating actions at the top -->
+        <div class="modal-top-actions">
+            <button class="modal-top-btn" onclick="toggleCoverPanel()" title="Capa">
+                <i class="bi bi-image"></i>
+            </button>
+            <button class="modal-top-btn" title="Mais opções">
+                <i class="bi bi-three-dots"></i>
+            </button>
+            <button class="modal-top-btn" onclick="closeCardModal()" title="Fechar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
 
+        <!-- Cover Area -->
+        <div class="card-modal-cover" id="cardModalCover">
             <!-- Dropdown de Capa (Popup) -->
             <div class="cover-dropdown" id="coverSection">
                 <div class="labels-dropdown-title">Capa</div>
@@ -1814,11 +1828,14 @@
 
         function updateCoverDisplay(color) {
             const cover = document.getElementById('cardModalCover');
+            const modal = document.querySelector('.card-modal');
             if (color) {
                 cover.style.background = color;
-                cover.style.display = 'flex';
+                cover.style.display = 'block';
+                modal.classList.add('has-cover');
             } else {
                 cover.style.display = 'none';
+                modal.classList.remove('has-cover');
             }
         }
 
