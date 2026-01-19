@@ -162,10 +162,6 @@
         background-position: center;
     }
 
-    .kanban-card-cover.color-only {
-        height: 6px;
-    }
-
     .kanban-card-content {
         padding: 12px 14px;
         position: relative;
@@ -972,7 +968,7 @@
                         {% if card.cover_image %}
                         <div class="kanban-card-cover" style="background-image: url('{{ card.cover_image }}');"></div>
                         {% elif card.cover_color %}
-                        <div class="kanban-card-cover color-only" style="background: {{ card.cover_color }};"></div>
+                        <div class="kanban-card-cover" style="background: {{ card.cover_color }};"></div>
                         {% endif %}
                         <div class="kanban-card-content">
                             {% if card.labels.exists %}
