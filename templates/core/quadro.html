@@ -155,9 +155,15 @@
     }
 
     .kanban-card-cover {
-        height: 6px;
+        height: 120px;
         width: 100%;
         border-radius: 10px 10px 0 0;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .kanban-card-cover.color-only {
+        height: 6px;
     }
 
     .kanban-card-content {
@@ -263,6 +269,59 @@
 
     .kanban-add-card {
         padding: 12px;
+    }
+
+    .kanban-add-list {
+        min-width: 280px;
+        max-width: 280px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        border: 2px dashed var(--light-gray);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        gap: 8px;
+        color: var(--medium-gray);
+        font-weight: 500;
+    }
+
+    .kanban-add-list:hover {
+        background: rgba(255, 255, 255, 0.6);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .kanban-add-list-form {
+        display: none;
+        width: 100%;
+    }
+
+    .kanban-add-list-form.show {
+        display: block;
+    }
+
+    .kanban-add-list-form input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--light-gray);
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .kanban-add-list-form input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+    }
+
+    .kanban-add-list-actions {
+        display: flex;
+        gap: 8px;
     }
 
     .kanban-add-card-btn {
@@ -910,8 +969,10 @@
                 <div class="kanban-cards" data-list-id="{{ lista.id }}">
                     {% for card in lista.cards.all %}
                     <div class="kanban-card" data-card-id="{{ card.id }}">
-                        {% if card.cover_color %}
-                        <div class="kanban-card-cover" style="background: {{ card.cover_color }};"></div>
+                        {% if card.cover_image %}
+                        <div class="kanban-card-cover" style="background-image: url('{{ card.cover_image }}');"></div>
+                        {% elif card.cover_color %}
+                        <div class="kanban-card-cover color-only" style="background: {{ card.cover_color }};"></div>
                         {% endif %}
                         <div class="kanban-card-content">
                             {% if card.labels.exists %}
@@ -968,6 +1029,21 @@
             {% empty %}
             <p style="color: var(--medium-gray); padding: 20px;">Nenhuma lista encontrada.</p>
             {% endfor %}
+
+            <!-- Botão para adicionar nova lista -->
+            <div class="kanban-add-list" id="addListContainer">
+                <div id="addListBtn" onclick="showAddListForm()">
+                    <i class="bi bi-plus-lg"></i> Adicionar outra lista
+                </div>
+                <div class="kanban-add-list-form" id="addListForm">
+                    <input type="text" id="newListName" placeholder="Nome da lista..."
+                        onkeypress="if(event.key==='Enter')addList()">
+                    <div class="kanban-add-list-actions">
+                        <button class="btn-add" onclick="addList()">Adicionar</button>
+                        <button class="btn-cancel" onclick="hideAddListForm()">&times;</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1181,6 +1257,45 @@
             } catch (e) {
                 console.error('Erro:', e);
                 alert('Erro ao criar cartão');
+            }
+        };
+
+        // Funções para adicionar nova lista
+        window.showAddListForm = function () {
+            document.getElementById('addListBtn').style.display = 'none';
+            document.getElementById('addListForm').classList.add('show');
+            document.getElementById('newListName').focus();
+        };
+
+        window.hideAddListForm = function () {
+            document.getElementById('addListBtn').style.display = 'block';
+            document.getElementById('addListForm').classList.remove('show');
+            document.getElementById('newListName').value = '';
+        };
+
+        window.addList = async function () {
+            const name = document.getElementById('newListName').value.trim();
+            if (!name) return;
+
+            try {
+                const res = await fetch('/api/kanban/boards/{{ board.id }}/lists/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const err = await res.json();
+                    alert('Erro: ' + (err.error || 'Não foi possível criar a lista'));
+                }
+            } catch (e) {
+                console.error('Erro:', e);
+                alert('Erro ao criar lista');
             }
         };
 
