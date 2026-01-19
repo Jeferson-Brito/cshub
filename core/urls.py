@@ -190,6 +190,8 @@ urlpatterns = [
     path('api/kanban/checklists/<int:checklist_id>/items/', api_kanban.api_checklist_items, name='api_kanban_checklist_items'),
     path('api/kanban/cards/<int:card_id>/comments/', api_kanban.api_card_comments, name='api_kanban_card_comments'),
     path('api/kanban/cards/<int:card_id>/members/', api_kanban.api_card_members, name='api_kanban_card_members'),
+    path('api/kanban/cards/<int:card_id>/attachments/', api_kanban.api_card_attachments, name='api_kanban_card_attachments'),
+    path('api/kanban/cards/<int:card_id>/attachments/<int:attachment_id>/', api_kanban.api_card_attachment_delete, name='api_kanban_card_attachment_delete'),
     path('api/kanban/search/', api_kanban.api_kanban_search, name='api_kanban_search'),
 ]
 

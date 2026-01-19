@@ -739,3 +739,125 @@ def api_kanban_search(request):
             for c in cards
         ]
     })
+
+
+# ============================================
+# MEMBERS
+# ============================================
+
+@api_login_required
+@require_http_methods(["POST"])
+def api_card_members(request, card_id):
+    """Gerencia membros atribuídos ao cartão"""
+    card = get_object_or_404(KanbanCard, id=card_id)
+    
+    try:
+        data = json.loads(request.body)
+        member_id = data.get('member_id')
+        action = data.get('action', 'add')  # 'add' ou 'remove'
+        
+        if not member_id:
+            return JsonResponse({'error': 'member_id é obrigatório'}, status=400)
+        
+        member = get_object_or_404(User, id=member_id)
+        
+        if action == 'add':
+            card.assigned_to.add(member)
+            CardActivity.objects.create(
+                card=card,
+                user=request.user,
+                action='assigned',
+                description=f'{request.user.get_full_name() or request.user.username} atribuiu {member.get_full_name() or member.username} ao cartão'
+            )
+        else:
+            card.assigned_to.remove(member)
+            CardActivity.objects.create(
+                card=card,
+                user=request.user,
+                action='assigned',
+                description=f'{request.user.get_full_name() or request.user.username} removeu {member.get_full_name() or member.username} do cartão'
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'assigned_to': [
+                {'id': u.id, 'name': u.get_full_name() or u.username, 'initials': get_user_initials(u)}
+                for u in card.assigned_to.all()
+            ]
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ============================================
+# ATTACHMENTS
+# ============================================
+
+@api_login_required
+@require_http_methods(["GET", "POST"])
+def api_card_attachments(request, card_id):
+    """Gerencia anexos do cartão"""
+    card = get_object_or_404(KanbanCard, id=card_id)
+    
+    if request.method == 'GET':
+        attachments = card.attachments.all()
+        return JsonResponse([
+            {
+                'id': att.id,
+                'filename': att.filename,
+                'url': att.file.url,
+                'uploaded_at': att.uploaded_at.strftime('%d/%m/%Y %H:%M'),
+                'uploaded_by': att.uploaded_by.get_full_name() or att.uploaded_by.username
+            }
+            for att in attachments
+        ], safe=False)
+    
+    elif request.method == 'POST':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'Arquivo não encontrado'}, status=400)
+        
+        uploaded_file = request.FILES['file']
+        
+        attachment = CardAttachment.objects.create(
+            card=card,
+            file=uploaded_file,
+            filename=uploaded_file.name,
+            uploaded_by=request.user
+        )
+        
+        CardActivity.objects.create(
+            card=card,
+            user=request.user,
+            action='attachment_added',
+            description=f'{request.user.get_full_name() or request.user.username} adicionou o anexo "{uploaded_file.name}"'
+        )
+        
+        return JsonResponse({
+            'id': attachment.id,
+            'filename': attachment.filename,
+            'url': attachment.file.url,
+            'uploaded_at': attachment.uploaded_at.strftime('%d/%m/%Y %H:%M')
+        }, status=201)
+
+
+@api_login_required
+@require_http_methods(["DELETE"])
+def api_card_attachment_delete(request, card_id, attachment_id):
+    """Exclui um anexo específico"""
+    card = get_object_or_404(KanbanCard, id=card_id)
+    attachment = get_object_or_404(CardAttachment, id=attachment_id, card=card)
+    
+    filename = attachment.filename
+    attachment.file.delete(save=False)  # Delete the file
+    attachment.delete()
+    
+    CardActivity.objects.create(
+        card=card,
+        user=request.user,
+        action='attachment_added',
+        description=f'{request.user.get_full_name() or request.user.username} removeu o anexo "{filename}"'
+    )
+    
+    return JsonResponse({'success': True})
+

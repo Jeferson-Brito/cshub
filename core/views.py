@@ -2218,10 +2218,24 @@ def quadro_view(request):
     import json
     labels_data = [{'id': l.id, 'name': l.name, 'color': l.color} for l in labels]
     
+    # Get NRS Suporte department users for members assignment
+    from .models import Department
+    nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+    members = []
+    if nrs_dept:
+        nrs_users = User.objects.filter(department=nrs_dept, ativo=True).order_by('first_name', 'username')
+        members = [{
+            'id': u.id,
+            'name': u.get_full_name() or u.username,
+            'initials': (u.first_name[:1] + u.last_name[:1]).upper() if u.first_name and u.last_name else u.username[:2].upper(),
+            'role': u.get_role_display()
+        } for u in nrs_users]
+    
     context = {
         'board': board,
         'listas': listas,
         'labels_json': json.dumps(labels_data),
+        'members_json': json.dumps(members),
     }
     return render(request, 'core/quadro.html', context)
 
