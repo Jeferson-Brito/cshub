@@ -426,9 +426,9 @@
 
     .card-modal-cover {
         height: 120px;
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        background: #f1f5f9;
+        display: none;
         position: relative;
-        display: flex;
         justify-content: flex-end;
         align-items: flex-start;
         padding: 8px;
@@ -1741,6 +1741,9 @@
                 // Carregar data de vencimento
                 updateDueDateDisplay(data.due_date);
 
+                // Carregar Capa
+                updateCoverDisplay(data.cover_color);
+
                 // Carregar labels
                 selectedLabels = data.labels ? data.labels.map(l => l.id) : [];
                 renderLabels();
@@ -1806,6 +1809,16 @@
                 metaSection.style.display = 'none';
                 pDateInput.value = '';
                 pTimeInput.value = '12:00';
+            }
+        }
+
+        function updateCoverDisplay(color) {
+            const cover = document.getElementById('cardModalCover');
+            if (color) {
+                cover.style.background = color;
+                cover.style.display = 'flex';
+            } else {
+                cover.style.display = 'none';
             }
         }
 
@@ -2050,12 +2063,7 @@
             });
 
             // Update modal cover
-            const cover = document.getElementById('cardModalCover');
-            if (color) {
-                cover.style.background = color;
-            } else {
-                cover.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
-            }
+            updateCoverDisplay(color);
 
             // Save to server
             try {
