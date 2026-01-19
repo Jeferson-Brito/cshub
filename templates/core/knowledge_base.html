@@ -170,6 +170,36 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de Detalhes da Ferramenta -->
+<div class="kb-modal-overlay d-none" id="tool-modal">
+    <div class="kb-modal" style="max-width: 500px;">
+        <div class="kb-modal-header">
+            <h3 id="tool-modal-title">Nome da Ferramenta</h3>
+            <button class="btn-close" id="close-tool-modal"></button>
+        </div>
+        <div class="kb-modal-content">
+            <div class="text-center mb-4">
+                <div class="kb-tool-icon mx-auto" style="width: 80px; height: 80px; font-size: 32px;">
+                    <i class="bi bi-robot"></i>
+                </div>
+            </div>
+            <h5 class="fw-bold mb-3">Sobre a ferramenta</h5>
+            <p id="tool-modal-desc" class="text-muted" style="font-size: 1.1em; line-height: 1.6;"></p>
+
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="fw-bold mb-2 small text-uppercase text-muted">Categoria</h6>
+                <span id="tool-modal-badge" class="badge bg-light text-dark border">Categoria</span>
+            </div>
+        </div>
+        <div class="kb-modal-footer">
+            <button class="btn btn-light" id="btn-close-tool">Fechar</button>
+            <a href="#" target="_blank" id="btn-access-tool" class="btn btn-primary d-flex align-items-center gap-2">
+                Acessar Ferramenta <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -368,16 +398,27 @@
         filtered.forEach(t => {
             const card = document.createElement('div');
             card.className = 'kb-tool-card';
-            card.onclick = () => window.open(t.url, '_blank');
+            card.onclick = () => openToolModal(t);
             card.innerHTML = `
                 <div class="kb-tool-icon"><i class="bi bi-robot"></i></div>
                 <h4>${t.titulo}</h4>
-                <p>${t.descricao}</p>
+                <p>Clique para ver detalhes</p>
                 <div class="kb-tool-badge badge bg-light text-dark mb-2">${t.categoria}</div>
-                <div class="kb-tool-link">Acessar <i class="bi bi-box-arrow-up-right"></i></div>
             `;
             container.appendChild(card);
         });
+    }
+
+    function openToolModal(tool) {
+        const modal = document.getElementById('tool-modal');
+        if (!modal) return;
+
+        document.getElementById('tool-modal-title').textContent = tool.titulo;
+        document.getElementById('tool-modal-desc').textContent = tool.descricao;
+        document.getElementById('tool-modal-badge').textContent = tool.categoria;
+        document.getElementById('btn-access-tool').href = tool.url;
+
+        modal.classList.remove('d-none');
     }
 
     // --- Artigo Actions ---
@@ -445,6 +486,19 @@
                 if (e.target === modalOverlay) modalOverlay.classList.add('d-none');
             };
         }
+
+        // Tool Modal Listeners
+        const toolModalOverlay = document.getElementById('tool-modal');
+        const btnCloseTool = document.getElementById('close-tool-modal');
+        const btnCloseToolFooter = document.getElementById('btn-close-tool');
+
+        if (toolModalOverlay) {
+            toolModalOverlay.onclick = (e) => {
+                if (e.target === toolModalOverlay) toolModalOverlay.classList.add('d-none');
+            };
+        }
+        if (btnCloseTool) btnCloseTool.onclick = () => toolModalOverlay.classList.add('d-none');
+        if (btnCloseToolFooter) btnCloseToolFooter.onclick = () => toolModalOverlay.classList.add('d-none');
 
         const articleForm = document.getElementById('article-form');
         if (articleForm) {
