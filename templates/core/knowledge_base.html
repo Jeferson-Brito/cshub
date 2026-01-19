@@ -99,11 +99,29 @@
         <!-- Ferramentas de IA (View: 'tools') -->
         <div id="view-tools" class="kb-list-container d-none">
             <div class="kb-list-header">
-                <button class="kb-btn-back" onclick="switchView('cards')">
-                    <i class="bi bi-arrow-left"></i> Voltar
-                </button>
-                <h2>Ferramentas de IA</h2>
+                <div>
+                    <button class="kb-btn-back" onclick="switchView('cards')">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </button>
+                    <h2>Ferramentas de IA</h2>
+                </div>
             </div>
+
+            <div class="kb-tools-filters mb-4 d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-primary active" onclick="filterTools('all', this)">Todas</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('ia', this)">Chat & Geral</button>
+                <button class="btn btn-sm btn-outline-primary"
+                    onclick="filterTools('marketing', this)">Marketing</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('design', this)">Design &
+                    Imagem</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('video', this)">Vídeo</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('audio', this)">Áudio & Voz</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('coding', this)">Dev</button>
+                <button class="btn btn-sm btn-outline-primary"
+                    onclick="filterTools('productivity', this)">Produtividade</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterTools('business', this)">Negócios</button>
+            </div>
+
             <div class="kb-tools-grid" id="tools-grid">
                 <!-- Ferramentas injetadas via JS -->
             </div>
@@ -313,12 +331,41 @@
         });
     }
 
+    // --- Tools Filters ---
+    let currentToolCategory = 'all';
+
+    window.filterTools = function (category, btn) {
+        currentToolCategory = category;
+
+        // Update pills
+        document.querySelectorAll('.kb-tools-filters .btn').forEach(b => {
+            b.classList.remove('active');
+            b.classList.remove('btn-primary');
+            b.classList.add('btn-outline-primary');
+        });
+        if (btn) {
+            btn.classList.add('active');
+            btn.classList.add('btn-primary');
+            btn.classList.remove('btn-outline-primary');
+        }
+
+        renderTools();
+    }
+
     function renderTools() {
         const container = document.getElementById('tools-grid');
         if (!container) return;
         container.innerHTML = '';
 
-        tools.forEach(t => {
+        let filtered = tools;
+        if (currentToolCategory !== 'all') {
+            filtered = tools.filter(t => t.categoria === currentToolCategory);
+        }
+
+        // Ordenar por título
+        filtered.sort((a, b) => a.titulo.localeCompare(b.titulo));
+
+        filtered.forEach(t => {
             const card = document.createElement('div');
             card.className = 'kb-tool-card';
             card.onclick = () => window.open(t.url, '_blank');
@@ -326,6 +373,7 @@
                 <div class="kb-tool-icon"><i class="bi bi-robot"></i></div>
                 <h4>${t.titulo}</h4>
                 <p>${t.descricao}</p>
+                <div class="kb-tool-badge badge bg-light text-dark mb-2">${t.categoria}</div>
                 <div class="kb-tool-link">Acessar <i class="bi bi-box-arrow-up-right"></i></div>
             `;
             container.appendChild(card);
