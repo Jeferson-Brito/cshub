@@ -434,9 +434,9 @@ def api_card_detail(request, card_id):
             return JsonResponse({'error': str(e)}, status=400)
     
     if request.method == "DELETE":
-        card.is_archived = True
-        card.save()
-        log_activity(card, request.user, 'archived', 'arquivou este cartão')
+        # Log activity before deletion while card still exists
+        log_activity(card, request.user, 'deleted', 'excluiu este cartão permanentemente')
+        card.delete()
         return JsonResponse({'deleted': True})
 
 
