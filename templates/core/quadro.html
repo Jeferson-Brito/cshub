@@ -1618,8 +1618,8 @@
                             {% if card.labels.exists %}
                             <div class="kanban-card-labels">
                                 {% for label in card.labels.all %}
-                                <span class="kanban-card-label" style="background: {{ label.color }};">{{
-                                    label.name|default:"Etiqueta" }}</span>
+                                <span class="kanban-card-label" style="background: {{ label.color }};"
+                                    title="{{ label.name }}"></span>
                                 {% endfor %}
                             </div>
                             {% endif %}
