@@ -1575,6 +1575,235 @@
     .assigned-avatar:first-child {
         margin-left: 0;
     }
+
+    /* Label Modals */
+    .labels-modal-overlay,
+    .label-edit-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .labels-selection-modal,
+    .label-edit-modal {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .labels-modal-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+    }
+
+    .labels-modal-header h3 {
+        margin: 0;
+        font-size: 14px;
+        flex: 1;
+        text-align: center;
+        color: #5e6c84;
+    }
+
+    .labels-modal-close {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #42526e;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+    }
+
+    .labels-modal-back {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        font-size: 16px;
+        color: #42526e;
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .labels-search-input {
+        margin: 12px 16px;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .labels-list {
+        padding: 0 16px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .label-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 4px;
+        border-radius: 4px;
+    }
+
+    .label-item:hover {
+        background: #f4f5f7;
+    }
+
+    .label-item input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .label-item-color {
+        flex: 1;
+        height: 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .label-item-edit {
+        background: none;
+        border: none;
+        color: #42526e;
+        cursor: pointer;
+        padding: 4px 8px;
+        font-size: 16px;
+    }
+
+    .create-label-btn {
+        margin: 12px 16px;
+        padding: 8px 12px;
+        background: #f4f5f7;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #172b4d;
+    }
+
+    .create-label-btn:hover {
+        background: #e4e6ea;
+    }
+
+    .label-preview {
+        height: 80px;
+        margin: 16px;
+        border-radius: 4px;
+    }
+
+    .label-form-group {
+        padding: 0 16px;
+        margin-bottom: 16px;
+    }
+
+    .label-form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #5e6c84;
+        margin-bottom: 8px;
+    }
+
+    .label-name-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .color-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+    }
+
+    .color-option {
+        height: 40px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.1s;
+    }
+
+    .color-option:hover {
+        transform: scale(1.05);
+    }
+
+    .color-option.selected {
+        border-color: #fff;
+        box-shadow: 0 0 0 2px #0079bf;
+    }
+
+    .remove-color-btn {
+        margin: 12px 16px;
+        padding: 8px 12px;
+        background: #eb5a46;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .remove-color-btn:hover {
+        background: #cf513d;
+    }
+
+    .label-edit-actions {
+        padding: 12px 16px;
+        border-top: 1px solid #ddd;
+    }
+
+    .btn-label-save {
+        width: 100%;
+        padding: 8px;
+        background: #0079bf;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .btn-label-save:hover {
+        background: #026aa7;
+    }
 </style>
 {% endblock %}
 
@@ -1889,10 +2118,58 @@
 
     </div>
 
-    <!-- Dropdown de Etiquetas (Popup) -->
-    <div class="labels-dropdown" id="labelsSection">
-        <div class="labels-dropdown-title">Etiquetas</div>
-        <div id="labelsContainer" class="card-labels-container"></div>
+    <!-- Modal de Seleção de Etiquetas -->
+    <div class="labels-modal-overlay" id="labelsModalOverlay" style="display: none;">
+        <div class="labels-selection-modal">
+            <div class="labels-modal-header">
+                <h3>Etiquetas</h3>
+                <button class="labels-modal-close" onclick="closeLabelSelection()">×</button>
+            </div>
+            <input type="text" class="labels-search-input" id="labelSearch" placeholder="Buscar etiquetas..."
+                onkeyup="filterLabels()">
+            <div class="labels-list" id="labelsList">
+                <!-- Rendered by JS -->
+            </div>
+            <button class="create-label-btn" onclick="openCreateLabel()">
+                Criar uma nova etiqueta
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Edição/Criação de Etiqueta -->
+    <div class="label-edit-modal-overlay" id="labelEditModalOverlay" style="display: none;">
+        <div class="label-edit-modal">
+            <div class="labels-modal-header">
+                <button class="labels-modal-back" onclick="backToLabelSelection()">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <h3 id="labelEditTitle">Editar etiqueta</h3>
+                <button class="labels-modal-close" onclick="closeLabelEdit()">×</button>
+            </div>
+
+            <div class="label-preview" id="labelPreview" style="background: #61bd4f;"></div>
+
+            <div class="label-form-group">
+                <label>Título</label>
+                <input type="text" class="label-name-input" id="labelNameInput" placeholder="Nome da etiqueta..."
+                    maxlength="50">
+            </div>
+
+            <div class="label-form-group">
+                <label>Selecionar uma cor</label>
+                <div class="color-picker-grid" id="colorPickerGrid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <button class="remove-color-btn" onclick="removeLabel()" id="deleteLabelBtn" style="display: none;">
+                <i class="bi bi-x"></i> Excluir
+            </button>
+
+            <div class="label-edit-actions">
+                <button class="btn-label-save" onclick="saveLabel()">Salvar</button>
+            </div>
+        </div>
     </div>
 
     <!-- Dropdown de Data (Popup) -->
@@ -3116,6 +3393,285 @@
                 activityLog.classList.add('expanded');
                 toggleBtn.textContent = 'Ocultar Detalhes';
             }
+        };
+
+        // ============================================
+        // LABEL MANAGEMENT SYSTEM
+        // ============================================
+
+        // Trello color palette (30 colors)
+        const labelColors = [
+            '#b3f3da', '#f3d660', '#fad29c', '#f8c4d0', '#e1c7fd',
+            '#61bd4f', '#f2d600', '#ff9f1a', '#eb5a46', '#c377e0',
+            '#0b6e49', '#946f00', '#ad5e18', '#ae2a19', '#68217a',
+            '#c6edfb', '#c0e6ff', '#d5f4e9', '#fdd7e4', '#e6e6e6',
+            '#579dff', '#60c6d2', '#94c748', '#e774bb', '#8e8e8e',
+            '#1f7eeb', '#227d9b', '#5b7c11', '#a8528f', '#626362'
+        ];
+
+        let currentEditingLabel = null;
+        let allBoardLabels = [];
+        let currentCardLabels = [];
+
+        // Open label selection modal
+        window.openLabelsManagement = function () {
+            if (!currentCard) return;
+
+            // Load labels and show modal
+            loadBoardLabels().then(() => {
+                document.getElementById('labelsModalOverlay').style.display = 'flex';
+                renderLabelsList();
+            });
+        };
+
+        // Close label selection
+        window.closeLabelSelection = function () {
+            document.getElementById('labelsModalOverlay').style.display = 'none';
+        };
+
+        // Load all board labels
+        async function loadBoardLabels() {
+            try {
+                // Assuming boardId is 1 - adjust based on your implementation
+                const boardId = 1;
+                const res = await fetch(`/api/kanban/boards/${boardId}/labels/`);
+                const data = await res.json();
+                allBoardLabels = data.labels || [];
+
+                // Get current card labels
+                if (currentCard && currentCard.labels) {
+                    currentCardLabels = currentCard.labels.map(l => l.id);
+                }
+            } catch (e) {
+                console.error('Error loading labels:', e);
+                allBoardLabels = [];
+            }
+        }
+
+        // Render labels list
+        function renderLabelsList() {
+            const container = document.getElementById('labelsList');
+            if (!container) return;
+
+            if (allBoardLabels.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nenhuma etiqueta criada</p>';
+                return;
+            }
+
+            container.innerHTML = allBoardLabels.map(label => {
+                const isChecked = currentCardLabels.includes(label.id);
+                const displayName = label.name || '';
+
+                return `
+                    <div class="label-item" data-label-id="${label.id}">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               onchange="toggleLabelOnCard(${label.id})">
+                        <div class="label-item-color" style="background: ${label.color};"
+                             onclick="toggleLabelOnCard(${label.id})">
+                            ${displayName}
+                        </div>
+                        <button class="label-item-edit" onclick="openEditLabel(${label.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle label on card
+        window.toggleLabelOnCard = async function (labelId) {
+            if (!currentCard) return;
+
+            const isCurrentlyOn = currentCardLabels.includes(labelId);
+            const action = isCurrentlyOn ? 'remove' : 'add';
+
+            try {
+                const res = await fetch(`/api/kanban/cards/${currentCard.id}/labels/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        label_id: labelId,
+                        action: action
+                    })
+                });
+
+                if (res.ok) {
+                    // Update local state
+                    if (action === 'add') {
+                        currentCardLabels.push(labelId);
+                    } else {
+                        currentCardLabels = currentCardLabels.filter(id => id !== labelId);
+                    }
+
+                    // Re-render
+                    renderLabelsList();
+                    // Reload card to show updated labels
+                    location.reload();
+                }
+            } catch (e) {
+                console.error('Error toggling label:', e);
+            }
+        };
+
+        // Filter labels
+        window.filterLabels = function () {
+            const search = document.getElementById('labelSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.label-item');
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        };
+
+        // Open create label
+        window.openCreateLabel = function () {
+            currentEditingLabel = null;
+            document.getElementById('labelEditTitle').textContent = 'Criar etiqueta';
+            document.getElementById('labelNameInput').value = '';
+            document.getElementById('labelPreview').style.background = '#61bd4f';
+            document.getElementById('deleteLabelBtn').style.display = 'none';
+
+            // Render color picker
+            renderColorPicker('#61bd4f');
+
+            // Hide selection modal, show edit modal
+            document.getElementById('labelsModalOverlay').style.display = 'none';
+            document.getElementById('labelEditModalOverlay').style.display = 'flex';
+        };
+
+        // Open edit label
+        window.openEditLabel = function (labelId) {
+            const label = allBoardLabels.find(l => l.id === labelId);
+            if (!label) return;
+
+            currentEditingLabel = label;
+            document.getElementById('labelEditTitle').textContent = 'Editar etiqueta';
+            document.getElementById('labelNameInput').value = label.name || '';
+            document.getElementById('labelPreview').style.background = label.color;
+            document.getElementById('deleteLabelBtn').style.display = 'block';
+
+            // Render color picker
+            renderColorPicker(label.color);
+
+            // Hide selection modal, show edit modal
+            document.getElementById('labelsModalOverlay').style.display = 'none';
+            document.getElementById('labelEditModalOverlay').style.display = 'flex';
+        };
+
+        // Render color picker grid
+        function renderColorPicker(selectedColor) {
+            const container = document.getElementById('colorPickerGrid');
+            if (!container) return;
+
+            container.innerHTML = labelColors.map(color => `
+                <div class="color-option ${color === selectedColor ? 'selected' : ''}" 
+                     style="background: ${color};"
+                     onclick="selectColor('${color}')"></div>
+            `).join('');
+        }
+
+        // Select color
+        window.selectColor = function (color) {
+            document.getElementById('labelPreview').style.background = color;
+
+            // Update selected state
+            document.querySelectorAll('.color-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        };
+
+        // Save label (create or update)
+        window.saveLabel = async function () {
+            const name = document.getElementById('labelNameInput').value.trim();
+            const color = document.getElementById('labelPreview').style.background || '#61bd4f';
+            const boardId = 1; // Adjust based on your implementation
+
+            if (currentEditingLabel) {
+                // Update existing label
+                try {
+                    const res = await fetch(`/api/kanban/labels/${currentEditingLabel.id}/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ name, color })
+                    });
+
+                    if (res.ok) {
+                        closeLabelEdit();
+                        await loadBoardLabels();
+                        openLabelsManagement();
+                    }
+                } catch (e) {
+                    console.error('Error updating label:', e);
+                    alert('Erro ao atualizar etiqueta');
+                }
+            } else {
+                // Create new label
+                try {
+                    const res = await fetch(`/api/kanban/boards/${boardId}/labels/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ name, color })
+                    });
+
+                    if (res.ok) {
+                        closeLabelEdit();
+                        await loadBoardLabels();
+                        openLabelsManagement();
+                    }
+                } catch (e) {
+                    console.error('Error creating label:', e);
+                    alert('Erro ao criar etiqueta');
+                }
+            }
+        };
+
+        // Delete label
+        window.removeLabel = async function () {
+            if (!currentEditingLabel) return;
+
+            if (!confirm(`Excluir a etiqueta "${currentEditingLabel.name || 'sem nome'}"?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/kanban/labels/${currentEditingLabel.id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+
+                if (res.ok) {
+                    closeLabelEdit();
+                    await loadBoardLabels();
+                    openLabelsManagement();
+                }
+            } catch (e) {
+                console.error('Error deleting label:', e);
+                alert('Erro ao excluir etiqueta');
+            }
+        };
+
+        // Back to label selection
+        window.backToLabelSelection = function () {
+            closeLabelEdit();
+            openLabelsManagement();
+        };
+
+        // Close label edit
+        window.closeLabelEdit = function () {
+            document.getElementById('labelEditModalOverlay').style.display = 'none';
         };
 
     })();

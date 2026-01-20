@@ -864,3 +864,74 @@ def api_card_attachment_delete(request, card_id, attachment_id):
     
     return JsonResponse({'success': True})
 
+
+
+# ============================================
+# LABELS CRUD ENDPOINTS
+# ============================================
+
+@csrf_exempt
+@api_login_required
+@require_http_methods(["GET", "POST"])
+def api_board_labels(request, board_id):
+    """Lista ou cria labels do quadro"""
+    board = get_object_or_404(KanbanBoard, id=board_id)
+    
+    if not can_view_board(request.user, board):
+        return JsonResponse({'error': 'Sem permissão'}, status=403)
+    
+    if request.method == "GET":
+        labels = board.labels.all()
+        return JsonResponse({
+            'labels': [{'id': l.id, 'name': l.name, 'color': l.color} for l in labels]
+        })
+    
+    # POST - Criar label
+    if not can_edit_board(request.user, board):
+        return JsonResponse({'error': 'Sem permissão de edição'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        label = CardLabel.objects.create(
+            board=board,
+            name=data.get('name', ''),
+            color=data.get('color', '#61bd4f')
+        )
+        return JsonResponse({
+            'id': label.id,
+            'name': label.name,
+            'color': label.color
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@csrf_exempt
+@api_login_required
+@require_http_methods(["PUT", "DELETE"])
+def api_label_detail(request, label_id):
+    """Atualiza ou exclui label"""
+    label = get_object_or_404(CardLabel, id=label_id)
+    
+    if not can_edit_board(request.user, label.board):
+        return JsonResponse({'error': 'Sem permissão'}, status=403)
+    
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            if 'name' in data:
+                label.name = data['name']
+            if 'color' in data:
+                label.color = data['color']
+            label.save()
+            return JsonResponse({
+                'id': label.id,
+                'name': label.name,
+                'color': label.color
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    if request.method == "DELETE":
+        label.delete()
+        return JsonResponse({'deleted': True})

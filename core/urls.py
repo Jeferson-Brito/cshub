@@ -193,5 +193,9 @@ urlpatterns = [
     path('api/kanban/cards/<int:card_id>/attachments/', api_kanban.api_card_attachments, name='api_kanban_card_attachments'),
     path('api/kanban/cards/<int:card_id>/attachments/<int:attachment_id>/', api_kanban.api_card_attachment_delete, name='api_kanban_card_attachment_delete'),
     path('api/kanban/search/', api_kanban.api_kanban_search, name='api_kanban_search'),
+    
+    # Label CRUD
+    path('api/kanban/boards/<int:board_id>/labels/', api_kanban.api_board_labels, name='api_kanban_board_labels'),
+    path('api/kanban/labels/<int:label_id>/', api_kanban.api_label_detail, name='api_kanban_label_detail'),
 ]
 
