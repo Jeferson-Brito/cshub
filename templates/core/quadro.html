@@ -831,6 +831,14 @@
         display: block;
     }
 
+    .activity-item.hidden-preview {
+        display: none;
+    }
+
+    .activity-log.expanded .activity-item.hidden-preview {
+        display: flex;
+    }
+
     .activity-item {
         display: flex;
         gap: 10px;
@@ -2924,17 +2932,29 @@
         // Render activities
         function renderActivities(activities) {
             const container = document.getElementById('cardActivityLog');
+            const toggleBtn = document.getElementById('toggleActivityBtn');
             if (!container) return;
 
             if (!activities || activities.length === 0) {
                 container.innerHTML = '<p style="color: var(--medium-gray); text-align: center; padding: 20px; font-size: 13px;">Nenhuma atividade registrada</p>';
+                if (toggleBtn) toggleBtn.style.display = 'none';
                 return;
             }
 
-            container.innerHTML = activities.map(activity => {
+            // Sort activities by date (most recent first)
+            const sortedActivities = [...activities].sort((a, b) =>
+                new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            // Show last 3 activities by default, hide the rest
+            const previewCount = 3;
+            const hasMore = sortedActivities.length > previewCount;
+
+            container.innerHTML = sortedActivities.map((activity, index) => {
                 const timeAgo = getTimeAgo(activity.created_at);
+                const isHidden = index >= previewCount;
                 return `
-                    <div class="activity-item">
+                    <div class="activity-item ${isHidden ? 'hidden-preview' : ''}">
                         <div class="activity-avatar">${activity.user_initials || 'U'}</div>
                         <div class="activity-content">
                             <div class="activity-text">${activity.description}</div>
@@ -2943,6 +2963,19 @@
                     </div>
                 `;
             }).join('');
+
+            // Show/hide toggle button based on activity count
+            if (toggleBtn) {
+                if (hasMore) {
+                    toggleBtn.style.display = 'inline-block';
+                    toggleBtn.textContent = 'Mostrar Detalhes';
+                } else {
+                    toggleBtn.style.display = 'none';
+                }
+            }
+
+            // Always show activity log (but with preview)
+            container.classList.add('show');
         }
 
         // Time ago helper
@@ -3074,11 +3107,13 @@
             const activityLog = document.getElementById('cardActivityLog');
             const toggleBtn = document.getElementById('toggleActivityBtn');
 
-            if (activityLog.classList.contains('show')) {
-                activityLog.classList.remove('show');
+            if (activityLog.classList.contains('expanded')) {
+                // Collapse to preview (show only 3)
+                activityLog.classList.remove('expanded');
                 toggleBtn.textContent = 'Mostrar Detalhes';
             } else {
-                activityLog.classList.add('show');
+                // Expand to show all
+                activityLog.classList.add('expanded');
                 toggleBtn.textContent = 'Ocultar Detalhes';
             }
         };
