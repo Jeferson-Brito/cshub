@@ -1764,6 +1764,26 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Membros Atribuídos -->
+                    <div class="card-meta-item" id="assignedMembersSection" style="display: none;">
+                        <span class="card-meta-label">Membros</span>
+                        <div class="card-meta-value">
+                            <div id="assignedAvatarsDisplay" style="display: flex;"></div>
+                            <button class="card-add-label-btn" onclick="toggleMembersPanel()">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Anexos -->
+                    <div class="card-meta-item" id="attachmentsMetaSection" style="display: none;">
+                        <span class="card-meta-label">Anexos</span>
+                        <div class="card-meta-value">
+                            <span id="attachmentsCount" style="font-size: 13px; color: var(--dark-color); cursor: pointer;" onclick="toggleAttachmentPanel()">
+                                <i class="bi bi-paperclip"></i> <span id="attachmentsCountNumber">0</span> anexo(s)
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Seção de Descrição -->
@@ -1919,6 +1939,30 @@
 
         // Labels disponíveis
         const availableLabels = JSON.parse(document.getElementById('labelsData').textContent);
+
+
+        // Close all popups when clicking outside
+        document.addEventListener('click', function(e) {
+            // List of popup IDs and their toggle buttons
+            const popups = [
+                { id: 'labelsSection', btnText: 'Etiquetas' },
+                { id: 'dateSection', btnText: 'Datas' },
+                { id: 'membersSection', btnText: 'Membros' },
+                { id: 'attachmentsSection', btnText: 'Anexo' },
+                { id: 'coverSection', btnText: 'Capa' },
+                { id: 'cardOptionsDropdown', btnText: 'three-dots' }
+            ];
+            
+            popups.forEach(popup => {
+                const section = document.getElementById(popup.id);
+                if (section && section.classList.contains('show')) {
+                    // Check if click is outside the popup and not on its toggle button
+                    if (!section.contains(e.target) && !e.target.closest('.card-action-btn') && !e.target.closest('.modal-top-btn') && !e.target.closest('.card-add-label-btn')) {
+                        section.classList.remove('show');
+                    }
+                }
+            });
+        });
 
         window.showAddCard = function (listId) {
             document.getElementById('addCardForm-' + listId).classList.add('show');
@@ -2101,6 +2145,15 @@
                     document.getElementById('checklistSection').style.display = 'none';
                 }
 
+
+                // Load attachments count
+                try {
+                    const attRes = await fetch('/api/kanban/cards/' + cardId + '/attachments/');
+                    if (attRes.ok) {
+                        const atts = await attRes.json();
+                        updateAttachmentsMetaDisplay(atts.length);
+                    }
+                } catch(e) { console.log('Erro ao carregar anexos', e); }
 
                 document.getElementById('cardModalOverlay').classList.add('show');
             } catch (e) {
@@ -2746,6 +2799,21 @@
         const availableMembers = JSON.parse(document.getElementById('membersData')?.textContent || '[]');
         let selectedMembers = [];
 
+
+        // Update attachments meta display
+        function updateAttachmentsDisplay(count) {
+            const section = document.getElementById('attachmentsMetaSection');
+            const countEl = document.getElementById('attachmentsCountNumber');
+            if (section && countEl) {
+                if (count > 0) {
+                    countEl.textContent = count;
+                    section.style.display = 'flex';
+                } else {
+                    section.style.display = 'none';
+                }
+            }
+        }
+
         window.toggleMembersPanel = function() {
             const section = document.getElementById('membersSection');
             section.classList.toggle('show');
@@ -2823,9 +2891,24 @@
                 display.innerHTML = activeMembers.slice(0, 5).map(m => 
                     `<div class="assigned-avatar" title="${m.name}">${m.initials}</div>`
                 ).join('');
-                section.classList.add('show');
+                section.style.display = 'flex';
             } else {
-                section.classList.remove('show');
+                section.style.display = 'none';
+            }
+        }
+
+
+        // Update attachments meta display
+        function updateAttachmentsMetaDisplay(count) {
+            const section = document.getElementById('attachmentsMetaSection');
+            const countEl = document.getElementById('attachmentsCountNumber');
+            if (section && countEl) {
+                if (count > 0) {
+                    countEl.textContent = count;
+                    section.style.display = 'flex';
+                } else {
+                    section.style.display = 'none';
+                }
             }
         }
 
@@ -2854,6 +2937,7 @@
                 const res = await fetch('/api/kanban/cards/' + currentCard.id + '/attachments/');
                 if (res.ok) {
                     const attachments = await res.json();
+                    updateAttachmentsMetaDisplay(attachments.length);
                     if (attachments.length === 0) {
                         list.innerHTML = '<p style="color: var(--medium-gray); text-align: center; padding: 10px;">Nenhum anexo</p>';
                     } else {
