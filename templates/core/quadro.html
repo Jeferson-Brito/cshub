@@ -1844,13 +1844,13 @@
                         <div class="kanban-card-cover" style="background: {{ card.cover_color }};"></div>
                         {% endif %}
                         <div class="kanban-card-content">
-                            {% if card.labels.exists %}
-                            <div class="kanban-card-labels">
-                                {% for label in card.labels.all %}
-                                <span class="kanban-card-label" style="background: {{ label.color }};"
-                                    title="{{ label.name }}"></span>
-                                {% endfor %}
-                            </div>
+                            {% if card.etiquetas.exists %}\r
+                            <div class="kanban-card-labels">\r
+                                {% for label in card.etiquetas.all %}\r
+                                <span class="kanban-card-label" style="background: {{ label.cor }};"
+                                    title="{{ label.nome }}"></span>\r
+                                {% endfor %}\r
+                            </div>\r
                             {% endif %}
                             <div class="kanban-card-title">{{ card.title }}</div>
                             <div class="kanban-card-meta">
