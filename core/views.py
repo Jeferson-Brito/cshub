@@ -2175,64 +2175,47 @@ def performance_view(request):
 @login_required
 def quadro_view(request):
     """Visualização do Quadro Kanban"""
-    from .models import KanbanBoard, KanbanList, CardLabel
-    
-    # Obter o quadro principal do usuário (ou criar se não existir)
-    board = KanbanBoard.objects.filter(owner=request.user).first()
-    
-    if not board:
-        # Tentar encontrar qualquer quadro ou criar um padrão
-        board = KanbanBoard.objects.first()
-        if not board:
-            board = KanbanBoard.objects.create(
-                name='Quadro Principal',
-                owner=request.user,
-                background_color='#2563eb'
-            )
-    
-    # Criar listas padrão se não existirem
-    if not board.lists.exists():
-        KanbanList.objects.create(board=board, name='A Fazer', position=0)
-        KanbanList.objects.create(board=board, name='Em Andamento', position=1)
-        KanbanList.objects.create(board=board, name='Concluído', position=2)
-    
-    # Criar labels padrão se não existirem
-    if not board.labels.exists():
-        default_labels = [
-            ('Urgente', '#ef4444'),
-            ('Importante', '#f97316'),
-            ('Normal', '#6b7280'),
-            ('Baixa', '#3b82f6'),
-            ('Reunião', '#6366f1'),
-            ('Documentação', '#0891b2'),
-            ('Bug', '#dc2626'),
-            ('Feature', '#059669'),
-            ('Concluído', '#22c55e'),
-        ]
-        for name, color in default_labels:
-            CardLabel.objects.create(board=board, name=name, color=color)
-    
-    listas = board.lists.filter(is_archived=False).order_by('position')
-    labels = board.labels.all()
-    
+    from .models import Lista, Cartao, QuadroEtiqueta, Department
     import json
-    labels_data = [{'id': l.id, 'name': l.name, 'color': l.color} for l in labels]
     
-    # Get NRS Suporte department users for members assignment
-    from .models import Department
-    nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+    # Get department
+    if request.user.is_administrador():
+        dept_id = request.session.get('selected_department_id')
+        if dept_id and dept_id != 0:
+            department = Department.objects.filter(id=dept_id).first() or Department.objects.first()
+        else:
+            department = Department.objects.first()
+    else:
+        department = request.user.department
+    
+    if not department:
+        department = Department.objects.first()
+    
+    # Get lists and prefetch cards with labels
+    listas = Lista.objects.filter(
+        department=department, 
+        archived=False
+    ).prefetch_related(
+        'cartoes__etiquetas',
+        'cartoes__membros'
+    ).order_by('ordem')
+    
+    # Get labels for this department
+    labels = QuadroEtiqueta.objects.filter(department=department)
+    labels_data = [{'id': l.id, 'name': l.nome, 'color': l.cor} for l in labels]
+    
+    # Get department users for members assignment
     members = []
-    if nrs_dept:
-        nrs_users = User.objects.filter(department=nrs_dept, ativo=True).order_by('first_name', 'username')
+    if department:
+        dept_users = User.objects.filter(department=department, ativo=True).order_by('first_name', 'username')
         members = [{
             'id': u.id,
             'name': u.get_full_name() or u.username,
             'initials': (u.first_name[:1] + u.last_name[:1]).upper() if u.first_name and u.last_name else u.username[:2].upper(),
             'role': u.get_role_display()
-        } for u in nrs_users]
+        } for u in dept_users]
     
     context = {
-        'board': board,
         'listas': listas,
         'labels_json': json.dumps(labels_data),
         'members_json': json.dumps(members),

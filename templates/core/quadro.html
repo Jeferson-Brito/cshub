@@ -1849,33 +1849,32 @@
                     </div>
                 </div>
                 <div class="kanban-cards" data-list-id="{{ lista.id }}">
-                    {% for card in lista.cards.all %}
-                    <div class="kanban-card" data-card-id="{{ card.id }}">
-                        {% if card.cover_image %}
-                        <div class="kanban-card-cover" style="background-image: url('{{ card.cover_image }}');"></div>
-                        {% elif card.cover_color %}
-                        <div class="kanban-card-cover" style="background: {{ card.cover_color }};"></div>
+                    {% for cartao in lista.cartoes.all %}
+                    <div class="kanban-card" data-card-id="{{ cartao.id }}">
+                        {% if cartao.cover_image %}
+                        <div class="kanban-card-cover" style="background-image: url('{{ cartao.cover_image }}');"></div>
+                        {% elif cartao.cover_color %}
+                        <div class="kanban-card-cover" style="background: {{ cartao.cover_color }};"></div>
                         {% endif %}
                         <div class="kanban-card-content">
-                            {% if card.labels.exists %}
+                            {% if cartao.etiquetas.exists %}
                             <div class="kanban-card-labels">
-                                {% for label in card.labels.all %}
-                                <span class="kanban-card-label" style="background: {{ label.color }};"
-                                    title="{{ label.name }}">{{ label.name }}</span>
+                                {% for label in cartao.etiquetas.all %}
+                                <span class="kanban-card-label" style="background: {{ label.cor }};"
+                                    title="{{ label.nome }}">{{ label.nome }}</span>
                                 {% endfor %}
                             </div>
                             {% endif %}
-                            <div class="kanban-card-title">{{ card.title }}</div>
+                            <div class="kanban-card-title">{{ cartao.titulo }}</div>
                             <div class="kanban-card-meta">
-                                {% if card.due_date %}
-                                <span
-                                    class="kanban-card-due {% if card.is_overdue %}overdue{% elif card.due_complete %}completed{% endif %}">
+                                {% if cartao.data_limite %}
+                                <span class="kanban-card-due">
                                     <i class="bi bi-clock"></i>
-                                    {{ card.due_date|date:"d M. H:i" }}
+                                    {{ cartao.data_limite|date:"d M. H:i" }}
                                 </span>
                                 {% endif %}
                                 <div class="kanban-card-icons">
-                                    {% if card.description %}
+                                    {% if cartao.descricao %}
                                     <span class="kanban-card-icon" title="Tem descrição">
                                         <i class="bi bi-text-left"></i>
                                     </span>
