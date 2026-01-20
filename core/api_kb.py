@@ -112,7 +112,21 @@ def api_kb_article_detail(request, pk):
             artigo.categoria = data.get('categoria', artigo.categoria)
             artigo.tags = data.get('tags', artigo.tags)
             artigo.save()
-            return JsonResponse({'status': 'success'})
+            
+            # Retornar o artigo completo atualizado
+            return JsonResponse({
+                'status': 'success',
+                'article': {
+                    'id': artigo.id,
+                    'titulo': artigo.titulo,
+                    'conteudo': artigo.conteudo,
+                    'categoria': artigo.categoria,
+                    'tags': [t.strip() for t in artigo.tags.split(',')] if artigo.tags else [],
+                    'views': artigo.views,
+                    'created_at': artigo.created_at.isoformat(),
+                    'updated_at': artigo.updated_at.isoformat()
+                }
+            })
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
             

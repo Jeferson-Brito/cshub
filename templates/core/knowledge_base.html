@@ -146,6 +146,7 @@
                         <option value="solutions">Soluções Comuns</option>
                         <option value="faq">Perguntas Frequentes</option>
                         <option value="troubleshooting">Resolução de Problemas</option>
+                        <option value="training">Treinamentos</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -265,7 +266,7 @@
     }
 
     function updateCounts() {
-        const counts = { tutorials: 0, solutions: 0, faq: 0, troubleshooting: 0 };
+        const counts = { tutorials: 0, solutions: 0, faq: 0, troubleshooting: 0, training: 0 };
         articles.forEach(a => { if (counts[a.categoria] !== undefined) counts[a.categoria]++; });
 
         const setCnt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
@@ -273,6 +274,7 @@
         setCnt('count-solutions', `${counts.solutions} artigos`);
         setCnt('count-faq', `${counts.faq} artigos`);
         setCnt('count-troubleshooting', `${counts.troubleshooting} artigos`);
+        setCnt('count-training', `${counts.training} cursos`);
         setCnt('count-tools', `${tools.length} ferramentas`);
     }
 
