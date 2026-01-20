@@ -479,11 +479,14 @@
         border-radius: 12px;
         width: 100%;
         max-width: 900px;
+        max-height: 90vh;
         box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
         margin-bottom: 40px;
         overflow: visible;
         /* Mudado de hidden para permitir popups */
         position: relative;
+        display: flex;
+        flex-direction: column;
     }
 
     .card-modal-cover {
@@ -600,6 +603,8 @@
         display: grid;
         grid-template-columns: 1fr 300px;
         min-height: 400px;
+        flex: 1;
+        overflow: hidden;
     }
 
     @media (max-width: 768px) {
@@ -615,11 +620,16 @@
     .card-modal-main {
         padding: 20px;
         border-right: 1px solid var(--light-gray);
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .card-modal-sidebar {
         padding: 20px;
         background: #fafafa;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 
     /* Title with checkbox */
@@ -807,6 +817,18 @@
         border-radius: 6px;
         font-size: 13px;
         resize: none;
+    }
+
+    .activity-log {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 12px;
+        display: none;
+    }
+
+    .activity-log.show {
+        display: block;
     }
 
     .activity-item {
@@ -1545,7 +1567,6 @@
     .assigned-avatar:first-child {
         margin-left: 0;
     }
-
 </style>
 {% endblock %}
 
@@ -1589,7 +1610,8 @@
                             {% if card.labels.exists %}
                             <div class="kanban-card-labels">
                                 {% for label in card.labels.all %}
-                                <span class="kanban-card-label" style="background: {{ label.color }};">{{ label.name|default:"Etiqueta" }}</span>
+                                <span class="kanban-card-label" style="background: {{ label.color }};">{{
+                                    label.name|default:"Etiqueta" }}</span>
                                 {% endfor %}
                             </div>
                             {% endif %}
@@ -1717,7 +1739,8 @@
             <div class="card-modal-main">
                 <!-- Linha do Título -->
                 <div class="card-title-row">
-                    <input type="text" class="card-title-input" id="editCardTitle" placeholder="Título do cartão" onblur="autoSaveCard()">
+                    <input type="text" class="card-title-input" id="editCardTitle" placeholder="Título do cartão"
+                        onblur="autoSaveCard()">
                     <input type="hidden" id="editCardId">
                 </div>
 
@@ -1779,7 +1802,9 @@
                     <div class="card-meta-item" id="attachmentsMetaSection" style="display: none;">
                         <span class="card-meta-label">Anexos</span>
                         <div class="card-meta-value">
-                            <span id="attachmentsCount" style="font-size: 13px; color: var(--dark-color); cursor: pointer;" onclick="toggleAttachmentPanel()">
+                            <span id="attachmentsCount"
+                                style="font-size: 13px; color: var(--dark-color); cursor: pointer;"
+                                onclick="toggleAttachmentPanel()">
                                 <i class="bi bi-paperclip"></i> <span id="attachmentsCountNumber">0</span> anexo(s)
                             </span>
                         </div>
@@ -1841,7 +1866,8 @@
                         <i class="bi bi-chat-left-text"></i> Comentários e atividade
                     </div>
                     <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
-                        <button class="card-section-btn">Mostrar Detalhes</button>
+                        <button class="card-section-btn" id="toggleActivityBtn"
+                            onclick="toggleActivityDetails()">Mostrar Detalhes</button>
                     </div>
                     <textarea class="comment-input" placeholder="Escreva um comentário..." rows="1"></textarea>
                 </div>
@@ -1852,7 +1878,7 @@
             </div>
         </div>
 
-        
+
     </div>
 
     <!-- Dropdown de Etiquetas (Popup) -->
@@ -1902,7 +1928,8 @@
         <div id="attachmentsList"></div>
         <div style="margin-top: 12px;">
             <input type="file" id="attachmentFileInput" style="display: none;" onchange="uploadAttachment(this)">
-            <button class="btn-modal btn-modal-primary" onclick="document.getElementById('attachmentFileInput').click()" style="width: 100%; justify-content: center;">
+            <button class="btn-modal btn-modal-primary" onclick="document.getElementById('attachmentFileInput').click()"
+                style="width: 100%; justify-content: center;">
                 <i class="bi bi-upload"></i> Adicionar Anexo
             </button>
         </div>
@@ -1934,7 +1961,7 @@
 
 
         // Close all popups when clicking outside
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             // List of popup IDs and their toggle buttons
             const popups = [
                 { id: 'labelsSection', btnText: 'Etiquetas' },
@@ -1944,7 +1971,7 @@
                 { id: 'coverSection', btnText: 'Capa' },
                 { id: 'cardOptionsDropdown', btnText: 'three-dots' }
             ];
-            
+
             popups.forEach(popup => {
                 const section = document.getElementById(popup.id);
                 if (section && section.classList.contains('show')) {
@@ -2145,7 +2172,7 @@
                         const atts = await attRes.json();
                         updateAttachmentsMetaDisplay(atts.length);
                     }
-                } catch(e) { console.log('Erro ao carregar anexos', e); }
+                } catch (e) { console.log('Erro ao carregar anexos', e); }
 
                 // Render activities
                 renderActivities(data.activities || []);
@@ -2752,12 +2779,12 @@
         });
 
         // Auto-save card on blur
-        window.autoSaveCard = async function() {
+        window.autoSaveCard = async function () {
             if (!currentCard) return;
-            
+
             const title = document.getElementById('editCardTitle').value.trim();
             if (!title) return;
-            
+
             try {
                 await fetch('/api/kanban/cards/' + currentCard.id + '/', {
                     method: 'PUT',
@@ -2774,11 +2801,11 @@
         };
 
         // Toggle card options menu (3-dots)
-        window.toggleCardOptionsMenu = function(event) {
+        window.toggleCardOptionsMenu = function (event) {
             event.stopPropagation();
             const menu = document.getElementById('cardOptionsDropdown');
             menu.classList.toggle('show');
-            
+
             const closeMenu = (e) => {
                 if (!menu.contains(e.target)) {
                     menu.classList.remove('show');
@@ -2809,10 +2836,10 @@
             }
         }
 
-        window.toggleMembersPanel = function() {
+        window.toggleMembersPanel = function () {
             const section = document.getElementById('membersSection');
             section.classList.toggle('show');
-            
+
             if (section.classList.contains('show')) {
                 renderMembers();
                 if (window.event && event.currentTarget) {
@@ -2827,7 +2854,7 @@
         function renderMembers() {
             const container = document.getElementById('membersContainer');
             if (!container) return;
-            
+
             container.innerHTML = availableMembers.map(member => {
                 const isSelected = selectedMembers.some(m => m === member.id || m.id === member.id);
                 return `
@@ -2843,12 +2870,12 @@
             }).join('') || '<p style="color: var(--medium-gray); text-align: center; padding: 20px;">Nenhum membro disponível</p>';
         }
 
-        window.toggleMember = async function(memberId) {
+        window.toggleMember = async function (memberId) {
             if (!currentCard) return;
-            
+
             const isCurrentlySelected = selectedMembers.some(m => m === memberId || m.id === memberId);
             const action = isCurrentlySelected ? 'remove' : 'add';
-            
+
             try {
                 const res = await fetch('/api/kanban/cards/' + currentCard.id + '/members/', {
                     method: 'POST',
@@ -2858,7 +2885,7 @@
                     },
                     body: JSON.stringify({ member_id: memberId, action: action })
                 });
-                
+
                 if (res.ok) {
                     if (action === 'add') {
                         selectedMembers.push(memberId);
@@ -2877,13 +2904,13 @@
             const section = document.getElementById('assignedMembersSection');
             const display = document.getElementById('assignedAvatarsDisplay');
             if (!section || !display) return;
-            
-            const activeMembers = availableMembers.filter(m => 
+
+            const activeMembers = availableMembers.filter(m =>
                 selectedMembers.some(sm => sm === m.id || sm.id === m.id)
             );
-            
+
             if (activeMembers.length > 0) {
-                display.innerHTML = activeMembers.slice(0, 5).map(m => 
+                display.innerHTML = activeMembers.slice(0, 5).map(m =>
                     `<div class="assigned-avatar" title="${m.name}">${m.initials}</div>`
                 ).join('');
                 section.style.display = 'flex';
@@ -2898,12 +2925,12 @@
         function renderActivities(activities) {
             const container = document.getElementById('cardActivityLog');
             if (!container) return;
-            
+
             if (!activities || activities.length === 0) {
                 container.innerHTML = '<p style="color: var(--medium-gray); text-align: center; padding: 20px; font-size: 13px;">Nenhuma atividade registrada</p>';
                 return;
             }
-            
+
             container.innerHTML = activities.map(activity => {
                 const timeAgo = getTimeAgo(activity.created_at);
                 return `
@@ -2927,7 +2954,7 @@
             const diffMin = Math.floor(diffSec / 60);
             const diffHour = Math.floor(diffMin / 60);
             const diffDay = Math.floor(diffHour / 24);
-            
+
             if (diffSec < 60) return 'agora';
             if (diffMin < 60) return `há ${diffMin} minuto${diffMin > 1 ? 's' : ''}`;
             if (diffHour < 24) return `há ${diffHour} hora${diffHour > 1 ? 's' : ''}`;
@@ -2951,10 +2978,10 @@
         }
 
         // Attachments functionality
-        window.toggleAttachmentPanel = function() {
+        window.toggleAttachmentPanel = function () {
             const section = document.getElementById('attachmentsSection');
             section.classList.toggle('show');
-            
+
             if (section.classList.contains('show')) {
                 loadAttachments();
                 if (window.event && event.currentTarget) {
@@ -2970,7 +2997,7 @@
             if (!currentCard) return;
             const list = document.getElementById('attachmentsList');
             list.innerHTML = '<p style="color: var(--medium-gray); text-align: center;">Carregando...</p>';
-            
+
             try {
                 const res = await fetch('/api/kanban/cards/' + currentCard.id + '/attachments/');
                 if (res.ok) {
@@ -2997,13 +3024,13 @@
             }
         }
 
-        window.uploadAttachment = async function(input) {
+        window.uploadAttachment = async function (input) {
             if (!currentCard || !input.files || input.files.length === 0) return;
-            
+
             const file = input.files[0];
             const formData = new FormData();
             formData.append('file', file);
-            
+
             try {
                 const res = await fetch('/api/kanban/cards/' + currentCard.id + '/attachments/', {
                     method: 'POST',
@@ -3012,7 +3039,7 @@
                     },
                     body: formData
                 });
-                
+
                 if (res.ok) {
                     loadAttachments();
                     input.value = '';
@@ -3024,9 +3051,9 @@
             }
         };
 
-        window.deleteAttachment = async function(attachmentId) {
+        window.deleteAttachment = async function (attachmentId) {
             if (!confirm('Excluir este anexo?')) return;
-            
+
             try {
                 const res = await fetch('/api/kanban/cards/' + currentCard.id + '/attachments/' + attachmentId + '/', {
                     method: 'DELETE',
@@ -3039,6 +3066,20 @@
                 }
             } catch (e) {
                 console.error('Erro ao excluir anexo:', e);
+            }
+        };
+
+        // Toggle activity details
+        window.toggleActivityDetails = function () {
+            const activityLog = document.getElementById('cardActivityLog');
+            const toggleBtn = document.getElementById('toggleActivityBtn');
+
+            if (activityLog.classList.contains('show')) {
+                activityLog.classList.remove('show');
+                toggleBtn.textContent = 'Mostrar Detalhes';
+            } else {
+                activityLog.classList.add('show');
+                toggleBtn.textContent = 'Ocultar Detalhes';
             }
         };
 
