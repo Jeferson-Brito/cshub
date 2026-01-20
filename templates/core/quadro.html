@@ -1877,6 +1877,24 @@
             <input type="hidden" id="editCardDueDate"> <!-- Fallback hidden input for compatibility -->
         </div>
     </div>
+
+    <!-- Dropdown de Membros (Popup) -->
+    <div class="members-dropdown" id="membersSection">
+        <div class="labels-dropdown-title">Membros</div>
+        <div id="membersContainer"></div>
+    </div>
+
+    <!-- Dropdown de Anexos (Popup) -->
+    <div class="attachments-dropdown" id="attachmentsSection">
+        <div class="labels-dropdown-title" style="margin-bottom: 12px;">Anexos</div>
+        <div id="attachmentsList"></div>
+        <div style="margin-top: 12px;">
+            <input type="file" id="attachmentFileInput" style="display: none;" onchange="uploadAttachment(this)">
+            <button class="btn-modal btn-modal-primary" onclick="document.getElementById('attachmentFileInput').click()" style="width: 100%; justify-content: center;">
+                <i class="bi bi-upload"></i> Adicionar Anexo
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Dados de etiquetas disponíveis -->
