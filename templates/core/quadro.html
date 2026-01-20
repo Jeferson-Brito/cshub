@@ -1847,15 +1847,7 @@
                 </div>
 
                 <div class="activity-log" id="cardActivityLog">
-                    <!-- Atividades serão inseridas aqui via JS futuramente -->
-                    <div class="activity-item">
-                        <div class="activity-avatar">JB</div>
-                        <div class="activity-content">
-                            <div class="activity-text"><strong>Jeferson Brito</strong> adicionou este cartão a A Fazer
-                            </div>
-                            <div class="activity-date">há 2 horas</div>
-                        </div>
-                    </div>
+                    <!-- Atividades serão inseridas aqui dinamicamente -->
                 </div>
             </div>
         </div>
@@ -2154,6 +2146,9 @@
                         updateAttachmentsMetaDisplay(atts.length);
                     }
                 } catch(e) { console.log('Erro ao carregar anexos', e); }
+
+                // Render activities
+                renderActivities(data.activities || []);
 
                 document.getElementById('cardModalOverlay').classList.add('show');
             } catch (e) {
@@ -2897,6 +2892,49 @@
             }
         }
 
+
+
+        // Render activities
+        function renderActivities(activities) {
+            const container = document.getElementById('cardActivityLog');
+            if (!container) return;
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<p style="color: var(--medium-gray); text-align: center; padding: 20px; font-size: 13px;">Nenhuma atividade registrada</p>';
+                return;
+            }
+            
+            container.innerHTML = activities.map(activity => {
+                const timeAgo = getTimeAgo(activity.created_at);
+                return `
+                    <div class="activity-item">
+                        <div class="activity-avatar">${activity.user_initials || 'U'}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">${activity.description}</div>
+                            <div class="activity-date">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Time ago helper
+        function getTimeAgo(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHour / 24);
+            
+            if (diffSec < 60) return 'agora';
+            if (diffMin < 60) return `há ${diffMin} minuto${diffMin > 1 ? 's' : ''}`;
+            if (diffHour < 24) return `há ${diffHour} hora${diffHour > 1 ? 's' : ''}`;
+            if (diffDay === 1) return 'ontem';
+            if (diffDay < 7) return `há ${diffDay} dias`;
+            return date.toLocaleDateString('pt-BR');
+        }
 
         // Update attachments meta display
         function updateAttachmentsMetaDisplay(count) {

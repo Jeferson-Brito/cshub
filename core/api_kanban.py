@@ -159,11 +159,12 @@ def card_to_detail_dict(card):
         {
             'id': a.id,
             'user': a.user.get_full_name() or a.user.username,
+            'user_initials': get_user_initials(a.user),
             'action': a.get_action_display(),
             'description': a.description,
             'created_at': a.created_at.isoformat(),
         }
-        for a in card.activities.all()[:10]
+        for a in card.activities.all()[:20]
     ]
     data['created_by'] = {
         'id': card.created_by.id,
@@ -183,11 +184,13 @@ def get_user_initials(user):
 
 def log_activity(card, user, action, description):
     """Registra atividade no cartão"""
+    user_name = user.get_full_name() or user.username
+    full_description = f"<strong>{user_name}</strong> {description}"
     CardActivity.objects.create(
         card=card,
         user=user,
         action=action,
-        description=description
+        description=full_description
     )
 
 
