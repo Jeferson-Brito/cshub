@@ -321,3 +321,90 @@ def api_ranking(request):
         'mes': mes,
         'ano': ano
     })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_podium(request):
+    """Retorna pódio (top 3) de analistas para cada métrica em um mês/ano específico"""
+    user = request.user
+    
+    # Verificar se é do departamento NRS Suporte
+    try:
+        nrs_dept = Department.objects.get(name='NRS Suporte')
+    except Department.DoesNotExist:
+        return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
+    
+    # Todos do NRS Suporte podem ver o pódio
+    if user.department != nrs_dept and user.role != 'administrador':
+        return JsonResponse({'error': 'Acesso restrito ao NRS Suporte'}, status=403)
+    
+    # Parâmetros
+    mes = request.GET.get('mes')
+    ano = request.GET.get('ano')
+    
+    if not mes or not ano:
+        return JsonResponse({'error': 'Parâmetros mes e ano são obrigatórios'}, status=400)
+    
+    try:
+        mes = int(mes)
+        ano = int(ano)
+    except ValueError:
+        return JsonResponse({'error': 'Valores inválidos para mes/ano'}, status=400)
+    
+    # Buscar KPIs do mês
+    kpis = IndicadorDesempenho.objects.filter(
+        department=nrs_dept,
+        mes=mes,
+        ano=ano
+    ).select_related('analista')
+    
+    # Preparar dados para cada métrica
+    tme_list = []
+    nps_list = []
+    chats_list = []
+    
+    for kpi in kpis:
+        analista_nome = kpi.analista.get_full_name() or kpi.analista.username
+        
+        # TME: menor é melhor
+        if kpi.tme is not None:
+            tme_list.append({
+                'analista_nome': analista_nome,
+                'value': kpi.tme
+            })
+        
+        # NPS: maior é melhor
+        if kpi.nps is not None:
+            nps_list.append({
+                'analista_nome': analista_nome,
+                'value': float(kpi.nps)
+            })
+        
+        # Chats: maior é melhor
+        if kpi.chats is not None:
+            chats_list.append({
+                'analista_nome': analista_nome,
+                'value': kpi.chats
+            })
+    
+    # Ordenar e pegar top 3
+    # TME: menor é melhor (ordem crescente)
+    tme_list.sort(key=lambda x: x['value'])
+    tme_top3 = tme_list[:3]
+    
+    # NPS: maior é melhor (ordem decrescente)
+    nps_list.sort(key=lambda x: x['value'], reverse=True)
+    nps_top3 = nps_list[:3]
+    
+    # Chats: maior é melhor (ordem decrescente)
+    chats_list.sort(key=lambda x: x['value'], reverse=True)
+    chats_top3 = chats_list[:3]
+    
+    return JsonResponse({
+        'tme_top3': tme_top3,
+        'nps_top3': nps_top3,
+        'chats_top3': chats_top3,
+        'mes': mes,
+        'ano': ano
+    })
