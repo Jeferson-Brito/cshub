@@ -343,13 +343,15 @@
         background: #2563eb;
     }
 
-    /* Podium Styles */
+
+    /* Podium Styles - Visual Step Design */
     .podium-card {
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         padding: 20px;
-        text-align: center;
+        position: relative;
+        overflow: hidden;
     }
 
     .podium-card-header {
@@ -357,7 +359,7 @@
         align-items: center;
         justify-content: center;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         padding-bottom: 15px;
         border-bottom: 2px solid #f1f5f9;
     }
@@ -373,74 +375,169 @@
         font-size: 1.3rem;
     }
 
-    .podium-item {
+    /* Podium Container - 3 steps side by side */
+    .podium-steps {
         display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 15px;
+        min-height: 280px;
+        position: relative;
+    }
+
+    /* Individual step */
+    .podium-step {
+        flex: 1;
+        max-width: 140px;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 12px;
-        padding: 12px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        background: #f8fafc;
-        transition: all 0.2s;
+        position: relative;
+        animation: podiumRise 0.6s ease-out;
     }
 
-    .podium-item:hover {
-        background: #f1f5f9;
-        transform: translateX(5px);
+    @keyframes podiumRise {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
-    .podium-position {
-        width: 40px;
-        height: 40px;
+    /* Step platform */
+    .step-platform {
+        width: 100%;
+        border-radius: 8px 8px 0 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 15px;
+        transition: transform 0.3s ease;
+    }
+
+    .step-platform:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Position badge */
+    .step-badge {
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.8rem;
         font-weight: 700;
-        font-size: 1.1rem;
-        flex-shrink: 0;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 2;
     }
 
-    .podium-position.first {
+    /* Name and value */
+    .step-name {
+        font-weight: 700;
+        color: white;
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+        text-align: center;
+        word-wrap: break-word;
+        max-width: 100%;
+    }
+
+    .step-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        text-align: center;
+    }
+
+    /* First place - Gold (center, tallest) */
+    .podium-step.first {
+        order: 2;
+    }
+
+    .podium-step.first .step-platform {
+        height: 220px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    }
+
+    .podium-step.first .step-badge {
         background: linear-gradient(135deg, #ffd700, #ffec8b);
         color: #7c5a00;
-        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        animation: pulse 2s infinite;
     }
 
-    .podium-position.second {
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    /* Second place - Silver (left, medium) */
+    .podium-step.second {
+        order: 1;
+    }
+
+    .podium-step.second .step-platform {
+        height: 170px;
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
+    }
+
+    .podium-step.second .step-badge {
         background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
         color: #4a4a4a;
-        box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+        box-shadow: 0 0 15px rgba(192, 192, 192, 0.4);
     }
 
-    .podium-position.third {
+    /* Third place - Bronze (right, shortest) */
+    .podium-step.third {
+        order: 3;
+    }
+
+    .podium-step.third .step-platform {
+        height: 130px;
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+
+    .podium-step.third .step-badge {
         background: linear-gradient(135deg, #cd7f32, #daa06d);
         color: #4a2c00;
-        box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
-    }
-
-    .podium-info {
-        flex: 1;
-        text-align: left;
-    }
-
-    .podium-name {
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 0.95rem;
-        margin-bottom: 2px;
-    }
-
-    .podium-value {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #3b82f6;
+        box-shadow: 0 0 15px rgba(205, 127, 50, 0.4);
     }
 
     .podium-empty {
-        padding: 40px 20px;
+        padding: 60px 20px;
         color: #94a3b8;
         font-style: italic;
+        text-align: center;
+    }
+
+    /* Confetti canvas */
+    #confettiCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9999;
     }
 
     @media (max-width: 768px) {
@@ -451,6 +548,24 @@
         .page-header-desempenho {
             flex-direction: column;
             align-items: stretch;
+        }
+
+        .podium-steps {
+            flex-direction: column;
+            align-items: center;
+            min-height: auto;
+        }
+
+        .podium-step {
+            max-width: 100%;
+            width: 100%;
+            order: initial !important;
+            margin-bottom: 15px;
+        }
+
+        .podium-step .step-platform {
+            height: auto !important;
+            min-height: 120px;
         }
     }
 </style>
@@ -483,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -706,6 +821,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script>
     const kpisData = {{ kpis_json| safe }};
@@ -1056,6 +1172,9 @@
 
         html += '</tbody></table>';
         container.innerHTML = html;
+        
+        // Trigger confetti animation
+        celebrateWithConfetti();
     }
 
     function openAddKpiModal() {
@@ -1223,6 +1342,9 @@
 
             html += '</tbody></table>';
             container.innerHTML = html;
+            
+            // Trigger confetti animation
+            celebrateWithConfetti();
         } catch (error) {
             container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar histórico.</div>';
         }
@@ -1425,6 +1547,9 @@
         html += '<p class="text-muted mt-3" style="font-size: 12px;"><strong>Legenda:</strong> 🟢 Meta atingida | 🔴 Meta não atingida | ⚪ Sem dados</p>';
 
         container.innerHTML = html;
+        
+        // Trigger confetti animation
+        celebrateWithConfetti();
     }
 
     // Initialize ranking filters if section exists
@@ -1512,6 +1637,9 @@
         html += renderPodiumCard('Quantidade de Chats', data.chats_top3, 'chats', 'bi-chat-dots-fill', '#8b5cf6');
 
         container.innerHTML = html;
+        
+        // Trigger confetti animation
+        celebrateWithConfetti();
     }
 
     function renderPodiumCard(title, topList, metricType, iconClass, iconColor) {
