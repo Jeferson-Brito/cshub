@@ -1660,7 +1660,7 @@
         const positionClasses = ['first', 'second', 'third'];
         const medals = ['🥇', '🥈', '🥉'];
 
-        let itemsHtml = '';
+        let stepsHtml = '';
         topList.forEach((item, index) => {
             const positionClass = positionClasses[index] || '';
             const medal = medals[index] || `${index + 1}º`;
@@ -1674,14 +1674,14 @@
                 valueDisplay = item.value;
             }
 
-            itemsHtml += `
-                <div class="podium-item">
-                    <div class="podium-position ${positionClass}">
+            stepsHtml += `
+                <div class="podium-step ${positionClass}">
+                    <div class="step-badge">
                         ${medal}
                     </div>
-                    <div class="podium-info">
-                        <div class="podium-name">${item.analista_nome}</div>
-                        <div class="podium-value">${valueDisplay}</div>
+                    <div class="step-platform">
+                        <div class="step-name">${item.analista_nome}</div>
+                        <div class="step-value">${valueDisplay}</div>
                     </div>
                 </div>
             `;
@@ -1693,7 +1693,9 @@
                     <i class="bi ${iconClass}" style="color: ${iconColor};"></i>
                     <h4>${title}</h4>
                 </div>
-                ${itemsHtml}
+                <div class="podium-steps">
+                    ${stepsHtml}
+                </div>
             </div>
         `;
     }
