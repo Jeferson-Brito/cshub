@@ -378,28 +378,28 @@
                             <input type="text" class="form-control" id="refund-analyst-name" readonly>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Código da Loja</label>
+                            <label class="form-label">Código da Loja <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="store_code" placeholder="Ex: PB05" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Nome do Cliente</label>
+                            <label class="form-label">Nome do Cliente <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="customer_name" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">CPF do Cliente</label>
+                            <label class="form-label">CPF do Cliente <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="customer_cpf" id="cpf-input"
                                 placeholder="000.000.000-00" maxlength="14" oninput="formatCPF(this)" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">E-mail do Cliente</label>
+                            <label class="form-label">E-mail do Cliente <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" name="customer_email" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Telefone do Cliente</label>
+                            <label class="form-label">Telefone do Cliente <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="customer_phone" required>
                         </div>
                     </div>
@@ -413,7 +413,7 @@
                             <input type="time" class="form-control" name="incident_time" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Local da Compra</label>
+                            <label class="form-label">Local da Compra <span class="text-danger">*</span></label>
                             <select class="form-select" name="purchase_location" required>
                                 <option value="" disabled selected>Selecione...</option>
                                 <option value="loja_fisica">Loja Física</option>
@@ -422,12 +422,13 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Motivo da Solicitação de Estorno</label>
+                        <label class="form-label">Motivo da Solicitação de Estorno <span
+                                class="text-danger">*</span></label>
                         <textarea class="form-control" name="reason" rows="3" required></textarea>
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Verificou nas Câmeras?</label>
+                            <label class="form-label">Verificou nas Câmeras? <span class="text-danger">*</span></label>
                             <select class="form-select" name="checked_cameras" required>
                                 <option value="" disabled selected>Selecione...</option>
                                 <option value="false">Não</option>
@@ -435,7 +436,7 @@
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Valor do Estorno</label>
+                            <label class="form-label">Valor do Estorno <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">R$</span>
                                 <input type="text" class="form-control" name="refund_value" id="refund-value-input"
@@ -443,7 +444,8 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Pagamento realizado com:</label>
+                            <label class="form-label">Pagamento realizado com: <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" name="refund_type" required onchange="togglePixField(this)">
                                 <option value="" disabled selected>Selecione...</option>
                                 <option value="pix">PIX</option>
@@ -455,7 +457,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Destino do estorno</label>
+                            <label class="form-label">Destino do estorno <span class="text-danger">*</span></label>
                             <select class="form-select" name="refund_destination" required>
                                 <option value="" disabled selected>Selecione...</option>
                                 <option value="estorno_bancario">Estorno bancário</option>
@@ -469,7 +471,7 @@
                             placeholder="CPF, E-mail, Telefone ou Chave aleatória">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Resumo do Atendimento</label>
+                        <label class="form-label">Resumo do Atendimento <span class="text-danger">*</span></label>
                         <textarea class="form-control" name="summary" rows="3" required
                             placeholder="Descreva o resumo do atendimento ao cliente..."></textarea>
                     </div>
