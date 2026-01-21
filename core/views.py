@@ -579,7 +579,11 @@ def store_complaints(request, loja_cod):
 
 @login_required
 def complaint_detail(request, pk):
-    complaint = get_object_or_404(Complaint, pk=pk)
+    # Otimização: carregar departamento e analista em uma única query
+    complaint = get_object_or_404(
+        Complaint.objects.select_related('department', 'analista'), 
+        pk=pk
+    )
     
     # Trava de segurança por departamento
     if not request.user.is_administrador():
@@ -587,11 +591,11 @@ def complaint_detail(request, pk):
             messages.error(request, 'Você não tem permissão para acessar esta reclamação.')
             return redirect('dashboard')
             
+    # Atividades já estão com select_related('usuario')
     activities = complaint.activities.select_related('usuario').order_by('-created_at')
-    
+
     # Adicionar comentário interno rápido
     if request.method == 'POST' and 'comentario_interno' in request.POST:
-        # ... logic remains same ...
         comentario = request.POST.get('comentario_interno', '').strip()
         if comentario:
             Activity.objects.create(
@@ -645,16 +649,26 @@ def complaint_detail(request, pk):
                 messages.error(request, 'Responsável não encontrado ou pertence a outro departamento!')
     
     # Lista de responsáveis para atribuição rápida (analistas e gestores do depto)
+    # Otimização: carregar departamento para evitar query no template (se houver loop)
     if request.user.is_administrador():
-        analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=complaint.department).order_by('first_name')
+        analistas_list = User.objects.filter(
+            role__in=['analista', 'gestor'], 
+            ativo=True, 
+            department=complaint.department
+        ).select_related('department').order_by('first_name')
     else:
-        analistas_list = User.objects.filter(role__in=['analista', 'gestor'], ativo=True, department=request.user.department).order_by('first_name')
+        analistas_list = User.objects.filter(
+            role__in=['analista', 'gestor'], 
+            ativo=True, 
+            department=request.user.department
+        ).select_related('department').order_by('first_name')
     
-    return render(request, 'core/complaint_detail.html', {
+    response = render(request, 'core/complaint_detail.html', {
         'complaint': complaint,
         'activities': activities,
         'analistas_list': analistas_list,
     })
+    return response
 
 
 @login_required
