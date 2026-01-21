@@ -634,6 +634,7 @@ class RefundRequest(models.Model):
     
     # Detalhes da solicitação
     incident_date = models.DateField()
+    incident_time = models.TimeField(null=True, blank=True)  # Horário do ocorrido
     purchase_location = models.CharField(max_length=20, choices=PURCHASE_LOCATION_CHOICES)
     reason = models.TextField()
     checked_cameras = models.BooleanField(default=False)

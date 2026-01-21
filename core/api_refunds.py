@@ -37,6 +37,7 @@ def api_refund_create(request):
             customer_email=data.get('customer_email', ''),
             customer_phone=data.get('customer_phone', ''),
             incident_date=data.get('incident_date'),
+            incident_time=data.get('incident_time') or None,
             purchase_location=data.get('purchase_location', 'loja_fisica'),
             reason=data.get('reason', ''),
             checked_cameras=checked_cameras,
@@ -202,6 +203,7 @@ def api_refund_detail(request, pk):
             'customer_email': refund.customer_email,
             'customer_phone': refund.customer_phone,
             'incident_date': refund.incident_date.isoformat(),
+            'incident_time': refund.incident_time.isoformat() if refund.incident_time else None,
             'purchase_location': refund.get_purchase_location_display(),
             'reason': refund.reason,
             'checked_cameras': refund.checked_cameras,
@@ -460,6 +462,10 @@ def api_refund_edit(request, pk):
         incident_date = data.get('incident_date')
         if incident_date:
             refund.incident_date = incident_date
+        
+        incident_time = data.get('incident_time')
+        if incident_time:
+            refund.incident_time = incident_time
             
         refund.purchase_location = data.get('purchase_location', refund.purchase_location)
         refund.reason = data.get('reason', refund.reason)
