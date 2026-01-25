@@ -34,11 +34,22 @@ class User(AbstractUser):
 
 
 class Store(models.Model):
+    AUDIT_RESULT_CHOICES = [
+        ('pending', 'Pendente'),
+        ('conforme', 'Conforme'),
+        ('irregular', 'Irregular'),
+    ]
+    
     code = models.CharField(max_length=10, unique=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=2)
     address = models.CharField(max_length=200, blank=True)
     active = models.BooleanField(default=True)
+    
+    # Campos para sistema de reverificação diária
+    needs_reverification = models.BooleanField(default=False, verbose_name="Precisa Reverificação")
+    last_audit_result = models.CharField(max_length=20, choices=AUDIT_RESULT_CHOICES, default='pending', verbose_name="Resultado da Última Auditoria")
+    last_audit_date = models.DateTimeField(null=True, blank=True, verbose_name="Data da Última Auditoria")
     
     def __str__(self):
         return f"{self.code} - {self.city}"
@@ -738,6 +749,22 @@ class StoreAuditIssue(models.Model):
         ('resolvida', 'Resolvida'),
     ]
     
+    RESOLUTION_STAGE_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('em_contato', 'Em Contato com Franqueado'),
+        ('aguardando_acao', 'Aguardando Ação do Franqueado'),
+        ('em_validacao', 'Em Validação'),
+        ('resolvida', 'Resolvida'),
+    ]
+    
+    NOTIFICATION_CHANNEL_CHOICES = [
+        ('whatsapp', 'WhatsApp'),
+        ('notificacao', 'Notificação/Email'),
+        ('ticket', 'Ticket'),
+        ('telefone', 'Telefone'),
+        ('presencial', 'Presencial'),
+    ]
+    
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='audit_issues', null=True, blank=True)
     gestor_notes = models.TextField(blank=True, verbose_name="Notas do Gestor")
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -745,6 +772,11 @@ class StoreAuditIssue(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberta')
     notified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Novos campos para rastreamento de resolução
+    resolution_stage = models.CharField(max_length=30, choices=RESOLUTION_STAGE_CHOICES, default='pendente', verbose_name="Etapa da Resolução")
+    notification_channel = models.CharField(max_length=20, choices=NOTIFICATION_CHANNEL_CHOICES, blank=True, null=True, verbose_name="Canal de Notificação")
+    resolution_history = models.JSONField(default=list, blank=True, verbose_name="Histórico de Resolução")
     
     class Meta:
         ordering = ['-created_at']

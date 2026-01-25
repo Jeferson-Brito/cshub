@@ -2375,9 +2375,18 @@ def verificacao_lojas(request):
     irregular_count = len(irregular_store_ids)
 
     # Pendências abertas para exibição no dashboard (se o usuário for gestor/admin)
+    # Adicionar paginação para pendências (10 por página)
     pending_issues = []
+    pending_issues_page = None
     if request.user.role in ['gestor', 'administrador']:
-        pending_issues = StoreAuditIssue.objects.filter(status='aberta').select_related('store').prefetch_related('items__audit__analyst')
+        pending_issues_queryset = StoreAuditIssue.objects.filter(status='aberta').select_related('store').prefetch_related('items__audit__analyst')
+        
+        # Paginação para pendências (10 por página)
+        from django.core.paginator import Paginator
+        pending_paginator = Paginator(pending_issues_queryset, 10)
+        pending_page_number = request.GET.get('pending_page', 1)
+        pending_issues_page = pending_paginator.get_page(pending_page_number)
+        pending_issues = pending_issues_page.object_list
 
     context = {
         'title': 'Verificação de Lojas',
@@ -2388,6 +2397,7 @@ def verificacao_lojas(request):
         'irregular_count': irregular_count,
         'filter_type': filter_type,
         'pending_issues': pending_issues,
+        'pending_issues_page': pending_issues_page,  # Objeto de paginação
         'irregular_store_ids': irregular_store_ids,
         'play_sound': request.session.pop('play_irregularity_sound', False),
         'search_query': search_query
@@ -2433,6 +2443,13 @@ def store_audit_create(request, store_id):
                 audit_item.issue = issue
                 audit_item.save()
         
+        # Atualizar campos de reverificação da loja
+        from django.utils import timezone
+        store.last_audit_date = timezone.now()
+        store.last_audit_result = 'irregular' if has_irregularity else 'conforme'
+        store.needs_reverification = False  # Resetar flag de reverificação
+        store.save()
+        
         if has_irregularity:
             messages.warning(request, f"Auditoria da loja {store.code} finalizada com irregularidades detectadas. Gestor notificado.")
             request.session['play_irregularity_sound'] = True # Sinal para o front tocar som
@@ -2456,11 +2473,20 @@ def store_audit_create(request, store_id):
     # Histórico de auditorias da loja
     history = StoreAudit.objects.filter(store=store).order_by('-created_at')[:10]
     
+    # Dados da última auditoria para exibir no formulário
+    last_audit = history.first() if history else None
+    last_audit_items = []
+    if last_audit:
+        last_audit_items = last_audit.items.filter(is_compliant=False)  # Apenas itens irregulares
+    
     context = {
         'store': store,
         'history': history,
         'items_choices': items_choices,
-        'title': f'Auditoria: Loja {store.code}'
+        'title': f'Auditoria: Loja {store.code}',
+        'last_audit': last_audit,
+        'last_audit_items': last_audit_items,
+        'needs_reverification': store.needs_reverification,
     }
     return render(request, 'core/store_audit_form.html', context)
 
@@ -2476,7 +2502,34 @@ def store_issue_resolve(request, issue_id):
     
     if request.method == 'POST':
         notes = request.POST.get('gestor_notes', '')
+        resolution_stage = request.POST.get('resolution_stage', '')
+        notification_channel = request.POST.get('notification_channel', '')
+        
+        # Validar que o canal de notificação foi informado
+        if not notification_channel:
+            store_code = issue.store.code if issue.store else 'Loja Desconhecida'
+            messages.error(request, f"Por favor, informe o canal de notificação antes de resolver a pendência da loja {store_code}.")
+            return redirect('verificacao_lojas')
+        
+        # Adicionar entrada no histórico de resolução
+        import json
+        history_entry = {
+            'timestamp': timezone.now().isoformat(),
+            'user': request.user.get_full_name() or request.user.username,
+            'stage': resolution_stage,
+            'channel': notification_channel,
+            'notes': notes
+        }
+        
+        # Atualizar histórico (garantir que é uma lista)
+        if not isinstance(issue.resolution_history, list):
+            issue.resolution_history = []
+        issue.resolution_history.append(history_entry)
+        
+        # Atualizar campos
         issue.gestor_notes = notes
+        issue.resolution_stage = 'resolvida' if resolution_stage == 'resolvida' else resolution_stage
+        issue.notification_channel = notification_channel
         issue.status = 'resolvida'
         issue.resolved_at = timezone.now()
         issue.resolved_by = request.user
