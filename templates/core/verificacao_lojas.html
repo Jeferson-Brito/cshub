@@ -94,6 +94,116 @@
         </div>
     </div>
 
+    <!-- Seção de Gestão de Analistas -->
+    {% if user.role in 'gestor,administrador,analista' %}
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-dark">
+                    {% if user.role in 'gestor,administrador' %}
+                    <i class="bi bi-people me-2 text-primary"></i> Gestão de Analistas
+                    {% else %}
+                    <i class="bi bi-trophy me-2 text-warning"></i> Minhas Metas Semanais
+                    {% endif %}
+                </h5>
+                {% if user.role in 'gestor,administrador' %}
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignStoreModal">
+                    <i class="bi bi-plus-circle me-1"></i> Atribuir Loja
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Dashboard do Analista -->
+            {% if user.role == 'analista' %}
+            <div id="analystDashboard">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="bi bi-shop text-primary" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2 mb-0" id="totalStores">-</h3>
+                            <small class="text-muted">Lojas Atribuídas</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2 mb-0" id="auditedCount">-</h3>
+                            <small class="text-muted">Auditadas esta Semana</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2 mb-0" id="progressPercentage">-</h3>
+                            <small class="text-muted">Progresso da Meta</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Progresso Semanal</span>
+                        <span class="fw-bold" id="progressText">-/-</span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
+                            <span id="progressBarText">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Dias restantes:</strong> <span id="daysRemaining">-</span> dias até domingo
+                </div>
+
+                <h6 class="fw-bold mb-3">Minhas Lojas</h6>
+                <div id="myStoresList" class="row">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tabela de Atribuições (Gestor) -->
+            {% if user.role in 'gestor,administrador' %}
+            <div id="assignmentsList">
+                <p class="text-muted">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Atribua lojas a analistas para definir metas semanais de auditoria.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Analista</th>
+                                <th>Loja</th>
+                                <th>Meta Semanal</th>
+                                <th>Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignmentsTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Carregando atribuições...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if pending_issues %}
     <!-- Pending Issues for Managers -->
     <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #f59e0b !important;">
@@ -1234,5 +1344,246 @@
         font-size: 1.1rem;
     }
 </style>
+
+<!-- Modal: Atribuir Loja a Analista -->
+<div class="modal fade" id="assignStoreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i> Atribuir Loja a Analista</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Analista</label>
+                    <select id="assignAnalystId" class="form-select">
+                        <option value="">Carregando analistas...</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Loja</label>
+                    <select id="assignStoreId" class="form-select">
+                        <option value="">Carregando lojas...</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Meta Semanal</label>
+                    <input type="number" id="assignWeeklyTarget" class="form-control" value="1" min="1" max="7">
+                    <small class="text-muted">Quantas vezes por semana o analista deve auditar esta loja</small>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="submitAssignment()">
+                    <i class="bi bi-check-lg me-1"></i> Atribuir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript para Gestão de Analistas
+
+    {% if user.role == 'analista' %}
+    // Carregar dashboard do analista
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAnalystDashboard();
+    });
+
+    async function loadAnalystDashboard() {
+        try {
+            const response = await fetch('/api/store-verification/analyst/dashboard/');
+            const data = await response.json();
+
+            if (data.success) {
+                // Atualizar métricas
+                document.getElementById('totalStores').textContent = data.metrics.total_stores;
+                document.getElementById('auditedCount').textContent = data.metrics.total_audited;
+                document.getElementById('progressPercentage').textContent = data.metrics.progress_percentage + '%';
+                document.getElementById('progressText').textContent = `${data.metrics.total_audited}/${data.metrics.total_target}`;
+                document.getElementById('daysRemaining').textContent = data.metrics.days_remaining;
+
+                // Atualizar barra de progresso
+                const progressBar = document.getElementById('progressBar');
+                const percentage = data.metrics.progress_percentage;
+                progressBar.style.width = percentage + '%';
+                progressBar.querySelector('span').textContent = Math.round(percentage) + '%';
+
+                // Mudar cor da barra baseada no progresso
+                progressBar.className = 'progress-bar';
+                if (percentage >= 100) {
+                    progressBar.classList.add('bg-success');
+                } else if (percentage >= 75) {
+                    progressBar.classList.add('bg-info');
+                } else if (percentage >= 50) {
+                    progressBar.classList.add('bg-warning');
+                } else {
+                    progressBar.classList.add('bg-danger');
+                }
+
+                // Carregar lojas atribuídas
+                loadMyStores();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dashboard:', error);
+        }
+    }
+
+    async function loadMyStores() {
+        try {
+            const response = await fetch('/api/store-verification/analyst/assignments/');
+            const data = await response.json();
+
+            if (data.success) {
+                const container = document.getElementById('myStoresList');
+
+                if (data.assignments.length === 0) {
+                    container.innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Nenhuma loja atribuída ainda</p>
+                    </div>
+                `;
+                    return;
+                }
+
+                container.innerHTML = '';
+                data.assignments.forEach(assignment => {
+                    const progress = assignment.progress;
+                    const card = `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-primary">${assignment.store_code}</h6>
+                                <small class="text-muted">${assignment.store_city || '-'}</small>
+                                <hr>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted small">Progresso</span>
+                                    <span class="fw-bold small">${progress.completed}/${progress.target}</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar ${progress.percentage >= 100 ? 'bg-success' : 'bg-primary'}" 
+                                         style="width: ${Math.min(100, progress.percentage)}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    container.insertAdjacentHTML('beforeend', card);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar lojas:', error);
+        }
+    }
+    {% endif %}
+
+    {% if user.role in 'gestor,administrador' %}
+    // Carregar dados do modal e tabela de atribuições
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAnalysts();
+        loadStores();
+        loadAllAssignments();
+    });
+
+    async function loadAnalysts() {
+        try {
+            const response = await fetch('/api/users/nrs-analysts/');
+            const data = await response.json();
+
+            const select = document.getElementById('assignAnalystId');
+            select.innerHTML = '<option value="">Selecione um analista...</option>';
+
+            if (data.analysts) {
+                data.analysts.forEach(analyst => {
+                    select.innerHTML += `<option value="${analyst.id}">${analyst.name}</option>`;
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar analistas:', error);
+        }
+    }
+
+    async function loadStores() {
+        try {
+            // Buscar todas as lojas ativas
+            const response = await fetch('/api/stores/presence/');
+            const data = await response.json();
+
+            const select = document.getElementById('assignStoreId');
+            select.innerHTML = '<option value="">Selecione uma loja...</option>';
+
+            // Simplificação: estamos assumindo que temos acesso às lojas do contexto
+            // Como alternativa, podemos popular via context do Django
+            {% for store in stores %}
+            select.innerHTML += `<option value="{{ store.id }}">{{ store.code }} - {{ store.city }}</option>`;
+            {% endfor %}
+        } catch (error) {
+            console.error('Erro ao carregar lojas:', error);
+        }
+    }
+
+    async function submitAssignment() {
+        const analystId = document.getElementById('assignAnalystId').value;
+        const storeId = document.getElementById('assignStoreId').value;
+        const weeklyTarget = document.getElementById('assignWeeklyTarget').value;
+
+        if (!analystId || !storeId) {
+            showToast('error', 'Por favor, selecione analista e loja');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/store-verification/analyst/assign/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify({
+                    analyst_id: parseInt(analystId),
+                    store_id: parseInt(storeId),
+                    weekly_target: parseInt(weeklyTarget)
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('assignStoreModal')).hide();
+                showToast('success', data.message);
+                loadAllAssignments(); // Recarregar tabela
+            } else {
+                showToast('error', data.error || 'Erro ao atribuir loja');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('error', 'Erro ao comunicar com o servidor');
+        }
+    }
+
+    async function loadAllAssignments() {
+        try {
+            // Nota: Esta API retorna apenas as atribuições do analista logado
+            // Para gestor ver todas, precisaríamos de uma API diferente
+            // Por enquanto, vamos apenas mostrar uma mensagem
+            const tbody = document.getElementById('assignmentsTableBody');
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4">
+                    <p class="text-muted">Atribuições serão exibidas aqui após implementação completa</p>
+                    <small class="text-muted">Use o botão "Atribuir Loja" para criar novas atribuições</small>
+                </td>
+            </tr>
+        `;
+        } catch (error) {
+            console.error('Erro ao carregar atribuições:', error);
+        }
+    }
+    {% endif %}
+</script>
 
 {% endblock %}
