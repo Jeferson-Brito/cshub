@@ -70,47 +70,54 @@
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs mb-4 px-3 border-bottom-0" id="verificationTabs" role="tablist">
-        {% if user.role in 'gestor,administrador,analista' %}
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {% if tab == 'management' %}active fw-bold{% endif %}"
-                href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}">
-                {% if user.role == 'analista' %}
-                <i class="bi bi-trophy me-2"></i> Minhas Metas
-                {% else %}
-                <i class="bi bi-people me-2"></i> Gestão
-                {% endif %}
+    <!-- Dashboard Cards (Acting as Tabs) -->
+    <div class="row mb-4">
+        <!-- Gestão Tab -->
+        <div class="col-6 col-lg-3 mb-3">
+            <a href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
+                <div class="stat-card stat-card-primary {% if tab == 'management' %}active-filter{% endif %}">
+                    <div class="stat-card-icon"><i class="bi bi-people"></i></div>
+                    <p class="stat-card-title">Gestão</p>
+                    <h2 class="stat-card-value">Analistas</h2>
+                </div>
             </a>
-        </li>
-        {% endif %}
+        </div>
 
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {% if tab == 'irregular' %}active fw-bold{% endif %}"
-                href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}">
-                <i class="bi bi-exclamation-triangle me-2"></i> Irregularidades
-                <span class="badge bg-danger rounded-pill ms-1">{{ irregular_count }}</span>
+        <!-- Irregular Tab -->
+        <div class="col-6 col-lg-3 mb-3">
+            <a href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
+                <div class="stat-card stat-card-warning {% if tab == 'irregular' %}active-filter{% endif %}">
+                    <div class="stat-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <p class="stat-card-title">Irregularidades</p>
+                    <h2 class="stat-card-value">{{ irregular_count }}</h2>
+                </div>
             </a>
-        </li>
+        </div>
 
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {% if tab == 'verified' %}active fw-bold{% endif %}"
-                href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}">
-                <i class="bi bi-clipboard-check me-2"></i> Verificadas
-                <span class="badge bg-success rounded-pill ms-1">{{ verified_count }}</span>
+        <!-- Verified Tab -->
+        <div class="col-6 col-lg-3 mb-3">
+            <a href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
+                <div class="stat-card stat-card-success {% if tab == 'verified' %}active-filter{% endif %}">
+                    <div class="stat-card-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <p class="stat-card-title">Verificadas</p>
+                    <h2 class="stat-card-value">{{ verified_count }}</h2>
+                </div>
             </a>
-        </li>
+        </div>
 
+        <!-- Suspended Tab -->
         {% if user.role in 'gestor,administrador' %}
-        <li class="nav-item" role="presentation">
-            <a class="nav-link {% if tab == 'suspended' %}active fw-bold{% endif %} text-secondary"
-                href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}">
-                <i class="bi bi-pause-circle me-2"></i> Suspensas
-                <span class="badge bg-secondary rounded-pill ms-1">{{ suspended_count|default:0 }}</span>
+        <div class="col-6 col-lg-3 mb-3">
+            <a href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
+                <div class="stat-card stat-card-secondary {% if tab == 'suspended' %}active-filter{% endif %}">
+                    <div class="stat-card-icon"><i class="bi bi-pause-circle"></i></div>
+                    <p class="stat-card-title">Suspensas</p>
+                    <h2 class="stat-card-value">{{ suspended_count|default:0 }}</h2>
+                </div>
             </a>
-        </li>
+        </div>
         {% endif %}
-    </ul>
+    </div>
 
     <!-- Tab Content -->
     <div class="tab-content" id="verificationTabsContent">
