@@ -417,6 +417,152 @@ def api_assign_store_to_analyst(request):
 
 @login_required
 @require_http_methods(["GET"])
+def api_get_available_stores(request):
+    """
+    Retorna lojas disponíveis (não atribuídas a nenhum analista)
+    E opcionalmente seleciona N lojas aleatórias
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        quantity = request.GET.get('quantity', None)
+        
+        # Buscar IDs de lojas já atribuídas (ativas)
+        assigned_store_ids = AnalystAssignment.objects.filter(
+            active=True
+        ).values_list('store_id', flat=True).distinct()
+        
+        # Buscar lojas disponíveis (não atribuídas)
+        available_stores = Store.objects.filter(
+            active=True
+        ).exclude(
+            id__in=assigned_store_ids
+        ).order_by('code')
+        
+        total_available = available_stores.count()
+        
+        # Se quantidade foi especificada, selecionar aleatoriamente
+        selected_stores = []
+        if quantity:
+            try:
+                qty = int(quantity)
+                if qty > total_available:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Apenas {total_available} lojas disponíveis. Solicitado: {qty}'
+                    }, status=400)
+                
+                # Seleção aleatória
+                import random
+                available_list = list(available_stores.values('id', 'code', 'city'))
+                selected_stores = random.sample(available_list, qty)
+                
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Quantidade inválida'
+                }, status=400)
+        else:
+            # Retornar todas as disponíveis
+            selected_stores = list(available_stores.values('id', 'code', 'city'))
+        
+        return JsonResponse({
+            'success': True,
+            'total_available': total_available,
+            'selected_count': len(selected_stores),
+            'stores': selected_stores
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_bulk_assign_stores(request):
+    """
+    Atribui múltiplas lojas a um analista de uma vez
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        analyst_id = data.get('analyst_id')
+        store_ids = data.get('store_ids', [])  # Lista de IDs
+        weekly_target = data.get('weekly_target', 1)
+        
+        if not analyst_id or not store_ids:
+            return JsonResponse({
+                'success': False,
+                'error': 'Analista e lojas são obrigatórios'
+            }, status=400)
+        
+        analyst = get_object_or_404(User, id=analyst_id)
+        
+        # Verificar se alguma loja já está atribuída a outro analista
+        already_assigned = AnalystAssignment.objects.filter(
+            store_id__in=store_ids,
+            active=True
+        ).exclude(analyst=analyst).select_related('analyst', 'store')
+        
+        if already_assigned.exists():
+            conflicts = []
+            for assignment in already_assigned:
+                conflicts.append({
+                    'store': assignment.store.code,
+                    'analyst': assignment.analyst.get_full_name() or assignment.analyst.username
+                })
+            
+            return JsonResponse({
+                'success': False,
+                'error': 'Algumas lojas já estão atribuídas a outros analistas',
+                'conflicts': conflicts
+            }, status=400)
+        
+        # Criar/atualizar atribuições
+        created_count = 0
+        updated_count = 0
+        
+        for store_id in store_ids:
+            try:
+                store = Store.objects.get(id=store_id, active=True)
+                
+                assignment, created = AnalystAssignment.objects.get_or_create(
+                    analyst=analyst,
+                    store=store,
+                    defaults={'weekly_target': weekly_target, 'active': True}
+                )
+                
+                if created:
+                    created_count += 1
+                else:
+                    assignment.weekly_target = weekly_target
+                    assignment.active = True
+                    assignment.save()
+                    updated_count += 1
+                    
+            except Store.DoesNotExist:
+                continue
+        
+        analyst_name = analyst.get_full_name() or analyst.username
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{created_count + updated_count} lojas atribuídas a {analyst_name}',
+            'created': created_count,
+            'updated': updated_count,
+            'total': created_count + updated_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
+@login_required
+@require_http_methods(["GET"])
 def api_get_analyst_dashboard(request):
     """
     Retorna métricas e progresso do analista para dashboard

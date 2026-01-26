@@ -43,6 +43,60 @@
                         id="auditForm">
                         {% csrf_token %}
 
+                        <!-- Alerta de Reverificação -->
+                        {% if needs_reverification %}
+                        <div
+                            class="alert alert-info bg-info bg-opacity-10 border border-info border-opacity-50 d-flex align-items-start shadow-sm mb-4">
+                            <i class="bi bi-arrow-repeat fs-3 me-3 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading fw-bold mb-2">Reverificação Necessária</h6>
+                                <p class="mb-0 small">Esta loja precisa ser verificada novamente. A última auditoria foi
+                                    realizada
+                                    {% if last_audit %}em <strong>{{ last_audit.created_at|date:"d/m/Y H:i"
+                                        }}</strong>{% endif %}.
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Resultado da Última Auditoria -->
+                        {% if last_audit %}
+                        <div
+                            class="alert {% if last_audit.has_irregularities %}alert-warning bg-warning bg-opacity-10 border-warning{% else %}alert-success bg-success bg-opacity-10 border-success{% endif %} border border-opacity-50 shadow-sm mb-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="alert-heading fw-bold mb-2">
+                                        <i
+                                            class="bi {% if last_audit.has_irregularities %}bi-exclamation-triangle-fill text-warning{% else %}bi-check-circle-fill text-success{% endif %} me-2"></i>
+                                        Última Auditoria: {% if last_audit.has_irregularities %}Irregular{% else
+                                        %}Conforme{% endif %}
+                                    </h6>
+                                    <p class="mb-1 small">
+                                        Realizada em <strong>{{ last_audit.created_at|date:"d/m/Y H:i" }}</strong>
+                                        por <strong>{{
+                                            last_audit.analyst.get_full_name|default:last_audit.analyst.username
+                                            }}</strong>
+                                    </p>
+
+                                    {% if last_audit_items %}
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block mb-1">Itens identificados como
+                                            irregulares:</small>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for item in last_audit_items %}
+                                            <span
+                                                class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                                <i class="bi bi-x-circle me-1"></i> {{ item.get_item_name_display }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="alert alert-info border-0 shadow-sm mb-4">
                             <i class="bi bi-info-circle-fill me-2"></i>
                             Para cada item abaixo, marque se está em <strong>conformidade</strong> ou

@@ -1345,39 +1345,90 @@
     }
 </style>
 
-<!-- Modal: Atribuir Loja a Analista -->
+<!-- Modal: Atribuir Lojas a Analista (Em Lote) -->
 <div class="modal fade" id="assignStoreModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i> Atribuir Loja a Analista</h5>
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i> Atribuir Lojas a Analista</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Analista</label>
-                    <select id="assignAnalystId" class="form-select">
-                        <option value="">Carregando analistas...</option>
-                    </select>
+                <!-- Etapa 1: Seleção de Analista e Quantidade -->
+                <div id="step1Selection">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Analista</label>
+                            <select id="assignAnalystId" class="form-select">
+                                <option value="">Carregando analistas...</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Quantidade de Lojas</label>
+                            <input type="number" id="assignQuantity" class="form-control" placeholder="Ex: 35" min="1"
+                                max="500">
+                            <small class="text-muted">
+                                <span id="availableCount">-</span> lojas disponíveis
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Meta Semanal (por loja)</label>
+                        <select id="assignWeeklyTarget" class="form-select">
+                            <option value="1" selected>1x por semana</option>
+                            <option value="2">2x por semana</option>
+                            <option value="3">3x por semana</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        O sistema irá selecionar lojas <strong>aleatórias</strong> que ainda não estão atribuídas a
+                        nenhum analista.
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Loja</label>
-                    <select id="assignStoreId" class="form-select">
-                        <option value="">Carregando lojas...</option>
-                    </select>
-                </div>
+                <!-- Etapa 2: Visualização das Lojas Selecionadas -->
+                <div id="step2Preview" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-shop me-1"></i>
+                            <span id="selectedCount">0</span> Lojas Selecionadas
+                        </h6>
+                        <button class="btn btn-sm btn-outline-primary" onclick="regenerateSelection()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Gerar Novamente
+                        </button>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Meta Semanal</label>
-                    <input type="number" id="assignWeeklyTarget" class="form-control" value="1" min="1" max="7">
-                    <small class="text-muted">Quantas vezes por semana o analista deve auditar esta loja</small>
+                    <div id="selectedStoresList" class="border rounded p-3"
+                        style="max-height: 300px; overflow-y: auto;">
+                        <!-- Lista será preenchida via JS -->
+                    </div>
+
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Confira se as lojas selecionadas estão corretas. Você pode gerar uma nova seleção aleatória
+                        clicando em "Gerar Novamente".
+                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="submitAssignment()">
-                    <i class="bi bi-check-lg me-1"></i> Atribuir
+
+                <!-- Botão Etapa 1 -->
+                <button type="button" id="btnGenerateSelection" class="btn btn-primary" onclick="generateSelection()">
+                    <i class="bi bi-shuffle me-1"></i> Gerar Seleção
+                </button>
+
+                <!-- Botões Etapa 2 (ocultos inicialmente) -->
+                <button type="button" id="btnBackToSelection" class="btn btn-secondary d-none" onclick="backToStep1()">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar
+                </button>
+                <button type="button" id="btnConfirmAssignment" class="btn btn-success d-none"
+                    onclick="confirmBulkAssignment()">
+                    <i class="bi bi-check-lg me-1"></i> Confirmar Atribuição
                 </button>
             </div>
         </div>
@@ -1482,10 +1533,12 @@
     {% endif %}
 
     {% if user.role in 'gestor,administrador' %}
-    // Carregar dados do modal e tabela de atribuições
+    // JavaScript para Atribuição em Lote
+    let selectedStoresArray = [];  // Armazena lojas selecionadas
+
     document.addEventListener('DOMContentLoaded', function () {
         loadAnalysts();
-        loadStores();
+        loadAvailableCount();
         loadAllAssignments();
     });
 
@@ -1507,37 +1560,118 @@
         }
     }
 
-    async function loadStores() {
+    async function loadAvailableCount() {
         try {
-            // Buscar todas as lojas ativas
-            const response = await fetch('/api/stores/presence/');
+            const response = await fetch('/api/store-verification/analyst/available-stores/');
             const data = await response.json();
 
-            const select = document.getElementById('assignStoreId');
-            select.innerHTML = '<option value="">Selecione uma loja...</option>';
-
-            // Simplificação: estamos assumindo que temos acesso às lojas do contexto
-            // Como alternativa, podemos popular via context do Django
-            {% for store in stores %}
-            select.innerHTML += `<option value="{{ store.id }}">{{ store.code }} - {{ store.city }}</option>`;
-            {% endfor %}
+            if (data.success) {
+                document.getElementById('availableCount').textContent = data.total_available;
+                document.getElementById('assignQuantity').max = data.total_available;
+            }
         } catch (error) {
-            console.error('Erro ao carregar lojas:', error);
+            console.error('Erro ao carregar contador:', error);
         }
     }
 
-    async function submitAssignment() {
+    // Gerar seleção aleatória
+    async function generateSelection() {
         const analystId = document.getElementById('assignAnalystId').value;
-        const storeId = document.getElementById('assignStoreId').value;
-        const weeklyTarget = document.getElementById('assignWeeklyTarget').value;
+        const quantity = document.getElementById('assignQuantity').value;
 
-        if (!analystId || !storeId) {
-            showToast('error', 'Por favor, selecione analista e loja');
+        if (!analystId) {
+            showToast('error', 'Selecione um analista');
+            return;
+        }
+
+        if (!quantity || parseInt(quantity) < 1) {
+            showToast('error', 'Digite uma quantidade válida');
             return;
         }
 
         try {
-            const response = await fetch('/api/store-verification/analyst/assign/', {
+            const response = await fetch(`/api/store-verification/analyst/available-stores/?quantity=${quantity}`);
+            const data = await response.json();
+
+            if (data.success) {
+                selectedStoresArray = data.stores;
+                showStep2(data.stores);
+            } else {
+                showToast('error', data.error || 'Erro ao gerar seleção');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('error', 'Erro ao comunicar com o servidor');
+        }
+    }
+
+    // Mostrar etapa 2 (preview)
+    function showStep2(stores) {
+        // Ocultar etapa 1
+        document.getElementById('step1Selection').classList.add('d-none');
+        document.getElementById('btnGenerateSelection').classList.add('d-none');
+
+        // Mostrar etapa 2
+        document.getElementById('step2Preview').classList.remove('d-none');
+        document.getElementById('btnBackToSelection').classList.remove('d-none');
+        document.getElementById('btnConfirmAssignment').classList.remove('d-none');
+
+        // Atualizar contador
+        document.getElementById('selectedCount').textContent = stores.length;
+
+        // Renderizar lista de lojas
+        const container = document.getElementById('selectedStoresList');
+        container.innerHTML = '';
+
+        stores.forEach(store => {
+            const storeCard = `
+                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                    <div>
+                        <span class="fw-bold text-primary">${store.code}</span>
+                        <small class="text-muted ms-2">${store.city || '-'}</small>
+                    </div>
+                    <i class="bi bi-check-circle text-success"></i>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', storeCard);
+        });
+    }
+
+    // Voltar para etapa 1
+    function backToStep1() {
+        document.getElementById('step1Selection').classList.remove('d-none');
+        document.getElementById('btnGenerateSelection').classList.remove('d-none');
+
+        document.getElementById('step2Preview').classList.add('d-none');
+        document.getElementById('btnBackToSelection').classList.add('d-none');
+        document.getElementById('btnConfirmAssignment').classList.add('d-none');
+
+        selectedStoresArray = [];
+    }
+
+    // Regenerar seleção (nova seleção aleatória)
+    function regenerateSelection() {
+        const quantity = document.getElementById('assignQuantity').value;
+
+        // Voltar para etapa 1 e gerar novamente
+        backToStep1();
+        generateSelection();
+    }
+
+    // Confirmar atribuição em lote
+    async function confirmBulkAssignment() {
+        const analystId = document.getElementById('assignAnalystId').value;
+        const weeklyTarget = document.getElementById('assignWeeklyTarget').value;
+
+        if (selectedStoresArray.length === 0) {
+            showToast('error', 'Nenhuma loja selecionada');
+            return;
+        }
+
+        const storeIds = selectedStoresArray.map(s => s.id);
+
+        try {
+            const response = await fetch('/api/store-verification/analyst/bulk-assign/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1545,7 +1679,7 @@
                 },
                 body: JSON.stringify({
                     analyst_id: parseInt(analystId),
-                    store_id: parseInt(storeId),
+                    store_ids: storeIds,
                     weekly_target: parseInt(weeklyTarget)
                 })
             });
@@ -1555,9 +1689,24 @@
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('assignStoreModal')).hide();
                 showToast('success', data.message);
-                loadAllAssignments(); // Recarregar tabela
+
+                // Resetar modal
+                setTimeout(() => {
+                    backToStep1();
+                    document.getElementById('assignQuantity').value = '';
+                    loadAvailableCount();  // Atualizar contador
+                }, 500);
             } else {
-                showToast('error', data.error || 'Erro ao atribuir loja');
+                showToast('error', data.error || 'Erro ao atribuir lojas');
+
+                // Se houve conflito, mostrar detalhes
+                if (data.conflicts) {
+                    let conflictMsg = 'Conflitos encontrados:\n';
+                    data.conflicts.forEach(c => {
+                        conflictMsg += `\n- ${c.store} já está com ${c.analyst}`;
+                    });
+                    alert(conflictMsg);
+                }
             }
         } catch (error) {
             console.error('Erro:', error);
@@ -1567,9 +1716,6 @@
 
     async function loadAllAssignments() {
         try {
-            // Nota: Esta API retorna apenas as atribuições do analista logado
-            // Para gestor ver todas, precisaríamos de uma API diferente
-            // Por enquanto, vamos apenas mostrar uma mensagem
             const tbody = document.getElementById('assignmentsTableBody');
             tbody.innerHTML = `
             <tr>
