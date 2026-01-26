@@ -2299,12 +2299,20 @@ def verificacao_lojas(request):
     from django.core.paginator import Paginator
     
     # 1. Base QuerySet
-    stores_queryset = Store.objects.filter(active=True).order_by('code')
+    # Tab handling
+    tab = request.GET.get('tab', 'management')
+    
+    # If tab is 'suspended', include inactive stores. Otherwise, only active.
+    if tab == 'suspended':
+        stores_queryset = Store.objects.filter(active=False).order_by('code')
+    else:
+        stores_queryset = Store.objects.filter(active=True).order_by('code')
     
     # 2. Status Calculation (Aggregate counts efficiently)
     # Get IDs for status sets
     verified_store_ids = set(StoreAudit.objects.values_list('store_id', flat=True))
     irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True))
+    suspended_count = Store.objects.filter(active=False).count()
     
     # Calculate OK stores
     ok_store_ids = verified_store_ids - irregular_store_ids
@@ -2323,7 +2331,16 @@ def verificacao_lojas(request):
         ).values_list('store_id', flat=True)
         stores_queryset = stores_queryset.filter(id__in=my_store_ids)
 
-    # Status Filter
+    # Filter by Tab/Status
+    if tab == 'irregular':
+        stores_queryset = stores_queryset.filter(id__in=irregular_store_ids)
+    elif tab == 'verified':
+        stores_queryset = stores_queryset.filter(id__in=ok_store_ids)
+    elif tab == 'suspended':
+        # Already filtered by active=False above
+        pass
+    
+    # Legacy 'filter' param support (optional, but good for backward compat link)
     filter_type = request.GET.get('filter')
     if filter_type == 'verified':
         stores_queryset = stores_queryset.filter(id__in=verified_store_ids)
@@ -2407,11 +2424,13 @@ def verificacao_lojas(request):
         'stores': page_obj, # Now passing the Page object
         'total_stores': total_stores,
         'scope': scope, # Passed to template for filter state
+        'tab': tab, # Current tab
         'filter_type': filter_type, # Ensure this is passed too
         'search_query': search_query, # Ensure this is passed too
         'verified_count': verified_count,
         'ok_count': ok_count,
         'irregular_count': irregular_count,
+        'suspended_count': suspended_count,
         'filter_type': filter_type,
         'pending_issues': pending_issues,
         'pending_issues_page': pending_issues_page,  # Objeto de paginação

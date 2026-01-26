@@ -70,586 +70,611 @@
         </div>
     </div>
 
-    <!-- Dashboard Cards -->
-    <div class="row mb-4">
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?filter=" class="text-decoration-none">
-                <div class="stat-card stat-card-primary {% if not filter_type %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-shop"></i></div>
-                    <p class="stat-card-title">Total de Lojas</p>
-                    <h2 class="stat-card-value">{{ total_stores }}</h2>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?filter=verified" class="text-decoration-none">
-                <div class="stat-card stat-card-info {% if filter_type == 'verified' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-clipboard-check"></i></div>
-                    <p class="stat-card-title">Verificadas</p>
-                    <h2 class="stat-card-value">{{ verified_count }}</h2>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?filter=ok" class="text-decoration-none">
-                <div class="stat-card stat-card-success {% if filter_type == 'ok' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-check-circle"></i></div>
-                    <p class="stat-card-title">Situação OK</p>
-                    <h2 class="stat-card-value">{{ ok_count }}</h2>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?filter=irregular" class="text-decoration-none">
-                <div class="stat-card stat-card-warning {% if filter_type == 'irregular' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                    <p class="stat-card-title">Irregulares</p>
-                    <h2 class="stat-card-value">{{ irregular_count }}</h2>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Seção de Gestão de Analistas -->
-    {% if user.role in 'gestor,administrador,analista' %}
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark">
-                    {% if user.role in 'gestor,administrador' %}
-                    <i class="bi bi-people me-2 text-primary"></i> Gestão de Analistas
-                    {% else %}
-                    <i class="bi bi-trophy me-2 text-warning"></i> Minhas Metas Semanais
-                    {% endif %}
-                </h5>
-                {% if user.role in 'gestor,administrador' %}
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignStoreModal">
-                    <i class="bi bi-plus-circle me-1"></i> Atribuir Loja
-                </button>
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4 px-3 border-bottom-0" id="verificationTabs" role="tablist">
+        {% if user.role in 'gestor,administrador,analista' %}
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'management' %}active fw-bold{% endif %}"
+                href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}">
+                {% if user.role == 'analista' %}
+                <i class="bi bi-trophy me-2"></i> Minhas Metas
+                {% else %}
+                <i class="bi bi-people me-2"></i> Gestão
                 {% endif %}
-            </div>
-        </div>
-        <div class="card-body">
-            <!-- Dashboard do Analista -->
-            {% if user.role == 'analista' %}
-            <div id="analystDashboard">
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded h-100">
-                            <i class="bi bi-shop text-primary" style="font-size: 2rem;"></i>
-                            <h3 class="mt-2 mb-0" id="totalStores">-</h3>
-                            <small class="text-muted">Lojas Atribuídas</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded h-100">
-                            <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
-                            <h3 class="mt-2 mb-0" id="dailyTarget">-</h3>
-                            <small class="text-muted">Meta Diária</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded h-100">
-                            <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
-                            <h3 class="mt-2 mb-0" id="auditedCount">-</h3>
-                            <small class="text-muted">Auditadas esta Semana</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded h-100">
-                            <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
-                            <h3 class="mt-2 mb-0" id="progressPercentage">-</h3>
-                            <small class="text-muted">Progresso da Meta</small>
-                        </div>
+            </a>
+        </li>
+        {% endif %}
+
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'irregular' %}active fw-bold{% endif %}"
+                href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}">
+                <i class="bi bi-exclamation-triangle me-2"></i> Irregularidades
+                <span class="badge bg-danger rounded-pill ms-1">{{ irregular_count }}</span>
+            </a>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'verified' %}active fw-bold{% endif %}"
+                href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}">
+                <i class="bi bi-clipboard-check me-2"></i> Verificadas
+                <span class="badge bg-success rounded-pill ms-1">{{ verified_count }}</span>
+            </a>
+        </li>
+
+        {% if user.role in 'gestor,administrador' %}
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'suspended' %}active fw-bold{% endif %} text-secondary"
+                href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}">
+                <i class="bi bi-pause-circle me-2"></i> Suspensas
+                <span class="badge bg-secondary rounded-pill ms-1">{{ suspended_count|default:0 }}</span>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="verificationTabsContent">
+
+        <!-- Tab: Management -->
+        <div class="tab-pane fade {% if tab == 'management' %}show active{% endif %}" id="management" role="tabpanel">
+            <!-- Dashboard Cards (Moved inside Management for better focus, or keep global?) -->
+            <!-- Keeping Global Counters visible is good, but user requested cleanup. Let's keep counters global but Analyst/Assignments here. -->
+
+
+            <!-- Seção de Gestão de Analistas -->
+            {% if user.role in 'gestor,administrador,analista' %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            {% if user.role in 'gestor,administrador' %}
+                            <i class="bi bi-people me-2 text-primary"></i> Gestão de Analistas
+                            {% else %}
+                            <i class="bi bi-trophy me-2 text-warning"></i> Minhas Metas Semanais
+                            {% endif %}
+                        </h5>
+                        {% if user.role in 'gestor,administrador' %}
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#assignStoreModal">
+                            <i class="bi bi-plus-circle me-1"></i> Atribuir Loja
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
+                <div class="card-body">
+                    <!-- Dashboard do Analista -->
+                    {% if user.role == 'analista' %}
+                    <div id="analystDashboard">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded h-100">
+                                    <i class="bi bi-shop text-primary" style="font-size: 2rem;"></i>
+                                    <h3 class="mt-2 mb-0" id="totalStores">-</h3>
+                                    <small class="text-muted">Lojas Atribuídas</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded h-100">
+                                    <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                                    <h3 class="mt-2 mb-0" id="dailyTarget">-</h3>
+                                    <small class="text-muted">Meta Diária</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded h-100">
+                                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                                    <h3 class="mt-2 mb-0" id="auditedCount">-</h3>
+                                    <small class="text-muted">Auditadas esta Semana</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded h-100">
+                                    <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
+                                    <h3 class="mt-2 mb-0" id="progressPercentage">-</h3>
+                                    <small class="text-muted">Progresso da Meta</small>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Progresso Semanal</span>
-                        <span class="fw-bold" id="progressText">-/-</span>
-                    </div>
-                    <div class="progress" style="height: 25px;">
-                        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">
-                            <span id="progressBarText">0%</span>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Progresso Semanal</span>
+                                <span class="fw-bold" id="progressText">-/-</span>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div id="progressBar" class="progress-bar bg-success" role="progressbar"
+                                    style="width: 0%">
+                                    <span id="progressBarText">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Dias restantes:</strong> <span id="daysRemaining">-</span> dias até domingo
+                        </div>
+
+                        <h6 class="fw-bold mb-3">Minhas Lojas</h6>
+                        <div id="myStoresList" class="row">
+                            <div class="col-12 text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    {% endif %}
 
-                <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
-                    <i class="bi bi-info-circle me-1"></i>
-                    <strong>Dias restantes:</strong> <span id="daysRemaining">-</span> dias até domingo
-                </div>
-
-                <h6 class="fw-bold mb-3">Minhas Lojas</h6>
-                <div id="myStoresList" class="row">
-                    <div class="col-12 text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Carregando...</span>
+                    <!-- Tabela de Atribuições (Gestor) -->
+                    {% if user.role in 'gestor,administrador' %}
+                    <div id="assignmentsList">
+                        <p class="text-muted">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            Atribua lojas a analistas para definir metas semanais de auditoria.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Analista</th>
+                                        <th>Loja</th>
+                                        <th>Meta Semanal</th>
+                                        <th>Progresso</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assignmentsTableBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                <span class="visually-hidden">Carregando...</span>
+                                            </div>
+                                            <p class="text-muted mt-2">Carregando atribuições...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- Tabela de Atribuições (Gestor) -->
-            {% if user.role in 'gestor,administrador' %}
-            <div id="assignmentsList">
-                <p class="text-muted">
-                    <i class="bi bi-lightbulb me-1"></i>
-                    Atribua lojas a analistas para definir metas semanais de auditoria.
-                </p>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>Analista</th>
-                                <th>Loja</th>
-                                <th>Meta Semanal</th>
-                                <th>Progresso</th>
-                            </tr>
-                        </thead>
-                        <tbody id="assignmentsTableBody">
-                            <tr>
-                                <td colspan="4" class="text-center py-4">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Carregando...</span>
-                                    </div>
-                                    <p class="text-muted mt-2">Carregando atribuições...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            {% if pending_issues %}
+            <!-- Pending Issues for Managers -->
+            <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #f59e0b !important;">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-megaphone me-2 text-warning"></i> Pendências
+                        Solicitadas
+                    </h5>
+                    <span class="badge bg-warning text-dark px-3 rounded-pill">{{ pending_issues|length }}
+                        Pendência(s)</span>
                 </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if pending_issues %}
-    <!-- Pending Issues for Managers -->
-    <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #f59e0b !important;">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-megaphone me-2 text-warning"></i> Pendências Solicitadas
-            </h5>
-            <span class="badge bg-warning text-dark px-3 rounded-pill">{{ pending_issues|length }} Pendência(s)</span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive" style="overflow: visible;">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">Loja</th>
-                            <th>Ítem Irregular</th>
-                            <th>Analista</th>
-                            <th>Status</th>
-                            <th>Data/Hora</th>
-                            <th class="text-end pe-4">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for issue in pending_issues %}
-                        <tr id="issue-row-{{ issue.id }}">
-                            <td class="ps-4">
-                                <div class="fw-bold text-primary">{{ issue.store.code }}</div>
-                                <small class="text-muted">{{ issue.store.city }}</small>
-                            </td>
-                            <td>
-                                {% for item in issue.items.all %}
-                                <span
-                                    class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-2 me-1 mb-1">
-                                    {{ item.get_item_name_display }}
-                                </span>
-                                {% endfor %}
-                            </td>
-                            <td>
-                                {% with first_item=issue.items.first %}
-                                {% if first_item.audit.analyst.get_full_name %}
-                                {{ first_item.audit.analyst.get_full_name }}
-                                {% else %}
-                                {{ first_item.audit.analyst.username }}
-                                {% endif %}
-                                {% endwith %}
-                            </td>
-                            <td>
-                                <div id="status-{{ issue.id }}">
-                                    {% if issue.status == 'notificado_whatsapp' %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-info text-white">
-                                            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                <!-- ... existing table content ... -->
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="overflow: visible;">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Loja</th>
+                                    <th>Ítem Irregular</th>
+                                    <th>Analista</th>
+                                    <th>Status</th>
+                                    <th>Data/Hora</th>
+                                    <th class="text-end pe-4">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for issue in pending_issues %}
+                                <tr id="issue-row-{{ issue.id }}">
+                                    <!-- ... existing row content ... -->
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-primary">{{ issue.store.code }}</div>
+                                        <small class="text-muted">{{ issue.store.city }}</small>
+                                    </td>
+                                    <td>
+                                        {% for item in issue.items.all %}
+                                        <span
+                                            class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-2 me-1 mb-1">
+                                            {{ item.get_item_name_display }}
                                         </span>
-                                        <div class="timer-container" data-issue-id="{{ issue.id }}">
-                                            <small class="text-muted timer-text">Carregando...</small>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% with first_item=issue.items.first %}
+                                        {% if first_item.audit.analyst.get_full_name %}
+                                        {{ first_item.audit.analyst.get_full_name }}
+                                        {% else %}
+                                        {{ first_item.audit.analyst.username }}
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <div id="status-{{ issue.id }}">
+                                            {% if issue.status == 'notificado_whatsapp' %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-info text-white">
+                                                    <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                                                </span>
+                                                <div class="timer-container" data-issue-id="{{ issue.id }}">
+                                                    <small class="text-muted timer-text">Carregando...</small>
+                                                </div>
+                                            </div>
+                                            {% elif issue.status == 'notificado_ticket' %}
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-ticket me-1"></i> Ticket {{ issue.ticket_id }}
+                                            </span>
+                                            {% elif issue.status == 'resolvida' %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i> Resolvida
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Aguardando</span>
+                                            {% endif %}
                                         </div>
-                                    </div>
-                                    {% elif issue.status == 'notificado_ticket' %}
-                                    <span class="badge bg-primary">
-                                        <i class="bi bi-ticket me-1"></i> Ticket {{ issue.ticket_id }}
-                                    </span>
-                                    {% elif issue.status == 'resolvida' %}
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle me-1"></i> Resolvida
-                                    </span>
+                                    </td>
+                                    <td>{{ issue.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-flex justify-content-end gap-2 align-items-center">
+                                            {% if issue.status == 'aberta' %}
+                                            <button
+                                                class="btn btn-sm btn-primary fw-bold px-3 d-flex align-items-center"
+                                                onclick="openNotifyModal({{ issue.id }})" style="height: 32px;">
+                                                <i class="bi bi-send me-1"></i> Notificar
+                                            </button>
+                                            {% endif %}
+
+                                            {% if issue.status != 'resolvida' %}
+                                            <button
+                                                class="btn btn-sm btn-warning fw-bold px-3 d-flex align-items-center"
+                                                data-bs-toggle="modal" data-bs-target="#resolveModal{{ issue.id }}"
+                                                style="height: 32px;">
+                                                <i class="bi bi-tools me-1"></i> Resolver
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação de Pendências - CORRIGIDA -->
+                    {% if pending_issues_page and pending_issues_page.has_other_pages %}
+                    <div class="card-footer bg-white py-3 border-top">
+                        <nav aria-label="Navegação de pendências">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if pending_issues_page.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link border-0 rounded-circle"
+                                        href="?pending_page={{ pending_issues_page.previous_page_number }}&tab={{ tab }}{% if scope %}&scope={{ scope }}{% endif %}">&laquo;</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link border-0">&laquo;</span></li>
+                                {% endif %}
+
+                                {% for page_num in pending_issues_page.paginator.page_range %}
+                                {% if pending_issues_page.number == page_num %}
+                                <li class="page-item active">
+                                    <span class="page-link border-0 rounded-circle fw-bold mx-1"
+                                        style="background-color: #f59e0b; border-color: #f59e0b;">{{ page_num }}</span>
+                                </li>
+                                {% elif page_num > pending_issues_page.number|add:'-3' and page_num <
+                                    pending_issues_page.number|add:'3' %} <li class="page-item">
+                                    <a class="page-link border-0 rounded-circle mx-1 text-dark"
+                                        href="?pending_page={{ page_num }}&tab={{ tab }}{% if scope %}&scope={{ scope }}{% endif %}">{{
+                                        page_num }}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                    {% if pending_issues_page.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link border-0 rounded-circle"
+                                            href="?pending_page={{ pending_issues_page.next_page_number }}&tab={{ tab }}{% if scope %}&scope={{ scope }}{% endif %}">&raquo;</a>
+                                    </li>
                                     {% else %}
-                                    <span class="badge bg-secondary">Aguardando</span>
+                                    <li class="page-item disabled"><span class="page-link border-0">&raquo;</span></li>
                                     {% endif %}
-                                </div>
-                            </td>
-                            <td>{{ issue.created_at|date:"d/m/Y H:i" }}</td>
-                            <td class="text-end pe-4">
-                                <div class="d-flex justify-content-end gap-2 align-items-center">
-                                    {% if issue.status == 'aberta' %}
-                                    <button class="btn btn-sm btn-primary fw-bold px-3 d-flex align-items-center"
-                                        onclick="openNotifyModal({{ issue.id }})" style="height: 32px;">
-                                        <i class="bi bi-send me-1"></i> Notificar
-                                    </button>
-                                    {% endif %}
-
-                                    {% if issue.status != 'resolvida' %}
-                                    <button class="btn btn-sm btn-warning fw-bold px-3 d-flex align-items-center"
-                                        data-bs-toggle="modal" data-bs-target="#resolveModal{{ issue.id }}"
-                                        style="height: 32px;">
-                                        <i class="bi bi-tools me-1"></i> Resolver
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Modal Movido para o final do arquivo -->
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginação de Pendências -->
-            {% if pending_issues_page and pending_issues_page.has_other_pages %}
-            <div class="card-footer bg-white py-3 border-top">
-                <nav aria-label="Navegação de pendências">
-                    <ul class="pagination justify-content-center mb-0">
-                        {% if pending_issues_page.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link border-0 rounded-circle"
-                                href="?pending_page={{ pending_issues_page.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&laquo;</a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link border-0">&laquo;</span></li>
-                        {% endif %}
-
-                        {% for page_num in pending_issues_page.paginator.page_range %}
-                        {% if pending_issues_page.number == page_num %}
-                        <li class="page-item active">
-                            <span class="page-link border-0 rounded-circle fw-bold mx-1"
-                                style="background-color: #f59e0b; border-color: #f59e0b;">{{ page_num }}</span>
-                        </li>
-                        {% elif page_num > pending_issues_page.number|add:'-3' and page_num <
-                            pending_issues_page.number|add:'3' %} <li class="page-item">
-                            <a class="page-link border-0 rounded-circle mx-1 text-dark"
-                                href="?pending_page={{ page_num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{
-                                page_num }}</a>
-                            </li>
-                            {% endif %}
-                            {% endfor %}
-
-                            {% if pending_issues_page.has_next %}
-                            <li class="page-item">
-                                <a class="page-link border-0 rounded-circle"
-                                    href="?pending_page={{ pending_issues_page.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&raquo;</a>
-                            </li>
-                            {% else %}
-                            <li class="page-item disabled"><span class="page-link border-0">&raquo;</span></li>
-                            {% endif %}
-                    </ul>
-                    <div class="text-center text-muted small mt-2">
-                        Página {{ pending_issues_page.number }} de {{ pending_issues_page.paginator.num_pages }}
+                            </ul>
+                            <div class="text-center text-muted small mt-2">
+                                Página {{ pending_issues_page.number }} de {{ pending_issues_page.paginator.num_pages }}
+                            </div>
+                        </nav>
                     </div>
-                </nav>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Stores List -->
-    <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="storesTable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4 py-3">Cód. Loja</th>
-                            <th>Status Operacional</th>
-
-                            <th>Última Auditoria</th>
-
-                            <th>Situação</th>
-                            <th class="text-end pe-4">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for store in stores %}
-                        <tr {% if not store.active %}class="opacity-75 bg-light" {% endif %}>
-                            <td class="ps-4 py-3">
-                                <span class="fw-bold text-dark">{{ store.code }}</span>
-                            </td>
-                            <td>
-                                {% if store.active %}
-                                <span
-                                    class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
-                                    <i class="bi bi-play-circle me-1"></i> Ativa
-                                </span>
-                                {% else %}
-                                <span
-                                    class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
-                                    <i class="bi bi-pause-circle me-1"></i> Suspensa
-                                </span>
-                                {% endif %}
-                            </td>
-                            <!-- Columns Removed -->
-                            <!-- Otimização: Uso de latest_audit anexado na view para evitar N+1 queries -->
-                            {% with last_audit=store.latest_audit %}
-
-                            <td>
-                                {% if last_audit %}
-                                <span class="text-muted small">{{ last_audit.created_at|date:"d/m/Y H:i" }}</span>
-                                {% else %}
-                                <span class="text-muted italic small">Nenhuma verificação</span>
-                                {% endif %}
-                            </td>
-                            {% endwith %}
-                            <!-- Recent History Removed -->
-                            <td>
-                                {% if store.ui_status == 'suspended' %}
-                                <span class="text-muted small">Sem auditoria (Suspensa)</span>
-                                {% elif store.ui_status == 'irregular' %}
-                                <span
-                                    class="badge rounded-pill bg-warning text-dark px-3 shadow-sm border border-warning border-opacity-50">
-                                    <i class="bi bi-exclamation-circle me-1"></i> Irregular
-                                </span>
-                                {% elif store.ui_status == 'compliant' %}
-                                <span class="badge rounded-pill bg-success px-3 shadow-sm">
-                                    <i class="bi bi-check2-all me-1"></i> Conforme
-                                </span>
-                                {% else %}
-                                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary px-3">
-                                    Pendente
-                                </span>
-                                {% endif %}
-
-                                {% if store.needs_reverification %}
-                                <div class="mt-1">
-                                    <span
-                                        class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1"
-                                        title="Precisa ser reverificada">
-                                        <i class="bi bi-arrow-repeat me-1"></i> Reverificação Necessária
-                                    </span>
-                                </div>
-                                {% endif %}
-                            </td>
-                            <td class="text-end pe-4">
-                                {% if store.active %}
-                                <a href="{% url 'store_audit_create' store.id %}"
-                                    class="btn btn-primary btn-sm rounded-3 px-3 fw-500">
-                                    <i class="bi bi-shield-plus me-1"></i> Auditar
-                                </a>
-                                {% else %}
-                                <button class="btn btn-outline-secondary btn-sm rounded-3 px-3 fw-500" disabled>
-                                    <i class="bi bi-lock me-1"></i> Suspensa
-                                </button>
-                                {% endif %}
-
-                                {% if user.role in 'gestor,administrador' %}
-                                <a href="{% url 'store_edit' store.id %}" class="btn btn-sm btn-outline-secondary ms-1"
-                                    title="Editar Loja">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="{% url 'store_delete' store.id %}" class="btn btn-sm btn-outline-danger ms-1"
-                                    title="Excluir Loja">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            {% if stores.has_other_pages %}
-            <div class="card-footer bg-white py-3">
-                <nav aria-label="Navegação de páginas">
-                    <ul class="pagination justify-content-center mb-0">
-                        {% if stores.has_previous %}
-                        <li class="page-item"><a class="page-link border-0"
-                                href="?page={{ stores.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&laquo;</a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link border-0">&laquo;</span></li>
-                        {% endif %}
-                        {% for page_num in stores.paginator.page_range %}
-                        {% if stores.number == page_num %}
-                        <li class="page-item active">
-                            <span class="page-link border-0 rounded-circle fw-bold mx-1">{{ page_num }}</span>
-                        </li>
-                        {% elif page_num > stores.number|add:'-3' and page_num < stores.number|add:'3' %} <li
-                            class="page-item">
-                            <a class="page-link border-0 rounded-circle mx-1 text-dark"
-                                href="?page={{ page_num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
-                                {{ page_num }}
-                            </a>
-                            </li>
-                            {% endif %}
-                            {% endfor %}
-                            {% if stores.has_next %}
-                            <li class="page-item"><a class="page-link border-0"
-                                    href="?page={{ stores.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&raquo;</a>
-                            </li>
-                            {% else %}
-                            <li class="page-item disabled"><span class="page-link border-0">&raquo;</span></li>
-                            {% endif %}
-                    </ul>
-                    <div class="text-center text-muted small mt-2">
-                        Página {{ stores.number }} de {{ stores.paginator.num_pages }}
-                    </div>
-                </nav>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-{% if play_sound %}
-<!-- Notificação sonora de irregularidade detectada -->
-<audio id="alertSound" autoplay>
-    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
-</audio>
-<script>
-    // Limpar o sinal da sessão (requer uma chamada ajax ou recarregamento consciente, mas vamos assumir que o Django remove após um uso ou o front ignora após tocar)
-    // Como o Django session geralmente persiste até o próximo middleware de request, 
-    // poderíamos fazer um fetch rápido para limpar ou apenas deixar o script tocar uma vez.
-    const audio = document.getElementById('alertSound');
-    if (audio) {
-        audio.volume = 0.5;
-        audio.play().catch(e => console.log("Áudio bloqueado pelo navegador."));
-    }
-</script>
-<!-- Opcional: view helper para limpar a flag -->
-{% endif %}
-
-<!-- History Modal -->
-<div class="modal fade" id="historyModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">
-                    Histórico Completo: <span class="text-primary" id="historyModalStoreCode"></span>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body pt-4">
-                <div id="historyLoading" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
+                    {% endif %}
                 </div>
-                <div id="historyContent" class="d-none">
-                    <div class="timeline" id="historyTimeline">
-                        <!-- Populated via JS -->
+            </div>
+            {% endif %}
+
+        </div> <!-- End Irregular Tab -->
+
+
+        <!-- Tabs for Verified/Suspended/All (Lists) -->
+        <div class="tab-pane fade {% if tab == 'verified' or tab == 'suspended' %}show active{% endif %}" id="lists"
+            role="tabpanel">
+
+            <!-- Stores List -->
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="storesTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3">Cód. Loja</th>
+                                    <th>Status Operacional</th>
+
+                                    <th>Última Auditoria</th>
+
+                                    <th>Situação</th>
+                                    <th class="text-end pe-4">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for store in stores %}
+                                <tr {% if not store.active %}class="opacity-75 bg-light" {% endif %}>
+                                    <td class="ps-4 py-3">
+                                        <span class="fw-bold text-dark">{{ store.code }}</span>
+                                    </td>
+                                    <td>
+                                        {% if store.active %}
+                                        <span
+                                            class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                                            <i class="bi bi-play-circle me-1"></i> Ativa
+                                        </span>
+                                        {% else %}
+                                        <span
+                                            class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
+                                            <i class="bi bi-pause-circle me-1"></i> Suspensa
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <!-- Columns Removed -->
+                                    <!-- Otimização: Uso de latest_audit anexado na view para evitar N+1 queries -->
+                                    {% with last_audit=store.latest_audit %}
+
+                                    <td>
+                                        {% if last_audit %}
+                                        <span class="text-muted small">{{ last_audit.created_at|date:"d/m/Y H:i"
+                                            }}</span>
+                                        {% else %}
+                                        <span class="text-muted italic small">Nenhuma verificação</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endwith %}
+                                    <!-- Recent History Removed -->
+                                    <td>
+                                        {% if store.ui_status == 'suspended' %}
+                                        <span class="text-muted small">Sem auditoria (Suspensa)</span>
+                                        {% elif store.ui_status == 'irregular' %}
+                                        <span
+                                            class="badge rounded-pill bg-warning text-dark px-3 shadow-sm border border-warning border-opacity-50">
+                                            <i class="bi bi-exclamation-circle me-1"></i> Irregular
+                                        </span>
+                                        {% elif store.ui_status == 'compliant' %}
+                                        <span class="badge rounded-pill bg-success px-3 shadow-sm">
+                                            <i class="bi bi-check2-all me-1"></i> Conforme
+                                        </span>
+                                        {% else %}
+                                        <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary px-3">
+                                            Pendente
+                                        </span>
+                                        {% endif %}
+
+                                        {% if store.needs_reverification %}
+                                        <div class="mt-1">
+                                            <span
+                                                class="badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1"
+                                                title="Precisa ser reverificada">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Reverificação Necessária
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        {% if store.active %}
+                                        <a href="{% url 'store_audit_create' store.id %}"
+                                            class="btn btn-primary btn-sm rounded-3 px-3 fw-500">
+                                            <i class="bi bi-shield-plus me-1"></i> Auditar
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3 fw-500" disabled>
+                                            <i class="bi bi-lock me-1"></i> Suspensa
+                                        </button>
+                                        {% endif %}
+
+                                        {% if user.role in 'gestor,administrador' %}
+                                        <a href="{% url 'store_edit' store.id %}"
+                                            class="btn btn-sm btn-outline-secondary ms-1" title="Editar Loja">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'store_delete' store.id %}"
+                                            class="btn btn-sm btn-outline-danger ms-1" title="Excluir Loja">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if stores.has_other_pages %}
+                    <div class="card-footer bg-white py-3">
+                        <nav aria-label="Navegação de páginas">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if stores.has_previous %}
+                                <li class="page-item"><a class="page-link border-0"
+                                        href="?page={{ stores.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&laquo;</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link border-0">&laquo;</span></li>
+                                {% endif %}
+                                {% for page_num in stores.paginator.page_range %}
+                                {% if stores.number == page_num %}
+                                <li class="page-item active">
+                                    <span class="page-link border-0 rounded-circle fw-bold mx-1">{{ page_num }}</span>
+                                </li>
+                                {% elif page_num > stores.number|add:'-3' and page_num < stores.number|add:'3' %} <li
+                                    class="page-item">
+                                    <a class="page-link border-0 rounded-circle mx-1 text-dark"
+                                        href="?page={{ page_num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                        {{ page_num }}
+                                    </a>
+                                    </li>
+                                    {% endif %}
+                                    {% endfor %}
+                                    {% if stores.has_next %}
+                                    <li class="page-item"><a class="page-link border-0"
+                                            href="?page={{ stores.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&raquo;</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled"><span class="page-link border-0">&raquo;</span></li>
+                                    {% endif %}
+                            </ul>
+                            <div class="text-center text-muted small mt-2">
+                                Página {{ stores.number }} de {{ stores.paginator.num_pages }}
+                            </div>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if play_sound %}
+        <!-- Notificação sonora de irregularidade detectada -->
+        <audio id="alertSound" autoplay>
+            <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+        </audio>
+        <script>
+            // Limpar o sinal da sessão (requer uma chamada ajax ou recarregamento consciente, mas vamos assumir que o Django remove após um uso ou o front ignora após tocar)
+            // Como o Django session geralmente persiste até o próximo middleware de request, 
+            // poderíamos fazer um fetch rápido para limpar ou apenas deixar o script tocar uma vez.
+            const audio = document.getElementById('alertSound');
+            if (audio) {
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log("Áudio bloqueado pelo navegador."));
+            }
+        </script>
+        <!-- Opcional: view helper para limpar a flag -->
+        {% endif %}
+
+        <!-- History Modal -->
+        <div class="modal fade" id="historyModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold text-dark">
+                            Histórico Completo: <span class="text-primary" id="historyModalStoreCode"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-4">
+                        <div id="historyLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                        </div>
+                        <div id="historyContent" class="d-none">
+                            <div class="timeline" id="historyTimeline">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<style>
-    .presence-badge {
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
+        <style>
+            .presence-badge {
+                display: inline-block;
+                transition: all 0.3s ease;
+            }
 
-    .presence-active {
-        background-color: #e0f2fe;
-        color: #0369a1;
-        border: 1px solid #bae6fd;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
+            .presence-active {
+                background-color: #e0f2fe;
+                color: #0369a1;
+                border: 1px solid #bae6fd;
+                padding: 2px 8px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
 
-    .presence-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #0ea5e9;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
+            .presence-dot {
+                width: 6px;
+                height: 6px;
+                background-color: #0ea5e9;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
 
-    @keyframes pulse {
-        0% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
-        }
+            @keyframes pulse {
+                0% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+                }
 
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0);
-        }
+                70% {
+                    transform: scale(1);
+                    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0);
+                }
 
-        100% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
-        }
-    }
-</style>
+                100% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+                }
+            }
+        </style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Presence polling removed from list view
-    });
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Presence polling removed from list view
+            });
 
 
 
-    async function showFullHistory(storeId, storeCode) {
-        const modal = new bootstrap.Modal(document.getElementById('historyModal'));
-        document.getElementById('historyModalStoreCode').textContent = storeCode;
-        document.getElementById('historyLoading').classList.remove('d-none');
-        document.getElementById('historyContent').classList.add('d-none');
-        modal.show();
+            async function showFullHistory(storeId, storeCode) {
+                const modal = new bootstrap.Modal(document.getElementById('historyModal'));
+                document.getElementById('historyModalStoreCode').textContent = storeCode;
+                document.getElementById('historyLoading').classList.remove('d-none');
+                document.getElementById('historyContent').classList.add('d-none');
+                modal.show();
 
-        try {
-            const response = await fetch(`/api/stores/${storeId}/history/`);
-            const data = await response.json();
+                try {
+                    const response = await fetch(`/api/stores/${storeId}/history/`);
+                    const data = await response.json();
 
-            if (data.success) {
-                const timeline = document.getElementById('historyTimeline');
-                timeline.innerHTML = '';
+                    if (data.success) {
+                        const timeline = document.getElementById('historyTimeline');
+                        timeline.innerHTML = '';
 
-                if (data.history.length === 0) {
-                    timeline.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-clock-history display-4 mb-3 d-block opacity-25"></i><p>Nenhuma auditoria realizada.</p></div>';
-                } else {
-                    data.history.forEach((audit, index) => {
-                        const isLast = index === data.history.length - 1;
-                        let itemsHtml = '';
+                        if (data.history.length === 0) {
+                            timeline.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-clock-history display-4 mb-3 d-block opacity-25"></i><p>Nenhuma auditoria realizada.</p></div>';
+                        } else {
+                            data.history.forEach((audit, index) => {
+                                const isLast = index === data.history.length - 1;
+                                let itemsHtml = '';
 
-                        if (audit.items && audit.items.length > 0) {
-                            // Separar itens por status
-                            const irregularItems = audit.items.filter(i => !i.is_compliant);
-                            const compliantItems = audit.items.filter(i => i.is_compliant);
+                                if (audit.items && audit.items.length > 0) {
+                                    // Separar itens por status
+                                    const irregularItems = audit.items.filter(i => !i.is_compliant);
+                                    const compliantItems = audit.items.filter(i => i.is_compliant);
 
-                            // Irregularidades
-                            if (irregularItems.length > 0) {
-                                itemsHtml += `<div class="mb-3">`;
-                                irregularItems.forEach(item => {
-                                    let resolutionHtml = '';
-                                    if (item.resolution) {
-                                        resolutionHtml = `
+                                    // Irregularidades
+                                    if (irregularItems.length > 0) {
+                                        itemsHtml += `<div class="mb-3">`;
+                                        irregularItems.forEach(item => {
+                                            let resolutionHtml = '';
+                                            if (item.resolution) {
+                                                resolutionHtml = `
                                             <div class="mt-2 text-success small border-top border-success border-opacity-25 pt-2">
                                                 <div class="d-flex align-items-center">
                                                     <i class="bi bi-check-circle-fill me-2"></i> 
@@ -661,9 +686,9 @@
                                                 ${item.resolution.notes ? `<div class="mt-1 ps-4 text-muted fst-italic">"${item.resolution.notes}"</div>` : ''}
                                             </div>
                                         `;
-                                    }
+                                            }
 
-                                    itemsHtml += `
+                                            itemsHtml += `
                                         <div class="p-3 bg-danger bg-opacity-10 rounded-3 mb-2 border border-danger border-opacity-10 position-relative">
                                             <div class="d-flex align-items-start">
                                                 <i class="bi bi-x-circle-fill text-danger mt-1 me-2"></i>
@@ -675,14 +700,14 @@
                                             </div>
                                         </div>
                                     `;
-                                });
-                                itemsHtml += `</div>`;
-                            }
+                                        });
+                                        itemsHtml += `</div>`;
+                                    }
 
-                            // Conformes
-                            if (compliantItems.length > 0) {
-                                const compliantNames = compliantItems.map(i => i.name).join(', ');
-                                itemsHtml += `
+                                    // Conformes
+                                    if (compliantItems.length > 0) {
+                                        const compliantNames = compliantItems.map(i => i.name).join(', ');
+                                        itemsHtml += `
                                     <div class="accordion accordion-flush mb-2" id="accordionFlush${audit.id}">
                                         <div class="accordion-item bg-transparent">
                                             <h2 class="accordion-header">
@@ -698,10 +723,10 @@
                                         </div>
                                     </div>
                                 `;
-                            }
-                        }
+                                    }
+                                }
 
-                        const html = `
+                                const html = `
                         <div class="timeline-premium-item d-flex position-relative pb-4">
                             <!-- Timeline Line -->
                             <div class="timeline-line-container d-flex flex-column align-items-center me-3" style="width: 40px; min-width: 40px;">
@@ -718,8 +743,8 @@
                                             <small class="text-muted">Auditado por <span class="text-primary fw-medium">${audit.analyst}</span></small>
                                         </div>
                                         ${audit.has_irregularities
-                                ? '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3"><i class="bi bi-exclamation-triangle me-1"></i> Irregular</span>'
-                                : '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3"><i class="bi bi-check-circle me-1"></i> Conforme</span>'}
+                                        ? '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3"><i class="bi bi-exclamation-triangle me-1"></i> Irregular</span>'
+                                        : '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3"><i class="bi bi-check-circle me-1"></i> Conforme</span>'}
                                     </div>
                                     <div class="p-3">
                                         ${itemsHtml}
@@ -728,293 +753,306 @@
                             </div>
                         </div>
                         `;
-                        timeline.insertAdjacentHTML('beforeend', html);
-                    });
+                                timeline.insertAdjacentHTML('beforeend', html);
+                            });
+                        }
+
+                        document.getElementById('historyLoading').classList.add('d-none');
+                        document.getElementById('historyContent').classList.remove('d-none');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    document.getElementById('historyTimeline').innerHTML = '<div class="alert alert-danger shadow-sm border-0"><i class="bi bi-exclamation-triangle-fill me-2"></i> Erro ao carregar histórico. Tente novamente.</div>';
+                    document.getElementById('historyLoading').classList.add('d-none');
+                    document.getElementById('historyContent').classList.remove('d-none');
+                }
+            }
+        </script>
+
+        <style>
+            .presence-badge {
+                display: inline-block;
+                transition: all 0.3s ease;
+            }
+
+            .presence-active {
+                background-color: #e0f2fe;
+                color: #0369a1;
+                border: 1px solid #bae6fd;
+                padding: 2px 8px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .presence-dot {
+                width: 6px;
+                height: 6px;
+                background-color: #0ea5e9;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
                 }
 
-                document.getElementById('historyLoading').classList.add('d-none');
-                document.getElementById('historyContent').classList.remove('d-none');
+                70% {
+                    transform: scale(1);
+                    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0);
+                }
+
+                100% {
+                    transform: scale(0.95);
+                    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+                }
             }
-        } catch (e) {
-            console.error(e);
-            document.getElementById('historyTimeline').innerHTML = '<div class="alert alert-danger shadow-sm border-0"><i class="bi bi-exclamation-triangle-fill me-2"></i> Erro ao carregar histórico. Tente novamente.</div>';
-            document.getElementById('historyLoading').classList.add('d-none');
-            document.getElementById('historyContent').classList.remove('d-none');
-        }
-    }
-</script>
 
-<style>
-    .presence-badge {
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
+            .page-header {
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #e9ecef;
+            }
 
-    .presence-active {
-        background-color: #e0f2fe;
-        color: #0369a1;
-        border: 1px solid #bae6fd;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
+            .page-header {
+                overflow: visible !important;
+                /* Fix dropdown clipping */
+            }
 
-    .presence-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #0ea5e9;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-    }
+            .stat-card.active-filter {
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) inset, 0 8px 30px rgba(0, 0, 0, 0.1) !important;
+                outline: 3px solid rgba(255, 255, 255, 0.5);
+            }
 
-    @keyframes pulse {
-        0% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
-        }
+            .fw-500 {
+                font-weight: 500;
+            }
 
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0);
-        }
+            .table-hover tbody tr:hover {
+                background-color: rgba(59, 130, 246, 0.05);
+            }
 
-        100% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
-        }
-    }
+            /* Ensure dropdown stays on top */
+            .dropdown-menu {
+                z-index: 1050 !important;
+            }
 
-    .page-header {
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .page-header {
-        overflow: visible !important;
-        /* Fix dropdown clipping */
-    }
-
-    .stat-card.active-filter {
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) inset, 0 8px 30px rgba(0, 0, 0, 0.1) !important;
-        outline: 3px solid rgba(255, 255, 255, 0.5);
-    }
-
-    .fw-500 {
-        font-weight: 500;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(59, 130, 246, 0.05);
-    }
-
-    /* Ensure dropdown stays on top */
-    .dropdown-menu {
-        z-index: 1050 !important;
-    }
-
-    .page-link.active {
-        background-color: var(--bs-primary);
-        color: white;
-    }
-</style>
-<script>
-    // JS Filter removed as search is now server-side
-</script>
-<!-- Modals de Resolução (Movidos para fora da tabela para evitar bugs de hover/z-index) -->
-{% for issue in pending_issues %}
-<div class="modal fade" id="resolveModal{{ issue.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <form action="{% url 'store_issue_resolve' issue.id %}" method="POST">
-                {% csrf_token %}
-                <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark">
-                        Resolver Pendências: {{ issue.store.code }}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body pt-4">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="p-3 bg-light rounded-3">
-                                <p class="mb-1 small text-muted text-uppercase">Loja</p>
-                                <p class="mb-0 fw-bold">{{ issue.store.code }}</p>
-                            </div>
+            .page-link.active {
+                background-color: var(--bs-primary);
+                color: white;
+            }
+        </style>
+        <script>
+            // JS Filter removed as search is now server-side
+        </script>
+        <!-- Modals de Resolução (Movidos para fora da tabela para evitar bugs de hover/z-index) -->
+        {% for issue in pending_issues %}
+        <div class="modal fade" id="resolveModal{{ issue.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-0 shadow-lg">
+                    <form action="{% url 'store_issue_resolve' issue.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold text-dark">
+                                Resolver Pendências: {{ issue.store.code }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="p-3 bg-light rounded-3">
-                                <p class="mb-1 small text-muted text-uppercase">Data da Auditoria</p>
-                                <p class="mb-0 fw-bold">{{ issue.created_at|date:"d/m/Y H:i" }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4" style="max-height: 500px; overflow-y: auto;">
-                        <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">Itens Irregulares</h6>
-
-                        {% for item in issue.items.all %}
-                        <div class="mb-4 p-3 border rounded-3 bg-light">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-danger bg-opacity-10 text-danger me-2">
-                                    {{ item.get_item_name_display }}
-                                </span>
-                            </div>
-
-                            <div class="p-3 border rounded-3 bg-white mb-3">
-                                <small class="text-muted d-block mb-1">Observações:</small>
-                                {{ item.description|default:"Sem observações." }}
-                            </div>
-
-                            {% if item.photo %}
-                            <div class="bg-dark rounded-3 overflow-hidden p-2 position-relative group">
-                                <a href="{{ item.photo.url }}" target="_blank" class="d-block text-center"
-                                    title="Clique para ampliar">
-                                    <img src="{{ item.photo.url }}" class="img-fluid rounded shadow-sm"
-                                        style="max-height: 300px; object-fit: contain;" alt="Evidência">
-                                </a>
-                                <div class="position-absolute bottom-0 end-0 m-3">
-                                    <div class="btn-group shadow">
-                                        <a href="{{ item.photo.url }}" target="_blank" class="btn btn-sm btn-light"
-                                            title="Ver tamanho original">
-                                            <i class="bi bi-arrows-fullscreen"></i>
-                                        </a>
-                                        <a href="{{ item.photo.url }}" download class="btn btn-sm btn-primary"
-                                            title="Baixar imagem">
-                                            <i class="bi bi-download"></i>
-                                        </a>
+                        <div class="modal-body pt-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="p-3 bg-light rounded-3">
+                                        <p class="mb-1 small text-muted text-uppercase">Loja</p>
+                                        <p class="mb-0 fw-bold">{{ issue.store.code }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="p-3 bg-light rounded-3">
+                                        <p class="mb-1 small text-muted text-uppercase">Data da Auditoria</p>
+                                        <p class="mb-0 fw-bold">{{ issue.created_at|date:"d/m/Y H:i" }}</p>
                                     </div>
                                 </div>
                             </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
 
-                    <!-- Campos de resolução -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-list-check me-1"></i> Etapa da Resolução
-                                <span class="text-danger">*</span></label>
-                            <select name="resolution_stage" class="form-select" required>
-                                <option value="" selected disabled>Selecione a etapa</option>
-                                <option value="pendente">Pendente</option>
-                                <option value="em_contato">Em Contato com Franqueado</option>
-                                <option value="aguardando_acao">Aguardando Ação do Franqueado</option>
-                                <option value="em_validacao">Em Validação</option>
-                                <option value="resolvida">Resolvida</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-chat-dots me-1"></i> Canal de Notificação
-                                <span class="text-danger">*</span></label>
-                            <select name="notification_channel" class="form-select" required>
-                                <option value="" selected disabled>Selecione o canal</option>
-                                <option value="whatsapp">WhatsApp</option>
-                                <option value="notificacao">Notificação/Email</option>
-                                <option value="ticket">Ticket</option>
-                                <option value="telefone">Telefone</option>
-                                <option value="presencial">Presencial</option>
-                            </select>
-                        </div>
-                    </div>
+                            <div class="mb-4" style="max-height: 500px; overflow-y: auto;">
+                                <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">Itens Irregulares</h6>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-success"><i class="bi bi-journal-check me-1"></i> Ações
-                            Tomadas / Notas de Resolução <span class="text-danger">*</span></label>
-                        <textarea name="gestor_notes" class="form-control border-success border-opacity-50" rows="4"
-                            required placeholder="Como esta pendência foi resolvida com o franqueado?"></textarea>
+                                {% for item in issue.items.all %}
+                                <div class="mb-4 p-3 border rounded-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-danger bg-opacity-10 text-danger me-2">
+                                            {{ item.get_item_name_display }}
+                                        </span>
+                                    </div>
+
+                                    <div class="p-3 border rounded-3 bg-white mb-3">
+                                        <small class="text-muted d-block mb-1">Observações:</small>
+                                        {{ item.description|default:"Sem observações." }}
+                                    </div>
+
+                                    {% if item.photo %}
+                                    <div class="bg-dark rounded-3 overflow-hidden p-2 position-relative group">
+                                        <a href="{{ item.photo.url }}" target="_blank" class="d-block text-center"
+                                            title="Clique para ampliar">
+                                            <img src="{{ item.photo.url }}" class="img-fluid rounded shadow-sm"
+                                                style="max-height: 300px; object-fit: contain;" alt="Evidência">
+                                        </a>
+                                        <div class="position-absolute bottom-0 end-0 m-3">
+                                            <div class="btn-group shadow">
+                                                <a href="{{ item.photo.url }}" target="_blank"
+                                                    class="btn btn-sm btn-light" title="Ver tamanho original">
+                                                    <i class="bi bi-arrows-fullscreen"></i>
+                                                </a>
+                                                <a href="{{ item.photo.url }}" download class="btn btn-sm btn-primary"
+                                                    title="Baixar imagem">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Campos de resolução -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-list-check me-1"></i> Etapa da
+                                        Resolução
+                                        <span class="text-danger">*</span></label>
+                                    <select name="resolution_stage" class="form-select" required>
+                                        <option value="" selected disabled>Selecione a etapa</option>
+                                        <option value="pendente">Pendente</option>
+                                        <option value="em_contato">Em Contato com Franqueado</option>
+                                        <option value="aguardando_acao">Aguardando Ação do Franqueado</option>
+                                        <option value="em_validacao">Em Validação</option>
+                                        <option value="resolvida">Resolvida</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-chat-dots me-1"></i> Canal de
+                                        Notificação
+                                        <span class="text-danger">*</span></label>
+                                    <select name="notification_channel" class="form-select" required>
+                                        <option value="" selected disabled>Selecione o canal</option>
+                                        <option value="whatsapp">WhatsApp</option>
+                                        <option value="notificacao">Notificação/Email</option>
+                                        <option value="ticket">Ticket</option>
+                                        <option value="telefone">Telefone</option>
+                                        <option value="presencial">Presencial</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-success"><i class="bi bi-journal-check me-1"></i>
+                                    Ações
+                                    Tomadas / Notas de Resolução <span class="text-danger">*</span></label>
+                                <textarea name="gestor_notes" class="form-control border-success border-opacity-50"
+                                    rows="4" required
+                                    placeholder="Como esta pendência foi resolvida com o franqueado?"></textarea>
+                            </div>
+                        </div>
+                        <div
+                            class="modal-footer border-top-0 pt-0 pb-4 d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-2">
+                                {% if user.role in 'gestor,administrador' %}
+                                <a href="{% url 'store_issue_edit' issue.id %}"
+                                    class="btn btn-outline-primary rounded-3">
+                                    <i class="bi bi-pencil me-1"></i> Editar
+                                </a>
+                                <a href="{% url 'store_issue_delete' issue.id %}"
+                                    class="btn btn-outline-danger rounded-3">
+                                    <i class="bi bi-trash3 me-1"></i> Excluir
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-light rounded-3 px-4"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-warning fw-bold rounded-3 px-4">
+                                    <i class="bi bi-check-lg me-1"></i> Confirmar Resolução
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Novo Modal: Escolha de Canal de Notificação -->
+        <div class="modal fade" id="notifyModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title"><i class="bi bi-send me-2"></i> Notificar Franqueado</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-3">Escolha o canal para notificar o franqueado sobre a irregularidade:</p>
+
+                        <div class="d-grid gap-2">
+                            <button
+                                class="btn btn-lg btn-outline-success d-flex align-items-center justify-content-between"
+                                onclick="chooseWhatsApp()">
+                                <span><i class="bi bi-whatsapp me-2"></i> WhatsApp</span>
+                                <span class="badge bg-success">Recomendado</span>
+                            </button>
+
+                            <button
+                                class="btn btn-lg btn-outline-primary d-flex align-items-center justify-content-center"
+                                onclick="chooseTicket()">
+                                <i class="bi bi-ticket me-2"></i> Criar Ticket
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top-0 pt-0 pb-4 d-flex justify-content-between align-items-center">
-                    <div class="d-flex gap-2">
-                        {% if user.role in 'gestor,administrador' %}
-                        <a href="{% url 'store_issue_edit' issue.id %}" class="btn btn-outline-primary rounded-3">
-                            <i class="bi bi-pencil me-1"></i> Editar
-                        </a>
-                        <a href="{% url 'store_issue_delete' issue.id %}" class="btn btn-outline-danger rounded-3">
-                            <i class="bi bi-trash3 me-1"></i> Excluir
-                        </a>
-                        {% endif %}
+            </div>
+        </div>
+
+        <!-- Modal WhatsApp: Definir Prazo -->
+        <div class="modal fade" id="whatsappModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-success text-white border-0">
+                        <h5 class="modal-title"><i class="bi bi-whatsapp me-2"></i> Notificação via WhatsApp</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light rounded-3 px-4"
-                            data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-warning fw-bold rounded-3 px-4">
-                            <i class="bi bi-check-lg me-1"></i> Confirmar Resolução
+                    <div class="modal-body p-4">
+                        <p class="mb-3">Defina o prazo para resolução via WhatsApp:</p>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Prazo</label>
+                            <select id="whatsappDeadline" class="form-select">
+                                <option value="24">24 horas</option>
+                                <option value="48" selected>48 horas (Recomendado)</option>
+                            </select>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Um timer será iniciado. Se não resolvido no prazo, você poderá escalonar para ticket.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" onclick="startWhatsAppNotification()">
+                            <i class="bi bi-clock me-1"></i> Iniciar Timer
                         </button>
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endfor %}
-
-<!-- Novo Modal: Escolha de Canal de Notificação -->
-<div class="modal fade" id="notifyModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title"><i class="bi bi-send me-2"></i> Notificar Franqueado</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="mb-3">Escolha o canal para notificar o franqueado sobre a irregularidade:</p>
-
-                <div class="d-grid gap-2">
-                    <button class="btn btn-lg btn-outline-success d-flex align-items-center justify-content-between"
-                        onclick="chooseWhatsApp()">
-                        <span><i class="bi bi-whatsapp me-2"></i> WhatsApp</span>
-                        <span class="badge bg-success">Recomendado</span>
-                    </button>
-
-                    <button class="btn btn-lg btn-outline-primary d-flex align-items-center justify-content-center"
-                        onclick="chooseTicket()">
-                        <i class="bi bi-ticket me-2"></i> Criar Ticket
-                    </button>
-                </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Modal WhatsApp: Definir Prazo -->
-<div class="modal fade" id="whatsappModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0">
-                <h5 class="modal-title"><i class="bi bi-whatsapp me-2"></i> Notificação via WhatsApp</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="mb-3">Defina o prazo para resolução via WhatsApp:</p>
+    </div> <!-- End Lists Tab -->
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Prazo</label>
-                    <select id="whatsappDeadline" class="form-select">
-                        <option value="24">24 horas</option>
-                        <option value="48" selected>48 horas (Recomendado)</option>
-                    </select>
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Um timer será iniciado. Se não resolvido no prazo, você poderá escalonar para ticket.
-                    </small>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success" onclick="startWhatsAppNotification()">
-                    <i class="bi bi-clock me-1"></i> Iniciar Timer
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+</div> <!-- End Tab Content -->
 
 <!-- Modal Ticket: Criar Ticket -->
 <div class="modal fade" id="ticketModal" tabindex="-1" aria-hidden="true">
@@ -1408,7 +1446,8 @@
 
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
                         <i class="bi bi-lightbulb me-1"></i>
-                        O sistema irá selecionar lojas <strong>aleatórias</strong> que ainda não estão atribuídas a
+                        O sistema irá selecionar lojas <strong>aleatórias</strong> que ainda não estão
+                        atribuídas a
                         nenhum analista.
                     </div>
                 </div>
@@ -1432,7 +1471,8 @@
 
                     <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 mt-3">
                         <i class="bi bi-info-circle me-1"></i>
-                        Confira se as lojas selecionadas estão corretas. Você pode gerar uma nova seleção aleatória
+                        Confira se as lojas selecionadas estão corretas. Você pode gerar uma nova seleção
+                        aleatória
                         clicando em "Gerar Novamente".
                     </div>
                 </div>
