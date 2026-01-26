@@ -36,7 +36,8 @@
                 <form method="GET" class="d-flex align-items-center">
                     {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
 
-                    <!-- Scope Toggle -->
+                    <!-- Scope Toggle (Analysts Only) -->
+                    {% if user.role == 'analista' %}
                     <div class="btn-group me-2" role="group" aria-label="Escopo">
                         <a href="?scope=my_stores{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
                             class="btn btn-outline-primary {% if scope == 'my_stores' %}active{% endif %}"
@@ -49,6 +50,7 @@
                             <i class="bi bi-grid"></i> Todas
                         </a>
                     </div>
+                    {% endif %}
 
                     <div class="input-group" style="width: 320px;">
                         <input type="text" class="form-control" name="q" id="storeSearch"
@@ -224,32 +226,20 @@
 
                     <!-- Tabela de Atribuições (Gestor) -->
                     {% if user.role in 'gestor,administrador' %}
-                    <div id="assignmentsList">
-                        <p class="text-muted">
-                            <i class="bi bi-lightbulb me-1"></i>
-                            Atribua lojas a analistas para definir metas semanais de auditoria.
+                    <div id="analystManagementSection">
+                        <p class="text-muted mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Visão geral do desempenho e atribuições dos analistas.
                         </p>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th>Analista</th>
-                                        <th>Loja</th>
-                                        <th>Meta Semanal</th>
-                                        <th>Progresso</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="assignmentsTableBody">
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4">
-                                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                                <span class="visually-hidden">Carregando...</span>
-                                            </div>
-                                            <p class="text-muted mt-2">Carregando atribuições...</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                        <!-- Analyst Cards Grid -->
+                        <div id="analystsGrid" class="row g-3">
+                            <div class="col-12 text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="text-muted mt-2">Carregando dados dos analistas...</p>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -1869,6 +1859,166 @@
         }
     }
     {% endif %}
+</script>
+
+<!-- Analyst Detail Modal -->
+<div class="modal fade" id="analystDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle text-primary"></i>
+                    <span id="analystModalName">Analista</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 bg-light text-center h-100">
+                            <h3 class="mb-0 fw-bold text-primary" id="modalTotalStores">-</h3>
+                            <small class="text-muted">Lojas Atribuídas</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 bg-light text-center h-100">
+                            <h3 class="mb-0 fw-bold text-success" id="modalWeeklyAudited">-</h3>
+                            <small class="text-muted">Auditadas (Semana)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 bg-light text-center h-100">
+                            <h3 class="mb-0 fw-bold text-warning" id="modalPending">-</h3>
+                            <small class="text-muted">Pendentes</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 bg-light text-center h-100">
+                            <h3 class="mb-0 fw-bold text-info" id="modalDailyAudited">-</h3>
+                            <small class="text-muted">Auditadas (Hoje)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Lojas sob Responsabilidade</h6>
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover table-sm align-middle">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th>Loja</th>
+                                <th>Cidade</th>
+                                <th>Status</th>
+                                <th>Última Auditoria</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalStoresTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAnalystOverview();
+    });
+
+    async function loadAnalystOverview() {
+        const grid = document.getElementById('analystsGrid');
+        if (!grid) return; // Only if element exists (Manager view)
+
+        try {
+            const response = await fetch('/core/api/store-verification/analyst/overview/');
+            const data = await response.json();
+
+            if (data.success) {
+                grid.innerHTML = '';
+                if (data.analysts.length === 0) {
+                    grid.innerHTML = '<div class="col-12 text-center text-muted">Nenhum analista encontrado.</div>';
+                    return;
+                }
+
+                data.analysts.forEach(analyst => {
+                    const isAttention = analyst.is_attention;
+                    const borderClass = isAttention ? 'border-warning border-2' : 'border-0';
+                    const bgClass = isAttention ? 'bg-warning bg-opacity-10' : 'bg-white';
+
+                    const cardHtml = `
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="card h-100 shadow-sm ${borderClass} cursor-pointer hover-shadow transition-all" 
+                                         onclick='openAnalystModal(${JSON.stringify(analyst).replace(/'/g, "&#39;")})'
+                                         style="cursor: pointer; transition: transform 0.2s;">
+                                        <div class="card-body ${bgClass}">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                                    ${analyst.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-truncate" style="max-width: 150px;" title="${analyst.name}">${analyst.name}</h6>
+                                                    <small class="text-muted">${analyst.stats.total_stores} Lojas</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <div class="d-flex justify-content-between small mb-1">
+                                                    <span>Semana</span>
+                                                    <span class="fw-bold ${analyst.stats.weekly_progress_pct >= 100 ? 'text-success' : 'text-primary'}">${analyst.stats.weekly_audited}/${analyst.stats.weekly_target}</span>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar ${isAttention ? 'bg-warning' : 'bg-success'}" role="progressbar" style="width: ${analyst.stats.weekly_progress_pct}%"></div>
+                                                </div>
+                                            </div>
+
+                                            ${isAttention ? `
+                                            <div class="d-flex align-items-center text-warning small mt-2">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Atenção: Meta diária
+                                            </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                    grid.insertAdjacentHTML('beforeend', cardHtml);
+                });
+            }
+        } catch (e) {
+            console.error("Erro ao carregar analistas", e);
+            grid.innerHTML = '<div class="col-12 text-center text-danger">Erro ao carregar dados.</div>';
+        }
+    }
+
+    function openAnalystModal(analyst) {
+        document.getElementById('analystModalName').textContent = analyst.name;
+        document.getElementById('modalTotalStores').textContent = analyst.stats.total_stores;
+        document.getElementById('modalWeeklyAudited').textContent = analyst.stats.weekly_audited;
+        document.getElementById('modalPending').textContent = analyst.stats.pending_weekly;
+        document.getElementById('modalDailyAudited').textContent = analyst.stats.today_audits;
+
+        const tbody = document.getElementById('modalStoresTableBody');
+        tbody.innerHTML = '';
+
+        analyst.stores.forEach(store => {
+            let statusBadge = '';
+            if (store.status === 'Conforme') statusBadge = '<span class="badge bg-success bg-opacity-10 text-success">Conforme</span>';
+            else if (store.status === 'Irregular') statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger">Irregular</span>';
+            else statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary">Pendente</span>';
+
+            const row = `
+                        <tr>
+                            <td class="fw-bold">${store.code}</td>
+                            <td>${store.city}</td>
+                            <td>${statusBadge}</td>
+                            <td class="small text-muted">${store.last_audit}</td>
+                        </tr>
+                    `;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
+
+        new bootstrap.Modal(document.getElementById('analystDetailModal')).show();
+    }
 </script>
 
 {% endblock %}

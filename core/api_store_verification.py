@@ -652,3 +652,99 @@ def api_get_analyst_dashboard(request):
             'days_remaining': days_remaining
         }
     })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_analysts_overview(request):
+    """
+    Retorna visão geral de todos os analistas para os cards de gestão
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+        
+    try:
+        # 1. Buscar todos os analistas
+        analysts = User.objects.filter(role='analista', ativo=True).order_by('first_name')
+        
+        # 2. Buscar dados de auditoria e atribuições
+        overview_data = []
+        
+        today = timezone.now().date()
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        for analyst in analysts:
+            # Atribuições ativas
+            assignments = AnalystAssignment.objects.filter(
+                analyst=analyst,
+                active=True
+            ).select_related('store')
+            
+            total_stores = assignments.count()
+            assigned_stores_list = []
+            
+            # Calcular progresso semanal
+            weekly_audited = 0
+            weekly_target_total = 0
+            
+            for ass in assignments:
+                prog = ass.get_weekly_progress()
+                # Status da loja para o detalhe
+                assigned_stores_list.append({
+                    'code': ass.store.code,
+                    'city': ass.store.city,
+                    'last_audit': ass.store.last_audit_date.strftime('%d/%m/%Y') if ass.store.last_audit_date else 'Nunca',
+                    'status': 'Conforme' if ass.store.last_audit_result == 'conforme' else 'Irregular' if ass.store.last_audit_result == 'irregular' else 'Pendente',
+                    'audited_this_week': prog['completed'] > 0
+                })
+                
+                weekly_audited += prog['completed']
+                weekly_target_total += prog['target']
+            
+            # Auditorias de hoje
+            today_audits = StoreAudit.objects.filter(
+                analyst=analyst,
+                created_at__gte=today_start
+            ).count()
+            
+            # Meta diária dinâmica (regra de negócio: total / 5 dias úteis aprox, ou fixo)
+            # Vamos usar: Se tem lojas, meta é pelo menos 1 ou 20% do total
+            daily_target = max(1, round(total_stores / 5)) if total_stores > 0 else 0
+            
+            # Status de Atenção
+            # Se for tarde do dia (ex: > 16h) e progresso < 80% da meta, ou se for fim do dia e < 100%
+            is_attention = False
+            current_hour = timezone.now().hour
+            
+            if daily_target > 0:
+                progress_pct = (today_audits / daily_target) * 100
+                if current_hour >= 16 and progress_pct < 100:
+                    is_attention = True
+            
+            # Ordenar lojas alfabeticamente
+            assigned_stores_list.sort(key=lambda x: x['code'])
+            
+            overview_data.append({
+                'id': analyst.id,
+                'name': analyst.get_full_name() or analyst.username or f"Analista {analyst.id}",
+                'photo_url': analyst.profile_image.url if hasattr(analyst, 'profile_image') and analyst.profile_image else None,
+                'stats': {
+                    'total_stores': total_stores,
+                    'weekly_audited': weekly_audited,
+                    'weekly_target': weekly_target_total,
+                    'weekly_progress_pct': round((weekly_audited / weekly_target_total * 100), 1) if weekly_target_total > 0 else 0,
+                    'today_audits': today_audits,
+                    'daily_target': daily_target,
+                    'pending_weekly': max(0, weekly_target_total - weekly_audited)
+                },
+                'is_attention': is_attention,
+                'stores': assigned_stores_list
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'analysts': overview_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
