@@ -2310,6 +2310,18 @@ def verificacao_lojas(request):
     ok_store_ids = verified_store_ids - irregular_store_ids
     
     # 3. Apply Filters
+    # Scope Filter (My Stores vs All Stores)
+    scope = request.GET.get('scope', 'all')
+    if scope == 'my_stores' and request.user.is_authenticated:
+        # Import dynamically to avoid circular dependency
+        from .models import AnalystAssignment 
+        my_store_ids = AnalystAssignment.objects.filter(
+            analyst=request.user, 
+            active=True
+        ).values_list('store_id', flat=True)
+        stores_queryset = stores_queryset.filter(id__in=my_store_ids)
+
+    # Status Filter
     filter_type = request.GET.get('filter')
     if filter_type == 'verified':
         stores_queryset = stores_queryset.filter(id__in=verified_store_ids)
@@ -2392,6 +2404,9 @@ def verificacao_lojas(request):
         'title': 'Verificação de Lojas',
         'stores': page_obj, # Now passing the Page object
         'total_stores': total_stores,
+        'scope': scope, # Passed to template for filter state
+        'filter_type': filter_type, # Ensure this is passed too
+        'search_query': search_query, # Ensure this is passed too
         'verified_count': verified_count,
         'ok_count': ok_count,
         'irregular_count': irregular_count,

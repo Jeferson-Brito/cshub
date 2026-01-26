@@ -632,6 +632,9 @@ def api_get_analyst_dashboard(request):
     days_until_sunday = (6 - today.weekday()) % 7  # Dias até domingo
     days_remaining = days_until_sunday if days_until_sunday > 0 else 0
     
+    # Meta Diária (Total / 6 dias úteis)
+    daily_target = max(1, round(total_stores / 6)) if total_stores > 0 else 0
+    
     return JsonResponse({
         'success': True,
         'analyst': {
@@ -645,6 +648,7 @@ def api_get_analyst_dashboard(request):
             'progress_percentage': round(percentage, 1),
             'pending': total_target - total_audited,
             'today_audits': today_audits,
+            'daily_target': daily_target,
             'days_remaining': days_remaining
         }
     })

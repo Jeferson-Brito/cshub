@@ -35,10 +35,26 @@
                 {% endif %}
                 <form method="GET" class="d-flex align-items-center">
                     {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
+
+                    <!-- Scope Toggle -->
+                    <div class="btn-group me-2" role="group" aria-label="Escopo">
+                        <a href="?scope=my_stores{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                            class="btn btn-outline-primary {% if scope == 'my_stores' %}active{% endif %}"
+                            title="Minhas Lojas">
+                            <i class="bi bi-person-check"></i> Minhas
+                        </a>
+                        <a href="?scope=all{% if filter_type %}&filter={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                            class="btn btn-outline-primary {% if scope != 'my_stores' %}active{% endif %}"
+                            title="Todas as Lojas">
+                            <i class="bi bi-grid"></i> Todas
+                        </a>
+                    </div>
+
                     <div class="input-group" style="width: 320px;">
                         <input type="text" class="form-control" name="q" id="storeSearch"
                             placeholder="Buscar loja (Cód, Cidade...)" value="{{ search_query|default:'' }}"
                             style="border-radius: 8px 0 0 8px; border: 1px solid #e2e8f0;">
+                        <input type="hidden" name="scope" value="{{ scope|default:'all' }}">
                         <button type="submit" class="btn btn-primary" style="border-radius: 0 8px 8px 0;">
                             <i class="bi bi-search"></i>
                         </button>
@@ -118,22 +134,29 @@
             {% if user.role == 'analista' %}
             <div id="analystDashboard">
                 <div class="row mb-3">
-                    <div class="col-md-4">
-                        <div class="text-center p-3 bg-light rounded">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded h-100">
                             <i class="bi bi-shop text-primary" style="font-size: 2rem;"></i>
                             <h3 class="mt-2 mb-0" id="totalStores">-</h3>
                             <small class="text-muted">Lojas Atribuídas</small>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-3 bg-light rounded">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded h-100">
+                            <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                            <h3 class="mt-2 mb-0" id="dailyTarget">-</h3>
+                            <small class="text-muted">Meta Diária</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded h-100">
                             <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
                             <h3 class="mt-2 mb-0" id="auditedCount">-</h3>
                             <small class="text-muted">Auditadas esta Semana</small>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="text-center p-3 bg-light rounded">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded h-100">
                             <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
                             <h3 class="mt-2 mb-0" id="progressPercentage">-</h3>
                             <small class="text-muted">Progresso da Meta</small>
@@ -1452,6 +1475,7 @@
             if (data.success) {
                 // Atualizar métricas
                 document.getElementById('totalStores').textContent = data.metrics.total_stores;
+                document.getElementById('dailyTarget').textContent = data.metrics.daily_target;
                 document.getElementById('auditedCount').textContent = data.metrics.total_audited;
                 document.getElementById('progressPercentage').textContent = data.metrics.progress_percentage + '%';
                 document.getElementById('progressText').textContent = `${data.metrics.total_audited}/${data.metrics.total_target}`;
