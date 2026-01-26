@@ -665,7 +665,7 @@ def api_get_analysts_overview(request):
         
     try:
         # 1. Buscar todos os analistas
-        analysts = User.objects.filter(role='analista', ativo=True).order_by('first_name')
+        analysts = User.objects.filter(role='analista', ativo=True, department__name='NRS Suporte').order_by('first_name')
         
         # 2. Buscar dados de auditoria e atribuições
         overview_data = []

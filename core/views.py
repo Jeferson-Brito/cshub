@@ -2417,7 +2417,12 @@ def verificacao_lojas(request):
         pending_paginator = Paginator(pending_issues_queryset, 10)
         pending_page_number = request.GET.get('pending_page', 1)
         pending_issues_page = pending_paginator.get_page(pending_page_number)
+        pending_page_number = request.GET.get('pending_page', 1)
+        pending_issues_page = pending_paginator.get_page(pending_page_number)
         pending_issues = pending_issues_page.object_list
+        pending_issues_count = pending_paginator.count
+    else:
+        pending_issues_count = 0
 
     context = {
         'title': 'Verificação de Lojas',
@@ -2436,7 +2441,8 @@ def verificacao_lojas(request):
         'pending_issues_page': pending_issues_page,  # Objeto de paginação
         'irregular_store_ids': irregular_store_ids,
         'play_sound': request.session.pop('play_irregularity_sound', False),
-        'search_query': search_query
+        'search_query': search_query,
+        'pending_issues_count': pending_issues_count,
     }
     return render(request, 'core/verificacao_lojas.html', context)
 
