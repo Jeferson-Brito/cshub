@@ -377,6 +377,32 @@ def api_get_analyst_assignments(request):
 
 
 @login_required
+@require_http_methods(["GET"])
+def api_get_all_assignments(request):
+    """
+    Retorna TODAS as atribuições ativas (apenas gestor/admin)
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    assignments = AnalystAssignment.objects.filter(active=True).select_related('analyst', 'store').order_by('analyst__first_name', 'store__code')
+    
+    result = []
+    for assignment in assignments:
+        progress = assignment.get_weekly_progress()
+        result.append({
+            'id': assignment.id,
+            'analyst_name': assignment.analyst.get_full_name() or assignment.analyst.username,
+            'store_code': assignment.store.code,
+            'store_city': assignment.store.city,
+            'weekly_target': assignment.weekly_target,
+            'progress': progress
+        })
+    
+    return JsonResponse({'success': True, 'assignments': result})
+
+
+@login_required
 @require_http_methods(["POST"])
 def api_assign_store_to_analyst(request):
     """
