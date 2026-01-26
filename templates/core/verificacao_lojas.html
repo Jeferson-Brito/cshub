@@ -72,64 +72,53 @@
         </div>
     </div>
 
-    <!-- Dashboard Cards (Acting as Tabs) -->
-    <div class="row mb-4">
-        <!-- Total Stores Tab -->
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?tab=all{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
-                <div class="stat-card stat-card-info {% if tab == 'all' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-shop"></i></div>
-                    <p class="stat-card-title">Total de Lojas</p>
-                    <h2 class="stat-card-value">{{ total_stores }}</h2>
-                </div>
+    <!-- Tab Navigation Menu -->
+    <ul class="nav nav-tabs nav-fill mb-4 border-bottom-0" id="verificationTabs" role="tablist">
+        <!-- Gestão/Metas Tab -->
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'management' %}active fw-bold{% endif %} py-3"
+                href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}"
+                style="border-radius: 12px 12px 0 0; {% if tab == 'management' %}border-top: 3px solid #0d6efd;{% endif %}">
+                {% if user.role in 'gestor,administrador' %}
+                <i class="bi bi-people me-2"></i>Gestão de Analistas
+                {% else %}
+                <i class="bi bi-trophy me-2"></i>Minhas Metas
+                {% endif %}
             </a>
-        </div>
-        <!-- Gestão Tab -->
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
-                <div class="stat-card stat-card-primary {% if tab == 'management' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-people"></i></div>
-                    <p class="stat-card-title">Gestão</p>
-                    <h2 class="stat-card-value">Analistas</h2>
-                </div>
-            </a>
-        </div>
+        </li>
 
         <!-- Irregular Tab -->
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
-                <div class="stat-card stat-card-warning {% if tab == 'irregular' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                    <p class="stat-card-title">Irregularidades</p>
-                    <h2 class="stat-card-value">{{ irregular_count }}</h2>
-                </div>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'irregular' %}active fw-bold{% endif %} py-3"
+                href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}"
+                style="border-radius: 12px 12px 0 0; {% if tab == 'irregular' %}border-top: 3px solid #ffc107;{% endif %}">
+                <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Lojas com Irregularidades
+                <span class="badge rounded-pill bg-warning text-dark ms-2">{{ irregular_count }}</span>
             </a>
-        </div>
+        </li>
 
         <!-- Verified Tab -->
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
-                <div class="stat-card stat-card-success {% if tab == 'verified' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-clipboard-check"></i></div>
-                    <p class="stat-card-title">Verificadas</p>
-                    <h2 class="stat-card-value">{{ verified_count }}</h2>
-                </div>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'verified' %}active fw-bold{% endif %} py-3"
+                href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}"
+                style="border-radius: 12px 12px 0 0; {% if tab == 'verified' %}border-top: 3px solid #198754;{% endif %}">
+                <i class="bi bi-check-circle me-2 text-success"></i>Lojas Verificadas
+                <span class="badge rounded-pill bg-success ms-2">{{ verified_count }}</span>
             </a>
-        </div>
+        </li>
 
         <!-- Suspended Tab -->
         {% if user.role in 'gestor,administrador' %}
-        <div class="col-6 col-lg-3 mb-3">
-            <a href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}" class="text-decoration-none">
-                <div class="stat-card stat-card-secondary {% if tab == 'suspended' %}active-filter{% endif %}">
-                    <div class="stat-card-icon"><i class="bi bi-pause-circle"></i></div>
-                    <p class="stat-card-title">Suspensas</p>
-                    <h2 class="stat-card-value">{{ suspended_count|default:0 }}</h2>
-                </div>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'suspended' %}active fw-bold{% endif %} py-3"
+                href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}"
+                style="border-radius: 12px 12px 0 0; {% if tab == 'suspended' %}border-top: 3px solid #6c757d;{% endif %}">
+                <i class="bi bi-pause-circle me-2 text-secondary"></i>Lojas Suspensas
+                <span class="badge rounded-pill bg-secondary ms-2">{{ suspended_count|default:0 }}</span>
             </a>
-        </div>
+        </li>
         {% endif %}
-    </div>
+    </ul>
 
     <!-- Tab Content -->
     <div class="tab-content" id="verificationTabsContent">
@@ -408,7 +397,7 @@
 
 
     <!-- Tabs for Verified/Suspended/All (Lists) -->
-    <div class="tab-pane fade {% if tab == 'verified' or tab == 'suspended' or tab == 'irregular' or tab == 'all' %}show active{% endif %}"
+    <div class="tab-pane fade {% if tab == 'verified' or tab == 'suspended' or tab == 'all' %}show active{% endif %}"
         id="lists" role="tabpanel">
 
         <!-- Stores List -->
@@ -1931,7 +1920,7 @@
         if (!grid) return; // Only if element exists (Manager view)
 
         try {
-            const response = await fetch('/core/api/store-verification/analyst/overview/');
+            const response = await fetch('/api/store-verification/analyst/overview/');
             const data = await response.json();
 
             if (data.success) {
