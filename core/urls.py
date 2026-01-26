@@ -11,6 +11,7 @@ from . import api_refunds
 from . import api_stores
 from . import api_chat
 from . import api_kanban
+from . import api_store_verification
 from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
@@ -162,6 +163,19 @@ urlpatterns = [
     path('api/stores/<int:store_id>/presence/', api_stores.api_store_presence_list, name='api_store_presence_list'),
     path('api/stores/<int:store_id>/presence/leave/', api_stores.api_store_presence_leave, name='api_store_presence_leave'),
     path('api/stores/<int:store_id>/history/', api_stores.api_store_audit_history, name='api_store_audit_history'),
+    
+    # Store Verification APIs - Notificações e Timers
+    path('api/store-verification/issue/<int:issue_id>/notify/', api_store_verification.api_notify_franchisee, name='api_notify_franchisee'),
+    path('api/store-verification/issue/<int:issue_id>/whatsapp/start/', api_store_verification.api_start_whatsapp_notification, name='api_start_whatsapp_notification'),
+    path('api/store-verification/issue/<int:issue_id>/ticket/create/', api_store_verification.api_create_ticket_from_issue, name='api_create_ticket_from_issue'),
+    path('api/store-verification/issue/<int:issue_id>/resolve/', api_store_verification.api_mark_issue_resolved, name='api_mark_issue_resolved'),
+    path('api/store-verification/issue/<int:issue_id>/timer/status/', api_store_verification.api_get_timer_status, name='api_get_timer_status'),
+    path('api/store-verification/issue/<int:issue_id>/escalate/', api_store_verification.api_escalate_to_ticket, name='api_escalate_to_ticket'),
+    
+    # Store Verification APIs - Gestão de Analistas
+    path('api/store-verification/analyst/assignments/', api_store_verification.api_get_analyst_assignments, name='api_get_analyst_assignments'),
+    path('api/store-verification/analyst/assign/', api_store_verification.api_assign_store_to_analyst, name='api_assign_store_to_analyst'),
+    path('api/store-verification/analyst/dashboard/', api_store_verification.api_get_analyst_dashboard, name='api_get_analyst_dashboard'),
     
     # Chat
     path('chat/', views.chat_view, name='chat'),

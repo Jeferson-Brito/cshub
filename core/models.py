@@ -746,7 +746,10 @@ class StoreAuditIssue(models.Model):
     """Solicitação de resolução para itens irregulares de uma loja"""
     STATUS_CHOICES = [
         ('aberta', 'Aberta'),
+        ('notificado_whatsapp', 'Notificado (WhatsApp)'),
+        ('notificado_ticket', 'Notificado (Ticket)'),
         ('resolvida', 'Resolvida'),
+        ('verificado', 'Verificado'),
     ]
     
     RESOLUTION_STAGE_CHOICES = [
@@ -765,18 +768,38 @@ class StoreAuditIssue(models.Model):
         ('presencial', 'Presencial'),
     ]
     
+    PRIORITY_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+    ]
+    
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='audit_issues', null=True, blank=True)
     gestor_notes = models.TextField(blank=True, verbose_name="Notas do Gestor")
     resolved_at = models.DateTimeField(null=True, blank=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_audit_issues')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberta')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='aberta')
     notified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # Novos campos para rastreamento de resolução
+    # Campos para rastreamento de resolução
     resolution_stage = models.CharField(max_length=30, choices=RESOLUTION_STAGE_CHOICES, default='pendente', verbose_name="Etapa da Resolução")
     notification_channel = models.CharField(max_length=20, choices=NOTIFICATION_CHANNEL_CHOICES, blank=True, null=True, verbose_name="Canal de Notificação")
     resolution_history = models.JSONField(default=list, blank=True, verbose_name="Histórico de Resolução")
+    
+    # Campos para WhatsApp Timer
+    deadline_hours = models.IntegerField(null=True, blank=True, verbose_name="Prazo em Horas", help_text="24-48 horas para WhatsApp")
+    deadline_datetime = models.DateTimeField(null=True, blank=True, verbose_name="Data/Hora Limite")
+    timer_started_at = models.DateTimeField(null=True, blank=True, verbose_name="Timer Iniciado Em")
+    timer_ended_at = models.DateTimeField(null=True, blank=True, verbose_name="Timer Encerrado Em")
+    auto_escalated = models.BooleanField(default=False, verbose_name="Escalonado Automaticamente")
+    escalation_question_shown = models.BooleanField(default=False, verbose_name="Pergunta de Escalonamento Exibida")
+    
+    # Campos para Ticket
+    ticket_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="ID do Ticket")
+    ticket_priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='media', verbose_name="Prioridade do Ticket")
+    ticket_responsible = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ticket_responsible_issues', verbose_name="Responsável pelo Ticket")
+    ticket_notes = models.TextField(blank=True, verbose_name="Observações do Ticket")
     
     class Meta:
         ordering = ['-created_at']
@@ -785,6 +808,38 @@ class StoreAuditIssue(models.Model):
 
     def __str__(self):
         return f"Pendência: {self.store.code} ({self.get_status_display()})"
+    
+    def get_time_remaining(self):
+        """Retorna o tempo restante em segundos (usado para o timer)"""
+        from django.utils import timezone
+        if self.deadline_datetime and self.status == 'notificado_whatsapp':
+            now = timezone.now()
+            if self.deadline_datetime > now:
+                delta = self.deadline_datetime - now
+                return delta.total_seconds()
+            return 0
+        return None
+    
+    def is_deadline_passed(self):
+        """Verifica se o prazo foi ultrapassado"""
+        from django.utils import timezone
+        if self.deadline_datetime:
+            return timezone.now() > self.deadline_datetime
+        return False
+    
+    def get_progress_percentage(self):
+        """Retorna a porcentagem do timer que já passou"""
+        if not self.timer_started_at or not self.deadline_datetime:
+            return 0
+        from django.utils import timezone
+        now = timezone.now()
+        total_time = (self.deadline_datetime - self.timer_started_at).total_seconds()
+        elapsed_time = (now - self.timer_started_at).total_seconds()
+        if total_time <= 0:
+            return 100
+        percentage = (elapsed_time / total_time) * 100
+        return min(100, max(0, percentage))
+
 
 
 class StoreViewerSession(models.Model):
@@ -813,7 +868,48 @@ class StoreViewerSession(models.Model):
         viewers = cls.objects.filter(store=store, last_heartbeat__gte=cutoff)
         if exclude_user:
             viewers = viewers.exclude(user=exclude_user)
-        return viewers
+
+
+class AnalystAssignment(models.Model):
+    """Atribuição de lojas a analistas para verificação"""
+    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_assignments')
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='analyst_assignments')
+    weekly_target = models.IntegerField(default=1, verbose_name="Meta Semanal", help_text="Quantas vezes por semana deve auditar")
+    active = models.BooleanField(default=True, verbose_name="Ativo")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['analyst', 'store']
+        ordering = ['analyst', 'store__code']
+        verbose_name = "Atribuição de Analista"
+        verbose_name_plural = "Atribuições de Analistas"
+    
+    def __str__(self):
+        return f"{self.analyst.get_full_name() or self.analyst.username} → {self.store.code}"
+    
+    def get_weekly_progress(self):
+        """Retorna o progresso semanal de auditorias para esta loja"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Calcula o início da semana (segunda-feira)
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
+        
+        # Conta auditorias feitas nesta semana
+        audits_this_week = StoreAudit.objects.filter(
+            analyst=self.analyst,
+            store=self.store,
+            created_at__gte=start_datetime
+        ).count()
+        
+        return {
+            'completed': audits_this_week,
+            'target': self.weekly_target,
+            'percentage': (audits_this_week / self.weekly_target * 100) if self.weekly_target > 0 else 0
+        }
 
 
 # ========================================
