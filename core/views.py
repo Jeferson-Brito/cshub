@@ -2311,7 +2311,9 @@ def verificacao_lojas(request):
     
     # 3. Apply Filters
     # Scope Filter (My Stores vs All Stores)
-    scope = request.GET.get('scope', 'all')
+    # Default to 'my_stores' for analysts if not specified
+    default_scope = 'my_stores' if getattr(request.user, 'role', '') == 'analista' else 'all'
+    scope = request.GET.get('scope', default_scope)
     if scope == 'my_stores' and request.user.is_authenticated:
         # Import dynamically to avoid circular dependency
         from .models import AnalystAssignment 
