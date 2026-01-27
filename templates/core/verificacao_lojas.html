@@ -369,8 +369,7 @@
                                 {% if pending_issues_page.number == page_num %}
                                 <li class="page-item active">
                                     <span class="page-link border-0 rounded-circle fw-bold mx-1"
-                                        style="background-color: #f59e0b; border-color: #f59e0b;">{{ page_num
-                                        }}</span>
+                                        style="background-color: #f59e0b; border-color: #f59e0b;">{{ page_num }}</span>
                                 </li>
                                 {% elif page_num > pending_issues_page.number|add:'-3' and page_num <
                                     pending_issues_page.number|add:'3' %} <li class="page-item">
