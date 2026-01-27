@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block content %}
+<!-- CSRF Token for JavaScript -->
+<form style="display:none;">{% csrf_token %}</form>
+
 <div class="container-fluid">
     <!-- Header -->
     <div class="page-header">
