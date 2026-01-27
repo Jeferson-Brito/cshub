@@ -3094,7 +3094,12 @@ body.sidebar-collapsed {
     padding-bottom: 4px !important;
 }
 /* ============================================
-   ESTATÕSTICAS EM TABS (STAT CARDS)
+   ESTATÔøΩSTICAS EM TABS (STAT CARDS)
+   ============================================ */
+
+
+/* ============================================
+   ESTAT√çSTICAS EM TABS (STAT CARDS)
    ============================================ */
 .nav-pills-stats {
     display: grid;
@@ -3188,4 +3193,3 @@ body.sidebar-collapsed {
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
 }
-
