@@ -3141,8 +3141,10 @@ body.sidebar-collapsed {
 
 .nav-link-stat.active {
     opacity: 1;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+    transform: translateY(-8px) scale(1.02);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    filter: brightness(1.15);
 }
 
 .nav-link-stat.active::after {
@@ -3151,8 +3153,9 @@ body.sidebar-collapsed {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.4);
+    height: 5px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.3);
 }
 
 .stat-icon {
