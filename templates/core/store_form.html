@@ -31,6 +31,20 @@
                             </div>
                         </div>
 
+                        <div class="mb-4" id="suspensionReasonContainer" style="display: none;">
+                            <label class="form-label fw-bold text-danger">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Motivo da Suspensão
+                            </label>
+                            {{ form.suspension_reason }}
+                            {% if form.suspension_reason.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.suspension_reason.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Obrigatório para lojas suspensas/inativas.</div>
+                        </div>
+
                         <div class="d-grid gap-2 mt-5">
                             <button type="submit" class="btn btn-primary py-2 fw-bold">Salvar Loja</button>
                             <a href="{% url 'verificacao_lojas' %}" class="btn btn-light border py-2">Voltar</a>
@@ -41,4 +55,30 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Mostrar/Ocultar campo de motivo baseado no status
+    const activeCheckbox = document.getElementById('{{ form.active.id_for_label }}');
+    const suspensionReasonContainer = document.getElementById('suspensionReasonContainer');
+    const suspensionReasonSelect = document.getElementById('{{ form.suspension_reason.id_for_label }}');
+
+    function toggleSuspensionReason() {
+        // Se checkbox está marcado = Ativa, ocultar motivo
+        // Se checkbox está desmarcado = Suspensa, mostrar motivo
+        if (activeCheckbox.checked) {
+            suspensionReasonContainer.style.display = 'none';
+            suspensionReasonSelect.value = '';  // Limpar seleção
+            suspensionReasonSelect.removeAttribute('required');
+        } else {
+            suspensionReasonContainer.style.display = 'block';
+            suspensionReasonSelect.setAttribute('required', 'required');
+        }
+    }
+
+    // Executar ao carregar página
+    toggleSuspensionReason();
+
+    // Executar quando status mudar
+    activeCheckbox.addEventListener('change', toggleSuspensionReason);
+</script>
 {% endblock %}

@@ -40,11 +40,27 @@ class Store(models.Model):
         ('irregular', 'Irregular'),
     ]
     
+    SUSPENSION_REASON_CHOICES = [
+        ('suspenso', 'Suspenso'),
+        ('ponto', 'Ponto'),
+        ('locacao', 'Locação'),
+        ('implantacao', 'Implantação'),
+        ('pausado', 'Pausado'),
+        ('distrato', 'Distrato'),
+    ]
+    
     code = models.CharField(max_length=10, unique=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=2)
     address = models.CharField(max_length=200, blank=True)
     active = models.BooleanField(default=True)
+    suspension_reason = models.CharField(
+        max_length=20, 
+        choices=SUSPENSION_REASON_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name="Motivo da Suspensão"
+    )
     
     # Campos para sistema de reverificação diária
     needs_reverification = models.BooleanField(default=False, verbose_name="Precisa Reverificação")
@@ -876,6 +892,11 @@ class AnalystAssignment(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='analyst_assignments')
     weekly_target = models.IntegerField(default=1, verbose_name="Meta Semanal", help_text="Quantas vezes por semana deve auditar")
     active = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    # Campos para período personalizado
+    period_start = models.DateField(null=True, blank=True, verbose_name="Início do Período")
+    period_end = models.DateField(null=True, blank=True, verbose_name="Fim do Período")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -909,6 +930,53 @@ class AnalystAssignment(models.Model):
             'completed': audits_this_week,
             'target': self.weekly_target,
             'percentage': (audits_this_week / self.weekly_target * 100) if self.weekly_target > 0 else 0
+        }
+    
+    def get_days_remaining(self):
+        """Retorna dias restantes baseado no período personalizado"""
+        from django.utils import timezone
+        
+        if not self.period_end:
+            # Fallback: comportamento antigo (até domingo)
+            today = timezone.now().date()
+            days_until_sunday = (6 - today.weekday()) % 7
+            return days_until_sunday if days_until_sunday > 0 else 0
+        
+        today = timezone.now().date()
+        if today > self.period_end:
+            return 0  # Período expirado
+        
+        delta = self.period_end - today
+        return delta.days + 1  # Inclui o dia atual
+    
+    def get_period_progress(self):
+        """Retorna progresso baseado no período personalizado"""
+        from django.utils import timezone
+        
+        # Se não há período definido, usar comportamento semanal antigo
+        if not self.period_start or not self.period_end:
+            return self.get_weekly_progress()
+        
+        # Converter datas para datetime com timezone
+        start_datetime = timezone.make_aware(
+            timezone.datetime.combine(self.period_start, timezone.datetime.min.time())
+        )
+        end_datetime = timezone.make_aware(
+            timezone.datetime.combine(self.period_end, timezone.datetime.max.time())
+        )
+        
+        # Contar auditorias no período
+        audits_in_period = StoreAudit.objects.filter(
+            analyst=self.analyst,
+            store=self.store,
+            created_at__gte=start_datetime,
+            created_at__lte=end_datetime
+        ).count()
+        
+        return {
+            'completed': audits_in_period,
+            'target': self.weekly_target,
+            'percentage': (audits_in_period / self.weekly_target * 100) if self.weekly_target > 0 else 0
         }
 
 

@@ -412,31 +412,61 @@ def api_assign_store_to_analyst(request):
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
     try:
+        from datetime import datetime
         data = json.loads(request.body)
         analyst_id = data.get('analyst_id')
         store_id = data.get('store_id')
         weekly_target = data.get('weekly_target', 1)
         
+        # Novos parâmetros de período
+        period_start_str = data.get('period_start')  # Formato: 'YYYY-MM-DD'
+        period_end_str = data.get('period_end')      # Formato: 'YYYY-MM-DD'
+        
         analyst = get_object_or_404(User, id=analyst_id)
         store = get_object_or_404(Store, id=store_id)
+        
+        # Converter strings para date objects
+        period_start = datetime.strptime(period_start_str, '%Y-%m-%d').date() if period_start_str else None
+        period_end = datetime.strptime(period_end_str, '%Y-%m-%d').date() if period_end_str else None
+        
+        # Validação
+        if period_start and period_end and period_start > period_end:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Data de início deve ser anterior à data de fim'
+            }, status=400)
         
         assignment, created = AnalystAssignment.objects.get_or_create(
             analyst=analyst,
             store=store,
-            defaults={'weekly_target': weekly_target, 'active': True}
+            defaults={
+                'weekly_target': weekly_target,
+                'active': True,
+                'period_start': period_start,
+                'period_end': period_end
+            }
         )
         
         if not created:
             assignment.weekly_target = weekly_target
             assignment.active = True
+            assignment.period_start = period_start
+            assignment.period_end = period_end
             assignment.save()
+        
+        # Formatar mensagem com datas
+        date_info = ""
+        if period_start and period_end:
+            date_info = f" (Período: {period_start.strftime('%d/%m/%Y')} - {period_end.strftime('%d/%m/%Y')})"
         
         return JsonResponse({
             'success': True,
-            'message': f'Loja {store.code} atribuída a {analyst.get_full_name() or analyst.username}',
+            'message': f'Loja {store.code} atribuída a {analyst.get_full_name() or analyst.username}{date_info}',
             'created': created
         })
         
+    except ValueError as e:
+        return JsonResponse({'success': False, 'error': 'Formato de data inválido. Use YYYY-MM-DD'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
@@ -514,15 +544,31 @@ def api_bulk_assign_stores(request):
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
     try:
+        from datetime import datetime
         data = json.loads(request.body)
         analyst_id = data.get('analyst_id')
         store_ids = data.get('store_ids', [])  # Lista de IDs
         weekly_target = data.get('weekly_target', 1)
         
+        # Novos parâmetros de período
+        period_start_str = data.get('period_start')
+        period_end_str = data.get('period_end')
+        
         if not analyst_id or not store_ids:
             return JsonResponse({
                 'success': False,
                 'error': 'Analista e lojas são obrigatórios'
+            }, status=400)
+        
+        # Converter datas
+        period_start = datetime.strptime(period_start_str, '%Y-%m-%d').date() if period_start_str else None
+        period_end = datetime.strptime(period_end_str, '%Y-%m-%d').date() if period_end_str else None
+        
+        # Validação
+        if period_start and period_end and period_start > period_end:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Data de início deve ser anterior à data de fim'
             }, status=400)
         
         analyst = get_object_or_404(User, id=analyst_id)
@@ -558,7 +604,12 @@ def api_bulk_assign_stores(request):
                 assignment, created = AnalystAssignment.objects.get_or_create(
                     analyst=analyst,
                     store=store,
-                    defaults={'weekly_target': weekly_target, 'active': True}
+                    defaults={
+                        'weekly_target': weekly_target,
+                        'active': True,
+                        'period_start': period_start,
+                        'period_end': period_end
+                    }
                 )
                 
                 if created:
@@ -566,6 +617,8 @@ def api_bulk_assign_stores(request):
                 else:
                     assignment.weekly_target = weekly_target
                     assignment.active = True
+                    assignment.period_start = period_start
+                    assignment.period_end = period_end
                     assignment.save()
                     updated_count += 1
                     
@@ -574,14 +627,21 @@ def api_bulk_assign_stores(request):
         
         analyst_name = analyst.get_full_name() or analyst.username
         
+        # Mensagem com informação de período
+        date_info = ""
+        if period_start and period_end:
+            date_info = f" (Período: {period_start.strftime('%d/%m/%Y')} - {period_end.strftime('%d/%m/%Y')})"
+        
         return JsonResponse({
             'success': True,
-            'message': f'{created_count + updated_count} lojas atribuídas a {analyst_name}',
+            'message': f'{created_count + updated_count} lojas atribuídas a {analyst_name}{date_info}',
             'created': created_count,
             'updated': updated_count,
             'total': created_count + updated_count
         })
         
+    except ValueError as e:
+        return JsonResponse({'success': False, 'error': 'Formato de data inválido. Use YYYY-MM-DD'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
@@ -609,14 +669,27 @@ def api_get_analyst_dashboard(request):
     
     total_stores = assignments.count()
     
-    # Calcular progresso semanal
+    # MUDANÇA: Usar período personalizado
     total_audited = 0
     total_target = 0
+    days_remaining = None  # Será o menor entre todas as atribuições
     
     for assignment in assignments:
-        progress = assignment.get_weekly_progress()
+        # Usar método novo que respeita período personalizado
+        progress = assignment.get_period_progress()
         total_audited += progress['completed']
         total_target += progress['target']
+        
+        # Pegar o menor número de dias restantes
+        assignment_days = assignment.get_days_remaining()
+        if days_remaining is None or assignment_days < days_remaining:
+            days_remaining = assignment_days
+    
+    # Se não houver atribuições, usar cálculo padrão
+    if days_remaining is None:
+        today = timezone.now().date()
+        days_until_sunday = (6 - today.weekday()) % 7
+        days_remaining = days_until_sunday if days_until_sunday > 0 else 0
     
     percentage = (total_audited / total_target * 100) if total_target > 0 else 0
     
@@ -627,13 +700,8 @@ def api_get_analyst_dashboard(request):
         created_at__gte=today_start
     ).count()
     
-    # Dias restantes na semana
-    today = timezone.now().date()
-    days_until_sunday = (6 - today.weekday()) % 7  # Dias até domingo
-    days_remaining = days_until_sunday if days_until_sunday > 0 else 0
-    
-    # Meta Diária (Total / 6 dias úteis)
-    daily_target = max(1, round(total_stores / 6)) if total_stores > 0 else 0
+    # Meta Diária ajustada baseada em dias restantes
+    daily_target = max(1, round((total_target - total_audited) / max(1, days_remaining))) if total_target > total_audited else 0
     
     return JsonResponse({
         'success': True,
