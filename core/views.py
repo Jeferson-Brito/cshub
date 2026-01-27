@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Count, Avg, Q
@@ -2294,6 +2295,7 @@ def solicitacoes_view(request):
 # ========================================
 
 @login_required
+@ensure_csrf_cookie
 def verificacao_lojas(request):
     """Página principal de verificação de lojas (NRS Suporte)"""
     from django.core.paginator import Paginator
