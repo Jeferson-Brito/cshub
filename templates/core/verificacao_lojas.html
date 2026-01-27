@@ -87,6 +87,16 @@
             </a>
         </li>
 
+        <!-- Total Stores Tab -->
+        <li class="nav-item" role="presentation">
+            <a class="nav-link {% if tab == 'all' %}active fw-bold{% endif %} py-3"
+                href="?tab=all{% if scope %}&scope={{ scope }}{% endif %}"
+                style="border-radius: 12px 12px 0 0; {% if tab == 'all' %}border-top: 3px solid #0dcaf0;{% endif %}">
+                <i class="bi bi-shop me-2 text-info"></i>Total de Lojas
+                <span class="badge rounded-pill bg-info text-dark ms-2">{{ total_stores }}</span>
+            </a>
+        </li>
+
         <!-- Irregular Tab -->
         <li class="nav-item" role="presentation">
             <a class="nav-link {% if tab == 'irregular' %}active fw-bold{% endif %} py-3"
