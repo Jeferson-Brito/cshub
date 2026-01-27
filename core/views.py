@@ -2300,7 +2300,7 @@ def verificacao_lojas(request):
     
     # 1. Base QuerySet
     # Tab handling
-    tab = request.GET.get('tab', 'management')
+    tab = request.GET.get('tab', 'all')  # DEFAULT: 'all' (Lojas Ativas)
     
     # If tab is 'suspended', include inactive stores. Otherwise, only active.
     if tab == 'suspended':
@@ -2309,9 +2309,10 @@ def verificacao_lojas(request):
         stores_queryset = Store.objects.filter(active=True).order_by('code')
     
     # 2. Status Calculation (Aggregate counts efficiently)
-    # Get IDs for status sets
-    verified_store_ids = set(StoreAudit.objects.values_list('store_id', flat=True))
-    irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True))
+    # OPTIMIZED: Use distinct() to avoid loading duplicate store_ids
+    # This prevents WORKER TIMEOUT when there are thousands of audits
+    verified_store_ids = set(StoreAudit.objects.values_list('store_id', flat=True).distinct())
+    irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True).distinct())
     suspended_count = Store.objects.filter(active=False).count()
     
     # Calculate OK stores
