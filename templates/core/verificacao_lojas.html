@@ -2256,9 +2256,11 @@
     // Funções de Atribuição em Lote
     // ========================================
 
-    // Helper function to get CSRF token from cookies
+    // Helper function to get CSRF token from multiple sources
     function getCookie(name) {
         let cookieValue = null;
+
+        // Try 1: Get from cookie
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
@@ -2269,6 +2271,24 @@
                 }
             }
         }
+
+        // Try 2: Get from meta tag
+        if (!cookieValue) {
+            const metaTag = document.querySelector('meta[name="csrf-token"]');
+            if (metaTag) {
+                cookieValue = metaTag.getAttribute('content');
+            }
+        }
+
+        // Try 3: Get from hidden input
+        if (!cookieValue) {
+            const inputTag = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (inputTag) {
+                cookieValue = inputTag.value;
+            }
+        }
+
+        console.log('CSRF Token retrieved:', cookieValue ? 'Found (length: ' + cookieValue.length + ')' : 'NOT FOUND');
         return cookieValue;
     }
 
