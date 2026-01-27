@@ -139,7 +139,6 @@
         </a>
 
         <!-- Suspended Tab -->
-        {% if user.role in 'gestor,administrador' %}
         <a class="nav-link-stat stat-gray {% if tab == 'suspended' %}active{% endif %}"
             href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
@@ -150,7 +149,6 @@
                 <div class="stat-value">{{ suspended_count|default:0 }}</div>
             </div>
         </a>
-        {% endif %}
     </div>
 
     <!-- Tab Content -->
