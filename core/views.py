@@ -2358,7 +2358,9 @@ def verificacao_lojas(request):
         )
 
     # 4. Pagination
-    paginator = Paginator(stores_queryset, 25) # 25 items per page
+    # Use 10 per page for suspended tab, 25 for others
+    items_per_page = 10 if tab == 'suspended' else 25
+    paginator = Paginator(stores_queryset, items_per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
