@@ -102,14 +102,14 @@
             </div>
         </a>
 
-        <!-- Total Stores Tab -->
-        <a class="nav-link-stat stat-blue {% if tab == 'all' %}active{% endif %}"
+        <!-- Active Stores Tab -->
+        <a class="nav-link-stat stat-blue {% if not tab or tab == 'all' %}active{% endif %}"
             href="?tab=all{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
                 <div class="stat-icon"><i class="bi bi-shop"></i></div>
             </div>
             <div>
-                <div class="stat-title">Total de Lojas</div>
+                <div class="stat-title">Lojas Ativas</div>
                 <div class="stat-value">{{ total_stores }}</div>
             </div>
         </a>
