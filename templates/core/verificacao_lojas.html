@@ -445,6 +445,7 @@
                                 <th>Última Auditoria</th>
 
                                 <th>Situação</th>
+                                <th>Motivo da Suspensão</th>
                                 <th class="text-end pe-4">Ação</th>
                             </tr>
                         </thead>
@@ -506,6 +507,19 @@
                                             <i class="bi bi-arrow-repeat me-1"></i> Reverificação Necessária
                                         </span>
                                     </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not store.active and store.suspension_reason %}
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        {{ store.get_suspension_reason_display }}
+                                    </span>
+                                    {% elif not store.active %}
+                                    <span class="text-muted small">-</span>
+                                    {% else %}
+                                    <span class="text-muted small">-</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end pe-4">
@@ -1506,6 +1520,34 @@
                         </select>
                     </div>
 
+                    <!-- NOVO: Período de Verificação -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-range me-1 text-primary"></i>
+                            Período de Verificação
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Data de Início</label>
+                                <input type="date" id="assignPeriodStart" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Data de Fim</label>
+                                <input type="date" id="assignPeriodEnd" class="form-control" required>
+                            </div>
+                        </div>
+                        <div id="periodSummary"
+                            class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mt-2 d-none">
+                            <i class="bi bi-calendar-check me-2"></i>
+                            <strong>Período:</strong> <span id="periodDays">-</span> dias
+                            (<span id="periodRange">-</span>)
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Defina o prazo que o analista terá para completar as verificações
+                        </small>
+                    </div>
+
                     <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25">
                         <i class="bi bi-lightbulb me-1"></i>
                         O sistema irá selecionar lojas <strong>aleatórias</strong> que ainda não estão
@@ -2141,6 +2183,212 @@
                     </div>
                 `;
             });
+    }
+
+    // ========================================
+    // JavaScript para Período Personalizado
+    // ========================================
+
+    // Definir data mínima como hoje e sugerir período padrão
+    document.addEventListener('DOMContentLoaded', function () {
+        const today = new Date().toISOString().split('T')[0];
+        const periodStartInput = document.getElementById('assignPeriodStart');
+        const periodEndInput = document.getElementById('assignPeriodEnd');
+
+        if (periodStartInput) {
+            periodStartInput.min = today;
+            periodStartInput.value = today;
+
+            // Sugerir 7 dias a partir de hoje
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            periodEndInput.min = today;
+            periodEndInput.value = nextWeek.toISOString().split('T')[0];
+
+            // Atualizar resumo inicial
+            updatePeriodSummary();
+        }
+    });
+
+    // Calcular e exibir resumo do período
+    function updatePeriodSummary() {
+        const startInput = document.getElementById('assignPeriodStart');
+        const endInput = document.getElementById('assignPeriodEnd');
+        const summary = document.getElementById('periodSummary');
+        const daysSpan = document.getElementById('periodDays');
+        const rangeSpan = document.getElementById('periodRange');
+
+        if (startInput && endInput && startInput.value && endInput.value) {
+            const start = new Date(startInput.value);
+            const end = new Date(endInput.value);
+
+            // Validar
+            if (start > end) {
+                startInput.setCustomValidity('Data de início deve ser anterior à data de fim');
+                summary.classList.add('d-none');
+                return;
+            } else {
+                startInput.setCustomValidity('');
+            }
+
+            // Calcular dias
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            // Formatar datas
+            const startFormatted = start.toLocaleDateString('pt-BR');
+            const endFormatted = end.toLocaleDateString('pt-BR');
+
+            // Exibir resumo
+            daysSpan.textContent = diffDays;
+            rangeSpan.textContent = `${startFormatted} a ${endFormatted}`;
+            summary.classList.remove('d-none');
+        } else {
+            summary.classList.add('d-none');
+        }
+    }
+
+    // Adicionar listeners se os campos existirem
+    const periodStartField = document.getElementById('assignPeriodStart');
+    const periodEndField = document.getElementById('assignPeriodEnd');
+    if (periodStartField) periodStartField.addEventListener('change', updatePeriodSummary);
+    if (periodEndField) periodEndField.addEventListener('change', updatePeriodSummary);
+
+    // ========================================
+    // Funções de Atribuição em Lote
+    // ========================================
+
+    let selectedStores = [];
+
+    async function generateSelection() {
+        const analystId = document.getElementById('assignAnalystId').value;
+        const quantity = parseInt(document.getElementById('assignQuantity').value);
+        const periodStart = document.getElementById('assignPeriodStart').value;
+        const periodEnd = document.getElementById('assignPeriodEnd').value;
+
+        if (!analystId) {
+            alert('Por favor, selecione um analista');
+            return;
+        }
+
+        if (!quantity || quantity < 1) {
+            alert('Por favor, informe uma quantidade válida');
+            return;
+        }
+
+        if (!periodStart || !periodEnd) {
+            alert('Por favor, defina o período de verificação');
+            return;
+        }
+
+        if (new Date(periodStart) > new Date(periodEnd)) {
+            alert('Data de início deve ser anterior à data de fim');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/store-verification/analyst/available-stores/?quantity=${quantity}`);
+            const data = await response.json();
+
+            if (data.success && data.stores) {
+                selectedStores = data.stores;
+
+                document.getElementById('selectedCount').textContent = selectedStores.length;
+
+                const listHTML = selectedStores.map(store => `
+                    <div class="d-flex align-items-center gap-2 p-2 border-bottom">
+                        <i class="bi bi-shop text-primary"></i>
+                        <div>
+                            <strong>${store.code}</strong>
+                            <small class="text-muted d-block">${store.city}</small>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('selectedStoresList').innerHTML = listHTML;
+
+                // Mudar para etapa 2
+                document.getElementById('step1Selection').classList.add('d-none');
+                document.getElementById('step2Preview').classList.remove('d-none');
+                document.getElementById('btnGenerateSelection').classList.add('d-none');
+                document.getElementById('btnBackToSelection').classList.remove('d-none');
+                document.getElementById('btnConfirmAssignment').classList.remove('d-none');
+            } else {
+                alert(data.error || 'Erro ao gerar seleção');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao gerar seleção de lojas');
+        }
+    }
+
+    function backToStep1() {
+        document.getElementById('step1Selection').classList.remove('d-none');
+        document.getElementById('step2Preview').classList.add('d-none');
+        document.getElementById('btnGenerateSelection').classList.remove('d-none');
+        document.getElementById('btnBackToSelection').classList.add('d-none');
+        document.getElementById('btnConfirmAssignment').classList.add('d-none');
+    }
+
+    function regenerateSelection() {
+        backToStep1();
+        generateSelection();
+    }
+
+    async function confirmBulkAssignment() {
+        const analystId = document.getElementById('assignAnalystId').value;
+        const weeklyTarget = parseInt(document.getElementById('assignWeeklyTarget').value);
+        const periodStart = document.getElementById('assignPeriodStart').value;
+        const periodEnd = document.getElementById('assignPeriodEnd').value;
+        const storeIds = selectedStores.map(s => s.id);
+
+        if (!confirm(`Confirma a atribuição de ${storeIds.length} lojas?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/store-verification/analyst/bulk-assign/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    analyst_id: analystId,
+                    store_ids: storeIds,
+                    weekly_target: weeklyTarget,
+                    period_start: periodStart,
+                    period_end: periodEnd
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao confirmar atribuição');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>
 
