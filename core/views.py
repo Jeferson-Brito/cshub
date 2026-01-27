@@ -2319,9 +2319,8 @@ def verificacao_lojas(request):
     
     # 3. Apply Filters
     # Scope Filter (My Stores vs All Stores)
-    # Default to 'my_stores' for analysts if not specified
-    default_scope = 'my_stores' if getattr(request.user, 'role', '') == 'analista' else 'all'
-    scope = request.GET.get('scope', default_scope)
+    # Default to 'all' for everyone to allow analysts to see all stores
+    scope = request.GET.get('scope', 'all')
     if scope == 'my_stores' and request.user.is_authenticated:
         # Import dynamically to avoid circular dependency
         from .models import AnalystAssignment 
@@ -2445,6 +2444,35 @@ def verificacao_lojas(request):
         'pending_issues_count': pending_issues_count,
     }
     return render(request, 'core/verificacao_lojas.html', context)
+
+
+@login_required
+def api_store_detail(request, store_id):
+    """Retorna detalhes de uma loja específica para o modal"""
+    from django.http import JsonResponse
+    
+    try:
+        store = Store.objects.get(id=store_id)
+        
+        # Buscar última auditoria
+        last_audit = StoreAudit.objects.filter(store=store).select_related('analyst').order_by('-created_at').first()
+        
+        data = {
+            'success': True,
+            'store': {
+                'id': store.id,
+                'code': store.code,
+                'city': store.city or 'Não informada',
+                'active': store.active,
+                'needs_reverification': store.needs_reverification,
+                'last_audit_date': last_audit.created_at.strftime('%d/%m/%Y %H:%M') if last_audit else None,
+                'last_audit_result': store.last_audit_result,
+                'analyst_name': last_audit.analyst.get_full_name() or last_audit.analyst.username if last_audit else None,
+            }
+        }
+        return JsonResponse(data)
+    except Store.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Loja não encontrada'}, status=404)
 
 
 @login_required

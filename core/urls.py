@@ -159,6 +159,7 @@ urlpatterns = [
     
     # Store Presence and History APIs
     path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),
+    path('api/stores/<int:store_id>/detail/', views.api_store_detail, name='api_store_detail'),
     path('api/stores/<int:store_id>/presence/heartbeat/', api_stores.api_store_presence_heartbeat, name='api_store_presence_heartbeat'),
     path('api/stores/<int:store_id>/presence/', api_stores.api_store_presence_list, name='api_store_presence_list'),
     path('api/stores/<int:store_id>/presence/leave/', api_stores.api_store_presence_leave, name='api_store_presence_leave'),

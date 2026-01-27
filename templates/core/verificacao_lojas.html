@@ -625,6 +625,28 @@
         </div>
     </div>
 
+    <!-- Store Details Modal -->
+    <div class="modal fade" id="storeDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-shop me-2"></i>
+                        <span id="storeDetailCode"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="storeDetailBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <style>
         .presence-badge {
             display: inline-block;
@@ -667,6 +689,16 @@
                 transform: scale(0.95);
                 box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
             }
+        }
+
+        .store-card-clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .store-card-clickable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
         }
     </style>
 
@@ -1600,7 +1632,7 @@
                     const progress = assignment.progress;
                     const card = `
                     <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card h-100 border-0 shadow-sm">
+                        <div class="card h-100 border-0 shadow-sm store-card-clickable" onclick="showStoreDetails(${assignment.store_id})">
                             <div class="card-body">
                                 <h6 class="fw-bold text-primary">${assignment.store_code}</h6>
                                 <small class="text-muted">${assignment.store_city || '-'}</small>
@@ -2039,6 +2071,76 @@
         });
 
         new bootstrap.Modal(document.getElementById('analystDetailModal')).show();
+    }
+
+    // Função para mostrar detalhes da loja no modal
+    function showStoreDetails(storeId) {
+        const modal = new bootstrap.Modal(document.getElementById('storeDetailsModal'));
+        modal.show();
+
+        // Resetar conteúdo
+        document.getElementById('storeDetailBody').innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+        `;
+
+        // Buscar detalhes
+        fetch(`/api/stores/${storeId}/detail/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const store = data.store;
+                    document.getElementById('storeDetailCode').textContent = store.code;
+
+                    let statusBadge = '';
+                    if (store.last_audit_result === 'irregular') {
+                        statusBadge = '<span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Irregular</span>';
+                    } else if (store.last_audit_result === 'conforme') {
+                        statusBadge = '<span class="badge bg-success px-3 py-2"><i class="bi bi-check-circle me-1"></i>Conforme</span>';
+                    } else {
+                        statusBadge = '<span class="badge bg-secondary px-3 py-2">Sem Auditoria</span>';
+                    }
+
+                    document.getElementById('storeDetailBody').innerHTML = `
+                        <div class="mb-3">
+                            <h6 class="text-muted small mb-2">Cidade</h6>
+                            <p class="mb-0">${store.city}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted small mb-2">Status</h6>
+                            <p class="mb-0">${statusBadge}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-muted small mb-2">Última Auditoria</h6>
+                            <p class="mb-0">${store.last_audit_date || 'Nunca auditada'}</p>
+                            ${store.analyst_name ? `<small class="text-muted">por ${store.analyst_name}</small>` : ''}
+                        </div>
+                        ${store.needs_reverification ? `
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-arrow-repeat me-2"></i>
+                                <strong>Reverificação Necessária</strong>
+                            </div>
+                        ` : ''}
+                        <div class="d-grid gap-2 mt-4">
+                            <a href="/verificacao-lojas/auditoria/${store.id}/" class="btn btn-primary btn-lg">
+                                <i class="bi bi-shield-plus me-2"></i>Realizar Auditoria
+                            </a>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar detalhes:', error);
+                document.getElementById('storeDetailBody').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        Erro ao carregar detalhes da loja
+                    </div>
+                `;
+            });
     }
 </script>
 
