@@ -816,3 +816,32 @@ def api_get_analysts_overview(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_unassign_store(request, assignment_id):
+    """
+    Desvincula uma loja de um analista (apenas gestor/admin)
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        assignment = get_object_or_404(AnalystAssignment, id=assignment_id)
+        
+        # Store info for response
+        analyst_name = assignment.analyst.get_full_name() or assignment.analyst.username
+        store_code = assignment.store.code
+        
+        # Deactivate assignment
+        assignment.active = False
+        assignment.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Loja {store_code} desvinculada de {analyst_name}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

@@ -596,6 +596,34 @@
         </div>
     </div>
 
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body text-center p-5">
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle"
+                            style="width: 80px; height: 80px;">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-3">Atribuição Realizada!</h4>
+                    <p class="text-muted mb-2" id="successMessage">Lojas atribuídas com sucesso</p>
+                    <div class="d-flex align-items-center justify-content-center gap-2 mt-3">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                            <i class="bi bi-shop me-1"></i>
+                            <span id="successStoreCount">0</span>
+                            <span class="ms-1">lojas</span>
+                        </span>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-4 px-5" data-bs-dismiss="modal">
+                        <i class="bi bi-check2 me-2"></i>OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if play_sound %}
     <!-- Notificação sonora de irregularidade detectada -->
     <audio id="alertSound" autoplay>
@@ -2402,8 +2430,8 @@
             const data = await response.json();
 
             if (data.success) {
-                alert(data.message);
-                location.reload();
+                // Show beautiful success modal instead of ugly alert
+                showSuccessModal(data.message, storeIds.length);
             } else {
                 alert('Erro: ' + data.error);
             }
@@ -2411,6 +2439,19 @@
             console.error('Erro:', error);
             alert('Erro ao confirmar atribuição');
         }
+    }
+
+    // Show beautiful success modal
+    function showSuccessModal(message, storeCount) {
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successStoreCount').textContent = storeCount;
+        const modal = new bootstrap.Modal(document.getElementById('successModal'));
+        modal.show();
+
+        // Reload after modal closes
+        document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+            location.reload();
+        }, { once: true });
     }
 
     function getCookie(name) {

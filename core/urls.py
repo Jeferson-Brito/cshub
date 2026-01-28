@@ -179,6 +179,7 @@ urlpatterns = [
     path('api/store-verification/analyst/assign/', api_store_verification.api_assign_store_to_analyst, name='api_assign_store_to_analyst'),
     path('api/store-verification/analyst/available-stores/', api_store_verification.api_get_available_stores, name='api_get_available_stores'),
     path('api/store-verification/analyst/bulk-assign/', api_store_verification.api_bulk_assign_stores, name='api_bulk_assign_stores'),
+    path('api/store-verification/analyst/unassign/<int:assignment_id>/', api_store_verification.api_unassign_store, name='api_unassign_store'),
     path('api/store-verification/analyst/dashboard/', api_store_verification.api_get_analyst_dashboard, name='api_get_analyst_dashboard'),
     path('api/store-verification/analyst/overview/', api_store_verification.api_get_analysts_overview, name='api_get_analysts_overview'),
     
