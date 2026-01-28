@@ -762,7 +762,7 @@ def api_get_analysts_overview(request):
                     'assignment_id': ass.id,  # For unassign functionality
                     'code': ass.store.code,
                     'city': ass.store.city,
-                    'last_audit': ass.store.last_audit_date.strftime('%d/%m/%Y') if ass.store.last_audit_date else 'Nunca',
+                    'last_audit': ass.store.last_audit_date.strftime('%d/%m/%Y %H:%M') if ass.store.last_audit_date else 'Nunca',
                     'status': 'Conforme' if ass.store.last_audit_result == 'conforme' else 'Irregular' if ass.store.last_audit_result == 'irregular' else 'Pendente',
                     'audited_this_week': prog['completed'] > 0
                 })
@@ -842,6 +842,113 @@ def api_unassign_store(request, assignment_id):
         return JsonResponse({
             'success': True,
             'message': f'Loja {store_code} desvinculada de {analyst_name}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_auto_distribute_stores(request):
+    """
+    Distribui lojas automaticamente para múltiplos analistas
+    Sobras vão para o primeiro analista
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        import json
+        import random
+        
+        data = json.loads(request.body)
+        analyst_ids = data.get('analyst_ids', [])
+        weekly_target = int(data.get('weekly_target', 3))
+        period_start = data.get('period_start')
+        period_end = data.get('period_end')
+        
+        if not analyst_ids or len(analyst_ids) == 0:
+            return JsonResponse({'success': False, 'error': 'Selecione pelo menos um analista'}, status=400)
+        
+        # Get available stores (active and not assigned)
+        assigned_store_ids = AnalystAssignment.objects.filter(active=True).values_list('store_id', flat=True)
+        available_stores = list(Store.objects.filter(active=True).exclude(id__in=assigned_store_ids))
+        
+        if not available_stores:
+            return JsonResponse({'success': False, 'error': 'Não há lojas disponíveis para distribuir'}, status=400)
+        
+        # Randomize stores
+        random.shuffle(available_stores)
+        
+        # Calculate distribution
+        total_stores = len(available_stores)
+        num_analysts = len(analyst_ids)
+        base_per_analyst = total_stores // num_analysts
+        remainder = total_stores % num_analysts
+        
+        # Distribute stores
+        distribution = {}
+        current_index = 0
+        
+        for i, analyst_id in enumerate(analyst_ids):
+            analyst = get_object_or_404(User, id=analyst_id)
+            
+            # First analyst gets base + remainder
+            stores_for_this_analyst = base_per_analyst + (remainder if i == 0 else 0)
+            
+            # Get stores for this analyst
+            stores_slice = available_stores[current_index:current_index + stores_for_this_analyst]
+            current_index += stores_for_this_analyst
+            
+            # Create assignments
+            for store in stores_slice:
+                AnalystAssignment.objects.create(
+                    analyst=analyst,
+                    store=store,
+                    weekly_target=weekly_target,
+                    period_start=period_start,
+                    period_end=period_end,
+                    active=True
+                )
+            
+            analyst_name = analyst.get_full_name() or analyst.username
+            distribution[analyst_name] = stores_for_this_analyst
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{total_stores} lojas distribuídas para {num_analysts} analistas',
+            'distribution': distribution,
+            'total_stores': total_stores,
+            'num_analysts': num_analysts
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_unassign_all_stores(request):
+    """
+    Desvincula TODAS as lojas de TODOS os analistas (apenas gestor/admin)
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        # Count active assignments
+        active_count = AnalystAssignment.objects.filter(active=True).count()
+        
+        if active_count == 0:
+            return JsonResponse({'success': False, 'error': 'Não há atribuições ativas para remover'}, status=400)
+        
+        # Deactivate all assignments
+        AnalystAssignment.objects.filter(active=True).update(active=False)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{active_count} atribuições removidas com sucesso'
         })
         
     except Exception as e:

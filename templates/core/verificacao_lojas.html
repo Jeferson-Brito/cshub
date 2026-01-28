@@ -596,28 +596,90 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <!-- Toast Container (Bottom Right) -->
+    <div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; min-width: 300px;"></div>
+
+    <!-- Confirmation Modal (Reusable) -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-body text-center p-5">
-                    <div class="mb-4">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle"
-                            style="width: 80px; height: 80px;">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="confirmModalLabel">Confirmar Ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">
+                    Deseja continuar?
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmModalAction">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Distribution Modal -->
+    <div class="modal fade" id="autoDistributionModal" tabindex="-1" aria-labelledby="autoDistributionModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-bottom-0 bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="autoDistributionModalLabel">
+                        <i class="bi bi-shuffle me-2"></i>Distribuição Automática de Lojas
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info border-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Como funciona:</strong> Selecione os analistas e as lojas disponíveis serão distribuídas
+                        automaticamente e aleatoriamente. Sobras vão para o primeiro analista.
+                    </div>
+
+                    <h6 class="fw-bold mb-3">Selecione os Analistas:</h6>
+                    <div id="analystCheckboxList" class="mb-4" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Populated via JS -->
+                    </div>
+
+                    <div class="card border-0 bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2"></i>Estatísticas</h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 fw-bold text-primary mb-0" id="statsAvailableStores">-</div>
+                                    <small class="text-muted">Lojas Disponíveis</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 fw-bold text-success mb-0" id="statsSelectedAnalysts">0</div>
+                                    <small class="text-muted">Analistas</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 fw-bold text-info mb-0" id="statsPerAnalyst">-</div>
+                                    <small class="text-muted">Por Analista</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <h4 class="fw-bold text-dark mb-3">Atribuição Realizada!</h4>
-                    <p class="text-muted mb-2" id="successMessage">Lojas atribuídas com sucesso</p>
-                    <div class="d-flex align-items-center justify-content-center gap-2 mt-3">
-                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
-                            <i class="bi bi-shop me-1"></i>
-                            <span id="successStoreCount">0</span>
-                            <span class="ms-1">lojas</span>
-                        </span>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Frequência Semanal</label>
+                            <input type="number" class="form-control" id="autoWeeklyTarget" value="3" min="1" max="7">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Período</label>
+                            <div class="d-flex gap-2">
+                                <input type="date" class="form-control" id="autoPeriodStart">
+                                <input type="date" class="form-control" id="autoPeriodEnd">
+                            </div>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-primary mt-4 px-5" data-bs-dismiss="modal">
-                        <i class="bi bi-check2 me-2"></i>OK
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAutoDistribution()">
+                        <i class="bi bi-shuffle me-2"></i>Distribuir Automaticamente
                     </button>
                 </div>
             </div>
@@ -2030,7 +2092,6 @@
                         <thead class="bg-light sticky-top">
                             <tr>
                                 <th>Loja</th>
-                                <th>Cidade</th>
                                 <th>Status</th>
                                 <th>Última Auditoria</th>
                                 <th class="text-end">Ações</th>
@@ -2143,7 +2204,6 @@
             const row = `
                         <tr class="${rowClass}">
                             <td class="fw-bold">${store.code}</td>
-                            <td>${store.city}</td>
                             <td>${statusBadge}</td>
                             <td class="small text-muted">${store.last_audit}</td>
                             <td class="text-end">
@@ -2447,28 +2507,73 @@
             const data = await response.json();
 
             if (data.success) {
-                // Show beautiful success modal instead of ugly alert
-                showSuccessModal(data.message, storeIds.length);
+                // Close assignment modal
+                const assignmentModal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
+                if (assignmentModal) {
+                    assignmentModal.hide();
+                }
+
+                // Show toast message
+                showToast('success', `${data.message} - ${storeIds.length} loja(s) atribuída(s)`);
+
+                // Reload after 2 seconds
+                setTimeout(() => location.reload(), 2000);
             } else {
-                alert('Erro: ' + data.error);
+                showToast('error', 'Erro: ' + data.error);
             }
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro ao confirmar atribuição');
+            showToast('error', 'Erro ao confirmar atribuição');
         }
     }
 
-    // Show beautiful success modal
-    function showSuccessModal(message, storeCount) {
-        document.getElementById('successMessage').textContent = message;
-        document.getElementById('successStoreCount').textContent = storeCount;
-        const modal = new bootstrap.Modal(document.getElementById('successModal'));
-        modal.show();
+    // Show toast notification
+    function showToast(type, message, duration = 4000) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
 
-        // Reload after modal closes
-        document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
-            location.reload();
-        }, { once: true });
+        // Icon and color maps
+        const iconMap = {
+            'success': 'bi-check-circle-fill text-success',
+            'error': 'bi-x-circle-fill text-danger',
+            'warning': 'bi-exclamation-triangle-fill text-warning',
+            'info': 'bi-info-circle-fill text-info'
+        };
+
+        const borderMap = {
+            'success': '#198754',
+            'error': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#0dcaf0'
+        };
+
+        const icon = iconMap[type] || iconMap['info'];
+        const borderColor = borderMap[type] || borderMap['info'];
+        const toastId = 'toast-' + Date.now();
+
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center bg-white" style="border-left: 4px solid ${borderColor};">
+                        <i class="bi ${icon} me-2" style="font-size: 1.25rem;"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', toastHTML);
+
+        // Initialize and show toast
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: duration });
+        toast.show();
+
+        // Remove from DOM after hiding
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
     }
 
     function getCookie(name) {
@@ -2488,34 +2593,253 @@
 
     // Function to confirm and unassign store from analyst
     async function confirmUnassignStore(assignmentId, storeCode, analystName) {
-        if (!confirm(`Deseja realmente desvincular a loja ${storeCode} de ${analystName}?`)) {
+        // Show confirmation modal instead of confirm()
+        showConfirmModal(
+            `Deseja realmente desvincular a loja ${storeCode} de ${analystName}?`,
+            async () => {
+                try {
+                    const response = await fetch(`/api/store-verification/analyst/unassign/${assignmentId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Csrftoken': getCookie('csrftoken')
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('error', 'Erro: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Erro ao desvincular loja:', error);
+                    showToast('error', 'Erro ao desvincular loja');
+                }
+            }
+        );
+    }
+
+    // Show confirmation modal (reusable)
+    function showConfirmModal(message, onConfirm) {
+        const modalElement = document.getElementById('confirmModal');
+        const modalBody = document.getElementById('confirmModalBody');
+        const confirmButton = document.getElementById('confirmModalAction');
+
+        // Set message
+        modalBody.textContent = message;
+
+        // Remove old event listeners by cloning
+        const newConfirmButton = confirmButton.cloneNode(true);
+        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+
+        // Add new event listener
+        newConfirmButton.addEventListener('click', () => {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+            if (onConfirm) onConfirm();
+        });
+
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+
+    // ===== AUTO DISTRIBUTION FUNCTIONS =====
+
+    let availableStoresCount = 0;
+
+    // Open auto distribution modal
+    async function openAutoDistributionModal() {
+        const modal = new bootstrap.Modal(document.getElementById('autoDistributionModal'));
+
+        // Load analysts and available stores count
+        await loadAnalystsForAutoDistribution();
+
+        // Set default dates
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 7);
+
+        document.getElementById('autoPeriodStart').valueAsDate = today;
+        document.getElementById('autoPeriodEnd').valueAsDate = endDate;
+
+        modal.show();
+    }
+
+    // Load analysts with checkboxes
+    async function loadAnalystsForAutoDistribution() {
+        try {
+            const response = await fetch('/api/store-verification/analyst/overview/');
+            const data = await response.json();
+
+            const countResponse = await fetch('/api/store-verification/analyst/available-stores/');
+            const countData = await countResponse.json();
+            availableStoresCount = countData.success ? countData.stores.length : 0;
+
+            document.getElementById('statsAvailableStores').textContent = availableStoresCount;
+
+            const container = document.getElementById('analystCheckboxList');
+            if (data.success && data.analysts.length > 0) {
+                container.innerHTML = '';
+                data.analysts.forEach(analyst => {
+                    const checkboxHtml = `
+                        <div class="form-check mb-2 p-3 border rounded hover-bg-light">
+                            <input class="form-check-input" type="checkbox" value="${analyst.id}" 
+                                   id="analyst${analyst.id}" onchange="updateAutoDistributionStats()">
+                            <label class="form-check-label w-100 cursor-pointer" for="analyst${analyst.id}">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">${analyst.name}</span>
+                                    <span class="badge bg-secondary">${analyst.stats.total_stores} lojas</span>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', checkboxHtml);
+                });
+            } else {
+                container.innerHTML = '<p class="text-muted">Nenhum analista encontrado</p>';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar analistas:', error);
+            showToast('error', 'Erro ao carregar analistas');
+        }
+    }
+
+    // Update stats in real-time
+    function updateAutoDistributionStats() {
+        const checkboxes = document.querySelectorAll('#analystCheckboxList input[type="checkbox"]:checked');
+        const selectedCount = checkboxes.length;
+
+        document.getElementById('statsSelectedAnalysts').textContent = selectedCount;
+
+        if (selectedCount > 0 && availableStoresCount > 0) {
+            const perAnalyst = Math.floor(availableStoresCount / selectedCount);
+            document.getElementById('statsPerAnalyst').textContent = perAnalyst;
+        } else {
+            document.getElementById('statsPerAnalyst').textContent = '-';
+        }
+    }
+
+    // Confirm and execute auto distribution
+    async function confirmAutoDistribution() {
+        const checkboxes = document.querySelectorAll('#analystCheckboxList input[type="checkbox"]:checked');
+        const analystIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        if (analystIds.length === 0) {
+            showToast('warning', 'Selecione pelo menos um analista');
             return;
         }
 
+        const weeklyTarget = parseInt(document.getElementById('autoWeeklyTarget').value);
+        const periodStart = document.getElementById('autoPeriodStart').value;
+        const periodEnd = document.getElementById('autoPeriodEnd').value;
+
         try {
-            const response = await fetch(`/api/store-verification/analyst/unassign/${assignmentId}/`, {
+            const response = await fetch('/api/store-verification/analyst/auto-distribute/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Csrftoken': getCookie('csrftoken')
-                }
+                },
+                body: JSON.stringify({
+                    analyst_ids: analystIds,
+                    weekly_target: weeklyTarget,
+                    period_start: periodStart,
+                    period_end: periodEnd
+                })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                // Show success message
-                alert(data.message);
-                // Reload page to update data
-                location.reload();
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('autoDistributionModal'));
+                if (modal) modal.hide();
+
+                // Show success toast
+                showToast('success', data.message);
+
+                // Reload after 2 seconds
+                setTimeout(() => location.reload(), 2000);
             } else {
-                alert('Erro: ' + data.error);
+                showToast('error', 'Erro: ' + data.error);
             }
         } catch (error) {
-            console.error('Erro ao desvincular loja:', error);
-            alert('Erro ao desvincular loja');
+            console.error('Erro:', error);
+            showToast('error', 'Erro ao distribuir lojas');
         }
     }
+
+    // Unassign all stores
+    async function confirmUnassignAllStores() {
+        showConfirmModal(
+            'Deseja realmente DESATRIBUIR TODAS as lojas de TODOS os analistas? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    const response = await fetch('/api/store-verification/analyst/unassign-all/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Csrftoken': getCookie('csrftoken')
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showToast('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('error', 'Erro: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                    showToast('error', 'Erro ao desatribuir lojas');
+                }
+            }
+        );
+    }
+
+    // ===== INJECT MANAGEMENT BUTTONS =====
+
+    // Inject buttons for auto distribution and unassign all
+    function injectManagementButtons() {
+        // Only for gestor/admin
+        {% if user.role in 'gestor,administrador' %}
+        // Find the container where cards are rendered
+        const cardContainer = document.querySelector('[data-analyst-cards]') ||
+            document.querySelector('.card-grid');
+
+        if (cardContainer && !document.getElementById('managementButtonsInjected')) {
+            // Create button container
+            const buttonContainer = document.createElement('div');
+            buttonContainer.id = 'managementButtonsInjected';
+            buttonContainer.className = 'mb-3 d-flex gap-2 justify-content-end';
+            buttonContainer.innerHTML = `
+                <button class="btn btn-outline-primary" onclick="openAutoDistributionModal()" title="Distribuir lojas automaticamente entre analistas">
+                    <i class="bi bi-shuffle me-2"></i>Distribuir Automaticamente
+                </button>
+                <button class="btn btn-outline-danger" onclick="confirmUnassignAllStores()" title="Desatribuir todas as lojas de todos os analistas">
+                    <i class="bi bi-x-circle me-2"></i>Desatribuir Tudo
+                </button>
+            `;
+
+            // Insert before card container
+            cardContainer.parentNode.insertBefore(buttonContainer, cardContainer);
+        }
+        {% endif %}
+    }
+
+    // Call inject function after loading analyst overview
+    {% if user.role in 'gestor,administrador' %}
+    const originalLoadAnalystOverview = loadAnalystOverview;
+    loadAnalystOverview = async function () {
+        await originalLoadAnalystOverview();
+        setTimeout(injectManagementButtons, 100);
+    };
+    {% endif %}
 </script>
 
 {% endblock %}
