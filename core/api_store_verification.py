@@ -861,6 +861,7 @@ def api_auto_distribute_stores(request):
     try:
         import json
         import random
+        from datetime import datetime
         
         data = json.loads(request.body)
         analyst_ids = data.get('analyst_ids', [])
@@ -907,8 +908,8 @@ def api_auto_distribute_stores(request):
                     analyst=analyst,
                     store=store,
                     weekly_target=weekly_target,
-                    period_start=period_start,
-                    period_end=period_end,
+                    period_start=period_start if period_start else None,
+                    period_end=period_end if period_end else None,
                     active=True
                 )
             
@@ -924,6 +925,9 @@ def api_auto_distribute_stores(request):
         })
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in api_auto_distribute_stores: {error_details}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
