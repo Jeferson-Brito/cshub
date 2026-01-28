@@ -255,6 +255,18 @@
                             Visão geral do desempenho e atribuições dos analistas.
                         </p>
 
+                        <!-- Management Action Buttons -->
+                        <div class="mb-3 d-flex gap-2 justify-content-end">
+                            <button class="btn btn-outline-primary" onclick="openAutoDistributionModal()"
+                                title="Distribuir lojas automaticamente entre analistas">
+                                <i class="bi bi-shuffle me-2"></i>Distribuir Automaticamente
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="confirmUnassignAllStores()"
+                                title="Desatribuir todas as lojas de todos os analistas">
+                                <i class="bi bi-x-circle me-2"></i>Desatribuir Tudo
+                            </button>
+                        </div>
+
                         <!-- Analyst Cards Grid -->
                         <div id="analystsGrid" class="row g-3">
                             <div class="col-12 text-center py-5">
@@ -2801,45 +2813,6 @@
             }
         );
     }
-
-    // ===== INJECT MANAGEMENT BUTTONS =====
-
-    // Inject buttons for auto distribution and unassign all
-    function injectManagementButtons() {
-        // Only for gestor/admin
-        {% if user.role in 'gestor,administrador' %}
-        // Find the container where cards are rendered
-        const cardContainer = document.querySelector('[data-analyst-cards]') ||
-            document.querySelector('.card-grid');
-
-        if (cardContainer && !document.getElementById('managementButtonsInjected')) {
-            // Create button container
-            const buttonContainer = document.createElement('div');
-            buttonContainer.id = 'managementButtonsInjected';
-            buttonContainer.className = 'mb-3 d-flex gap-2 justify-content-end';
-            buttonContainer.innerHTML = `
-                <button class="btn btn-outline-primary" onclick="openAutoDistributionModal()" title="Distribuir lojas automaticamente entre analistas">
-                    <i class="bi bi-shuffle me-2"></i>Distribuir Automaticamente
-                </button>
-                <button class="btn btn-outline-danger" onclick="confirmUnassignAllStores()" title="Desatribuir todas as lojas de todos os analistas">
-                    <i class="bi bi-x-circle me-2"></i>Desatribuir Tudo
-                </button>
-            `;
-
-            // Insert before card container
-            cardContainer.parentNode.insertBefore(buttonContainer, cardContainer);
-        }
-        {% endif %}
-    }
-
-    // Call inject function after loading analyst overview
-    {% if user.role in 'gestor,administrador' %}
-    const originalLoadAnalystOverview = loadAnalystOverview;
-    loadAnalystOverview = async function () {
-        await originalLoadAnalystOverview();
-        setTimeout(injectManagementButtons, 100);
-    };
-    {% endif %}
 </script>
 
 {% endblock %}
