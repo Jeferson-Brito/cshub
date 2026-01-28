@@ -2033,6 +2033,7 @@
                                 <th>Cidade</th>
                                 <th>Status</th>
                                 <th>Última Auditoria</th>
+                                <th class="text-end">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="modalStoresTableBody">
@@ -2126,16 +2127,32 @@
 
         analyst.stores.forEach(store => {
             let statusBadge = '';
-            if (store.status === 'Conforme') statusBadge = '<span class="badge bg-success bg-opacity-10 text-success">Conforme</span>';
-            else if (store.status === 'Irregular') statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger">Irregular</span>';
-            else statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary">Pendente</span>';
+            let rowClass = '';  // Background color for the row
+
+            if (store.status === 'Conforme') {
+                statusBadge = '<span class="badge bg-success bg-opacity-10 text-success">Conforme</span>';
+                rowClass = 'table-success bg-opacity-25';  // Light green background
+            } else if (store.status === 'Irregular') {
+                statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger">Irregular</span>';
+                rowClass = 'table-danger bg-opacity-25';  // Light red background
+            } else {
+                statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary">Pendente</span>';
+                rowClass = '';  // No background (white)
+            }
 
             const row = `
-                        <tr>
+                        <tr class="${rowClass}">
                             <td class="fw-bold">${store.code}</td>
                             <td>${store.city}</td>
                             <td>${statusBadge}</td>
                             <td class="small text-muted">${store.last_audit}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                        onclick="confirmUnassignStore(${store.assignment_id}, '${store.code}', '${analyst.name}')"
+                                        title="Desvincular loja">
+                                    <i class="bi bi-x-circle me-1"></i>Desvincular
+                                </button>
+                            </td>
                         </tr>
                     `;
             tbody.insertAdjacentHTML('beforeend', row);
@@ -2467,6 +2484,37 @@
             }
         }
         return cookieValue;
+    }
+
+    // Function to confirm and unassign store from analyst
+    async function confirmUnassignStore(assignmentId, storeCode, analystName) {
+        if (!confirm(`Deseja realmente desvincular a loja ${storeCode} de ${analystName}?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/store-verification/analyst/unassign/${assignmentId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Csrftoken': getCookie('csrftoken')
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success message
+                alert(data.message);
+                // Reload page to update data
+                location.reload();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Erro ao desvincular loja:', error);
+            alert('Erro ao desvincular loja');
+        }
     }
 </script>
 

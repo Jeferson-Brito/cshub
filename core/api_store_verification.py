@@ -759,6 +759,7 @@ def api_get_analysts_overview(request):
                 prog = ass.get_weekly_progress()
                 # Status da loja para o detalhe
                 assigned_stores_list.append({
+                    'assignment_id': ass.id,  # For unassign functionality
                     'code': ass.store.code,
                     'city': ass.store.city,
                     'last_audit': ass.store.last_audit_date.strftime('%d/%m/%Y') if ass.store.last_audit_date else 'Nunca',
