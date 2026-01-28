@@ -646,10 +646,17 @@
                     <div class="alert alert-info border-0">
                         <i class="bi bi-info-circle me-2"></i>
                         <strong>Como funciona:</strong> Selecione os analistas e as lojas disponíveis serão distribuídas
-                        automaticamente e aleatoriamente. Sobras vão para o primeiro analista.
+                        automaticamente e aleatoriamente. Sobras são distribuídas igualmente entre os primeiros
+                        analistas.
                     </div>
 
-                    <h6 class="fw-bold mb-3">Selecione os Analistas:</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0">Selecione os Analistas:</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                            onclick="toggleSelectAllAnalysts()">
+                            <i class="bi bi-check-square me-1"></i>Selecionar Todos
+                        </button>
+                    </div>
                     <div id="analystCheckboxList" class="mb-4" style="max-height: 300px; overflow-y: auto;">
                         <!-- Populated via JS -->
                     </div>
@@ -2697,11 +2704,13 @@
                 container.innerHTML = '';
                 data.analysts.forEach(analyst => {
                     const checkboxHtml = `
-                        <div class="form-check mb-2 p-3 border rounded hover-bg-light">
-                            <input class="form-check-input" type="checkbox" value="${analyst.id}" 
-                                   id="analyst${analyst.id}" onchange="updateAutoDistributionStats()">
-                            <label class="form-check-label w-100 cursor-pointer" for="analyst${analyst.id}">
-                                <div class="d-flex justify-content-between">
+                        <div class="form-check mb-2 p-3 border rounded" style="cursor: pointer; transition: background 0.2s;" 
+                             onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                            <input class="form-check-input analyst-checkbox" type="checkbox" value="${analyst.id}" 
+                                   id="analyst${analyst.id}" onchange="updateAutoDistributionStats()" 
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <label class="form-check-label w-100 ms-2" for="analyst${analyst.id}" style="cursor: pointer;">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-bold">${analyst.name}</span>
                                     <span class="badge bg-secondary">${analyst.stats.total_stores} lojas</span>
                                 </div>
@@ -2717,6 +2726,18 @@
             console.error('Erro ao carregar analistas:', error);
             showToast('error', 'Erro ao carregar analistas');
         }
+    }
+
+    // Toggle select/deselect all analysts
+    function toggleSelectAllAnalysts() {
+        const checkboxes = document.querySelectorAll('.analyst-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+
+        updateAutoDistributionStats();
     }
 
     // Update stats in real-time

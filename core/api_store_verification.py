@@ -894,8 +894,8 @@ def api_auto_distribute_stores(request):
         for i, analyst_id in enumerate(analyst_ids):
             analyst = get_object_or_404(User, id=analyst_id)
             
-            # First analyst gets base + remainder
-            stores_for_this_analyst = base_per_analyst + (remainder if i == 0 else 0)
+            # Distribute remainder: each of the first 'remainder' analysts gets +1
+            stores_for_this_analyst = base_per_analyst + (1 if i < remainder else 0)
             
             # Get stores for this analyst
             stores_slice = available_stores[current_index:current_index + stores_for_this_analyst]
