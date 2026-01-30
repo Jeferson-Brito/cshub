@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, Avg, Q
+from django.db.models import Count, Avg, Q, Max
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
@@ -469,7 +469,7 @@ def user_access_history(request):
     # Estatísticas por usuário
     user_stats = User.objects.filter(ativo=True).annotate(
         total_logins=Count('audit_logs', filter=Q(audit_logs__action='login')),
-        last_login_audit=models.Max('audit_logs__created_at', filter=Q(audit_logs__action='login'))
+        last_login_audit=Max('audit_logs__created_at', filter=Q(audit_logs__action='login'))
     ).order_by('-total_logins')
     
     # Paginação dos logs detalhados
