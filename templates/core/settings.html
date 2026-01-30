@@ -79,7 +79,13 @@
                     {% for field in password_form %}
                     <div class="form-group mb-3">
                         <label class="form-label small fw-bold text-muted">{{ field.label }}</label>
-                        {{ field }}
+                        <div class="input-group">
+                            {{ field }}
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(this)"
+                                tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         {% if field.help_text %}
                         <div class="form-text small">{{ field.help_text }}</div>
                         {% endif %}
@@ -92,6 +98,20 @@
                         document.querySelectorAll('input[type="password"]').forEach(input => {
                             input.classList.add('form-control');
                         });
+
+                        function togglePassword(btn) {
+                            const input = btn.previousElementSibling;
+                            const icon = btn.querySelector('i');
+                            if (input.type === 'password') {
+                                input.type = 'text';
+                                icon.classList.remove('bi-eye');
+                                icon.classList.add('bi-eye-slash');
+                            } else {
+                                input.type = 'password';
+                                icon.classList.remove('bi-eye-slash');
+                                icon.classList.add('bi-eye');
+                            }
+                        }
                     </script>
 
                     <div class="d-flex justify-content-end mt-4">
