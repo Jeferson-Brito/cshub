@@ -41,7 +41,8 @@
                         </div>
                         <div class="setting-text">
                             <h6 class="setting-title-modern">Tema Escuro</h6>
-                            <p class="setting-description-modern">Alterne entre tema claro e escuro para melhorar sua experiência visual e reduzir o cansaço visual</p>
+                            <p class="setting-description-modern">Alterne entre tema claro e escuro para melhorar sua
+                                experiência visual e reduzir o cansaço visual</p>
                         </div>
                     </div>
                     <div class="setting-action">
@@ -56,6 +57,49 @@
                         </label>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Segurança - Alterar Senha -->
+        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.15s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Segurança</h5>
+                    <p class="settings-card-subtitle">Gerencie suas credenciais de acesso</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <form method="post" action="{% url 'settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="change_password" value="true">
+
+                    {% for field in password_form %}
+                    <div class="form-group mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text small">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <script>
+                        document.querySelectorAll('input[type="password"]').forEach(input => {
+                            input.classList.add('form-control');
+                        });
+                    </script>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Alterar Senha
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -78,7 +122,8 @@
                         </div>
                         <div class="setting-text">
                             <h6 class="setting-title-modern">Notificações do Sistema</h6>
-                            <p class="setting-description-modern">Receba notificações sobre ações importantes, atualizações e alertas do sistema</p>
+                            <p class="setting-description-modern">Receba notificações sobre ações importantes,
+                                atualizações e alertas do sistema</p>
                         </div>
                     </div>
                     <div class="setting-action">
@@ -225,70 +270,70 @@
 
 {% block scripts %}
 <script>
-// Carregar tema salvo
-document.addEventListener('DOMContentLoaded', function() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-        document.getElementById('theme-toggle').checked = true;
-    }
-    
-    // Carregar preferência de notificações
-    const savedNotifications = localStorage.getItem('notifications');
-    if (savedNotifications !== null) {
-        document.getElementById('notifications-toggle').checked = savedNotifications === 'true';
-    }
-    
-    // Animações de entrada
-    const cards = document.querySelectorAll('.settings-card');
-    cards.forEach((card, index) => {
-        setTimeout(() => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.5s ease';
+    // Carregar tema salvo
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.getElementById('theme-toggle').checked = true;
+        }
+
+        // Carregar preferência de notificações
+        const savedNotifications = localStorage.getItem('notifications');
+        if (savedNotifications !== null) {
+            document.getElementById('notifications-toggle').checked = savedNotifications === 'true';
+        }
+
+        // Animações de entrada
+        const cards = document.querySelectorAll('.settings-card');
+        cards.forEach((card, index) => {
             setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 50);
-        }, index * 100);
-    });
-});
-
-// Toggle de tema com animação
-function toggleTheme() {
-    const body = document.body;
-    const toggle = document.getElementById('theme-toggle');
-    
-    // Animação suave
-    body.style.transition = 'background 0.3s ease, color 0.3s ease';
-    
-    if (toggle.checked) {
-        body.classList.add('dark-theme');
-        localStorage.setItem('theme', 'dark');
-        showToast('Tema escuro ativado!', 'success');
-    } else {
-        body.classList.remove('dark-theme');
-        localStorage.setItem('theme', 'light');
-        showToast('Tema claro ativado!', 'success');
-    }
-    
-    setTimeout(() => {
-        body.style.transition = '';
-    }, 300);
-}
-
-// Salvar preferência de notificações
-document.addEventListener('DOMContentLoaded', function() {
-    const notificationsToggle = document.getElementById('notifications-toggle');
-    if (notificationsToggle) {
-        notificationsToggle.addEventListener('change', function() {
-            localStorage.setItem('notifications', this.checked);
-            showToast(
-                this.checked ? 'Notificações ativadas!' : 'Notificações desativadas!', 
-                'info'
-            );
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
         });
+    });
+
+    // Toggle de tema com animação
+    function toggleTheme() {
+        const body = document.body;
+        const toggle = document.getElementById('theme-toggle');
+
+        // Animação suave
+        body.style.transition = 'background 0.3s ease, color 0.3s ease';
+
+        if (toggle.checked) {
+            body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+            showToast('Tema escuro ativado!', 'success');
+        } else {
+            body.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+            showToast('Tema claro ativado!', 'success');
+        }
+
+        setTimeout(() => {
+            body.style.transition = '';
+        }, 300);
     }
-});
+
+    // Salvar preferência de notificações
+    document.addEventListener('DOMContentLoaded', function () {
+        const notificationsToggle = document.getElementById('notifications-toggle');
+        if (notificationsToggle) {
+            notificationsToggle.addEventListener('change', function () {
+                localStorage.setItem('notifications', this.checked);
+                showToast(
+                    this.checked ? 'Notificações ativadas!' : 'Notificações desativadas!',
+                    'info'
+                );
+            });
+        }
+    });
 </script>
 {% endblock %}

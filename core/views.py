@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -1321,11 +1322,29 @@ def user_delete(request, pk):
     messages.success(request, f'Usuário {username} excluído!')
     return redirect('user_list')
 
+# Imports for settings_view
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 @login_required
 def settings_view(request):
-    """Página de configurações do sistema"""
-    return render(request, 'core/settings.html')
+    """Página de configurações do usuário"""
+    if request.method == 'POST':
+        if 'change_password' in request.POST:
+            password_form = PasswordChangeForm(request.user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                update_session_auth_hash(request, user)  # Manter usuário logado
+                messages.success(request, 'Sua senha foi alterada com sucesso!')
+                return redirect('settings')
+            else:
+                messages.error(request, 'Erro ao alterar senha. Verifique os campos.')
+    else:
+        password_form = PasswordChangeForm(request.user)
+
+    return render(request, 'core/settings.html', {
+        'password_form': password_form
+    })
 
 
 @login_required
