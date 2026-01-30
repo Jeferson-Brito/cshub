@@ -1,0 +1,251 @@
+from django.core.management.base import BaseCommand
+from core.models import FerramentaIA
+
+class Command(BaseCommand):
+    help = 'Popula o banco de dados com 200 ferramentas de IA profissionais'
+
+    def handle(self, *args, **options):
+        # Lista de 200 ferramentas de IA
+        # Formato: (Titulo, URL, Descricao, Categoria)
+        # Categorias: 'ia' (Geral), 'design', 'marketing', 'coding', 'productivity', 'business', 'audio', 'video'
+        
+        tools = [
+            # --- Chat & Assistentes Gerais ---
+            ("ChatGPT", "https://chat.openai.com/", "Modelo de linguagem avançado da OpenAI capaz de dialogar, escrever textos criativos, resolver problemas matemáticos e programar. Especializado em compreensão de contexto e geração de texto natural. Utilizado para automação de atendimento, criação de conteúdo e assistência técnica.", "ia"),
+            ("Claude", "https://claude.ai/", "Assistente de IA da Anthropic conhecido por sua segurança e capacidade de processar grandes volumes de texto (janela de contexto ampla). Ideal para resumir documentos longos, análise jurídica e escrita criativa com nuance.", "ia"),
+            ("Google Gemini", "https://gemini.google.com/", "IA multimodal do Google que integra texto, imagens, código e vídeo. Especializada em raciocínio complexo e integrada ao ecossistema Google Workspace. Utilizada para pesquisa, análise de dados e colaboração em tempo real.", "ia"),
+            ("Microsoft Copilot", "https://copilot.microsoft.com/", "Assistente de produtividade da Microsoft integrado ao Windows e Office 365 (Word, Excel, PPT). Especializado em aumentar a eficiência no trabalho corporativo, gerar imagens e buscar informações na web em tempo real.", "ia"),
+            ("Perplexity AI", "https://www.perplexity.ai/", "Motor de resposta conversacional que combina busca na web com LLMs. Especializado em fornecer respostas precisas com citações de fontes confiáveis. Utilizado para pesquisa acadêmica, fact-checking e descoberta de informações rápidas.", "ia"),
+            ("Poe", "https://poe.com/", "Agregador de modelos de IA que permite acesso a GPT-4, Claude, Llama e outros em uma única interface. Especializado em comparação de modelos e criação de bots personalizados. Utilizado por entusiastas e desenvolvedores para testar diferentes IAs.", "ia"),
+            ("Hugging Chat", "https://huggingface.co/chat/", "Interface de chat open-source da Hugging Face que permite testar os modelos de linguagem abertos mais recentes (como Llama 3, Mistral). Especializado em transparência e privacidade. Utilizado pela comunidade open-source.", "ia"),
+            ("Pi (Inflection AI)", "https://pi.ai/", "IA pessoal projetada para ser empática, gentil e segura. Especializada em inteligência emocional e conversas de apoio. Utilizada como um confidente virtual, para brainstorming pessoal e bem-estar.", "ia"),
+            ("Character.AI", "https://beta.character.ai/", "Plataforma que permite criar e conversar com personas de IA baseadas em ficção ou realidade. Especializada em entretenimento e roleplay. Utilizada para aprendizado de idiomas, escrita criativa e diversão.", "ia"),
+            ("Jasper Chat", "https://www.jasper.ai/chat", "Chatbot voltado especificamente para criadores de conteúdo e marketing. Especializado em manter o tom de voz da marca. Utilizado para brainstorming de campanhas e redação publicitária.", "ia"),
+            ("You.com", "https://you.com/", "Motor de busca com assistente de IA focado em produtividade e codificação. Especializado em modos de busca personalizados (Pesquisa, Código, Escrita). Utilizado para encontrar soluções técnicas rapidamente.", "ia"),
+            ("Komo", "https://komo.ai/", "Motor de busca generative focado em privacidade, sem anúncios e rastreamento. Especializado em exploração de tópicos ('Deep Dive'). Utilizado por usuários preocupados com privacidade.", "ia"),
+            ("Andi", "https://andisearch.com/", "Busca inteligente que resume resultados e responde perguntas diretamente. Especializado em fornecer respostas diretas sem poluição visual. Utilizado como alternativa limpa ao Google.", "ia"),
+            ("Brave Leo", "https://brave.com/leo/", "Assistente de IA nativo do navegador Brave, focado em privacidade. Especializado em resumir páginas da web e vídeos em tempo real. Utilizado para leitura rápida e compreensão de conteúdo online.", "ia"),
+            ("Opera Aria", "https://www.opera.com/features/aria", "IA nativa do navegador Opera, alimentada pela tecnologia da OpenAI. Especializada em auxiliar na navegação e geração de texto durante o uso da web. Utilizada para produtividade no browser.", "ia"),
+            ("Taskade AI", "https://www.taskade.com/", "Plataforma de produtividade tudo-em-um com agentes de IA autônomos. Especializada em gestão de projetos e automação de tarefas. Utilizada por equipes para organizar fluxos de trabalho complexos.", "ia"),
+            ("Writesonic (Chatsonic)", "https://writesonic.com/chat", "Chatbot conectado ao Google Search para dados em tempo real. Especializado em criação de conteúdo atualizado e geração de imagens. Utilizado por profissionais de marketing digital.", "ia"),
+            ("Rytr Chat", "https://rytr.me/", "Assistente de escrita simples e acessível. Especializado em gerar textos curtos como e-mails e legendas. Utilizado por freelancers e pequenas empresas.", "ia"),
+            ("Easy-Peasy.AI", "https://easy-peasy.ai/", "Gerador de conteúdo versátil com templates prontos. Especializado em facilitar a criação de copy para iniciantes. Utilizado para social media e descrições de produtos.", "ia"),
+            ("Forefront", "https://www.forefront.ai/", "Plataforma empresarial que oferece acesso a múltiplos modelos com recursos de segurança. Especializada em integração corporativa e fine-tuning. Utilizada por empresas para implantar LLMs com segurança.", "ia"),
+
+            # --- Criação de Conteúdo & Marketing ---
+            ("Jasper", "https://www.jasper.ai/", "Plataforma robusta de IA para marketing enterprise. Especializada em manter a consistência da marca e colaborar em campanhas. Utilizada para criar posts de blog, e-mails de vendas e anúncios em escala.", "marketing"),
+            ("Copy.ai", "https://www.copy.ai/", "Gerador de copy automatizado focado em workflows de vendas e marketing. Especializado em criar sequências de e-mail e posts sociais. Utilizado para eliminar o bloqueio criativo e acelerar a produção.", "marketing"),
+            ("Writesonic", "https://writesonic.com/", "Ferramenta de criação de conteúdo SEO-friendly. Especializada em artigos longos que rankeiam no Google. Utilizada por blogueiros e agências de SEO.", "marketing"),
+            ("Rytr", "https://rytr.me/", "Assistente de escrita leve e econômico. Especializado em gerar variações de texto rapidamente. Utilizado para legendas de Instagram, meta descriptions e CTAs.", "marketing"),
+            ("Anyword", "https://anyword.com/", "Plataforma de copywriting orientada a dados que prevê o desempenho do texto. Especializada em otimizar taxas de conversão (CRO). Utilizada para anúncios pagos e landing pages.", "marketing"),
+            ("Surfer SEO", "https://surferseo.com/", "Ferramenta de otimização de conteúdo que analisa a SERP. Especializada em sugerir termos e estrutura para rankear melhor. Utilizada para planejar e auditar conteúdo SEO.", "marketing"),
+            ("Frase", "https://www.frase.io/", "Plataforma que combina pesquisa de tópicos e criação de conteúdo. Especializada em briefs e otimização de artigos existentes. Utilizada por estrategistas de conteúdo.", "marketing"),
+            ("Semrush (ContentShake)", "https://www.semrush.com/", "Ferramenta auxiliar da suite Semrush para redação otimizada. Especializada em guiar a escrita com dados de competidores. Utilizada por profissionais de marketing 'full-stack'.", "marketing"),
+            ("Scalenut", "https://www.scalenut.com/", "Plataforma que gerencia todo o ciclo de vida do conteúdo SEO. Especializada em 'Cruise Mode' para criar artigos em minutos. Utilizada para escalar a produção de blogs.", "marketing"),
+            ("Writer", "https://writer.com/", "IA generativa full-stack construída para empresas. Especializada em segurança de dados e conformidade com o guia de estilo da marca. Utilizada por grandes organizações (L'Oréal, Uber).", "marketing"),
+            ("LongShot AI", "https://www.longshot.ai/", "Assistente focado em conteúdo longo e fact-checking. Especializado em garantir a precisão das informações geradas. Utilizado para nichos técnicos e 'YMYL' (Your Money Your Life).", "marketing"),
+            ("Peppertype.ai", "https://www.peppertype.ai/", "Assistente virtual para times de conteúdo. Especializado em gerar ideias de tópicos e rascunhos rápidos. Utilizado para manter calendários editoriais cheios.", "marketing"),
+            ("Neuroflash", "https://neuroflash.com/", "Líder europeu em geração de texto e imagem. Especializado na língua alemã e nuances europeias. Utilizado por profissionais de marketing na DACH region.", "marketing"),
+            ("Simplified", "https://simplified.com/", "App 'tudo-em-um' para marketing moderno. Especializado em unir design gráfico, edição de vídeo, e escrita IA em um só lugar. Utilizado por gestores de social media.", "marketing"),
+            ("Hypotenuse AI", "https://www.hypotenuse.ai/", "IA focada em e-commerce. Especializada em gerar descrições de produtos em massa a partir de imagens ou atributos. Utilizada por lojas online e marketplaces.", "marketing"),
+            ("Wordtune", "https://www.wordtune.com/", "Companheiro de leitura e escrita. Especializado em reescrever frases para melhorar tom, clareza e fluidez. Utilizado por não-nativos e profissionais para polir emails.", "marketing"),
+            ("Quillbot", "https://quillbot.com/", "Ferramenta de paráfrase avançada. Especializada em reestruturar textos para evitar plágio e melhorar legibilidade. Utilizada amplamente por estudantes e acadêmicos.", "marketing"),
+            ("Grammarly", "https://www.grammarly.com/", "O assistente de escrita mais popular. Especializado em correção gramatical, tom e estilo em tempo real. Utilizado por quase todos profissionais que escrevem em inglês.", "marketing"),
+            ("Hemingway Editor Plus", "https://hemingwayapp.com/", "Versão com IA do famoso editor. Especializada em tornar a escrita audaciosa e clara, corrigindo frases complexas. Utilizada por escritores que buscam concisão.", "marketing"),
+            ("ProWritingAid", "https://prowritingaid.com/", "Mentor de escrita e editor de estilo profundo. Especializado em análise detalhada de estrutura e repetições. Utilizado por autores de livros e narrativas longas.", "marketing"),
+            ("AdCreative.ai", "https://www.adcreative.ai/", "IA focada em performance visual. Especializada em gerar centenas de variações de banners publicitários otimizados para conversão. Utilizada para campanhas de PPC (Ads).", "marketing"),
+            ("Predis.ai", "https://predis.ai/", "Gerador de conteúdo 3-em-1 (imagem, vídeo, legenda) para social media. Especializado em criar posts completos a partir de uma frase. Utilizado para manter redes sociais ativas.", "marketing"),
+            ("Ocoya", "https://www.ocoya.com/", "Plataforma de automação que cria e agenda posts. Especializada em gerar gráficos e textos rapidamente. Utilizada para gestão de múltiplas redes sociais.", "marketing"),
+            ("FeedHive", "https://feedhive.com/", "Ferramenta de gestão com IA para reciclagem de conteúdo. Especializada em prever os melhores horários e analisar engajamento. Utilizada para crescer audiência organicamente.", "marketing"),
+            ("Taplio", "https://taplio.com/", "Ferramenta tudo-em-um para LinkedIn. Especializada em criar carrosséis, gerar posts virais e engajar com leads. Utilizada para personal branding no LinkedIn.", "marketing"),
+            ("TweetHunter", "https://tweethunter.io/", "Ferramenta similar ao Taplio, mas para o Twitter (X). Especializada em inspiração de tweets virais e automação de DMs. Utilizada para crescer no Twitter.", "marketing"),
+            ("Reply.io", "https://reply.io/", "Plataforma de engajamento de vendas multicanal. Especializada em criar sequências de outreach personalizadas com IA. Utilizada por times de SDR e BDR.", "marketing"),
+            ("Lavender", "https://www.lavender.ai/", "Coach de e-mail de vendas em tempo real. Especializado em analisar e pontuar e-mails para aumentar taxa de resposta. Utilizado para cold email e prospecção.", "marketing"),
+            ("Regie.ai", "https://www.regie.ai/", "Plataforma generativa para times de receita. Especializada em personalizar conteúdo de vendas em escala. Utilizada para campanhas outbound enterprise.", "marketing"),
+            ("SmartWriter.ai", "https://www.smartwriter.ai/", "Gerador de 'quebra-gelos' hiper-personalizados. Especializado em usar dados do LinkedIn para criar introduções únicas. Utilizado para aumentar conversão em cold outreach.", "marketing"),
+
+            # --- Imagem & Design ---
+            ("Midjourney", "https://www.midjourney.com/", "Gerador de arte via IA líder de mercado, operado via Discord. Especializado em criar imagens artísticas, fotorrealistas e conceituais de altíssima qualidade. Utilizado por designers, artistas e diretores de arte.", "design"),
+            ("DALL·E 3", "https://openai.com/dall-e-3", "Modelo de geração de imagem da OpenAI integrado ao ChatGPT. Especializado em seguir instruções complexas e renderizar texto dentro da imagem. Utilizado para uso geral, ilustrações e brainstorming visual.", "design"),
+            ("Stable Diffusion", "https://stability.ai/", "Modelo de geração de imagem open-source poderoso e flexível. Especializado em permitir controle total se rodado localmente (ControlNet, LoRA). Utilizado por tech-savvy artists e desenvolvedores.", "design"),
+            ("Adobe Firefly", "https://firefly.adobe.com/", "IA generativa da Adobe treinada em banco de imagens seguro. Especializada em integração com Photoshop (Generative Fill) e uso comercial seguro. Utilizada por profissionais criativos corporativos.", "design"),
+            ("Canva Magic Studio", "https://www.canva.com/magic", "Suite de ferramentas de IA dentro do Canva. Especializada em facilitar o design para não-designers (Magic Edit, Magic Eraser). Utilizada por equipes de marketing e redes sociais.", "design"),
+            ("Leonardo.ai", "https://leonardo.ai/", "Plataforma de geração de assets visuais focada em controle de estilo. Especializada em criação de personagens, itens de jogos e arte consistente. Utilizada por desenvolvedores de jogos e criadores de ativos digitais.", "design"),
+            ("Ideogram", "https://ideogram.ai/", "Gerador de imagens com foco excepcional em tipografia e texto. Especializado em criar logos, designs de camisetas e posters com letras legíveis. Utilizado para design gráfico e print-on-demand.", "design"),
+            ("Krea AI", "https://www.krea.ai/", "Ferramenta de geração e aprimoramento em tempo real. Especializada em transformar esboços simples em arte instantaneamente e 'upscaling' inteligente. Utilizada para prototipagem rápida e visualização.", "design"),
+            ("Playground AI", "https://playgroundai.com/", "Editor de imagens AI colaborativo e híbrido. Especializado em misturar edição real com geração de imagem de forma intuitiva. Utilizado para experimentação artística rápida.", "design"),
+            ("Clipdrop", "https://clipdrop.co/", "Suite de ferramentas de edição mágica da Stability AI. Especializada em remover fundos, reluminação (Relight) e expansão de imagens (Uncrop). Utilizada para retoques rápidos profissionais.", "design"),
+            ("Photoroom", "https://www.photoroom.com/", "App focado em fotografia de produtos. Especializado em remover fundos e criar cenários de estúdio virtuais. Utilizado por vendedores de e-commerce e revendedores.", "design"),
+            ("Remove.bg", "https://www.remove.bg/", "A ferramenta original de remoção de fundo. Especializada em fazer apenas uma coisa com perfeição e rapidez. Utilizada em fluxos de trabalho que exigem recortes automáticos.", "design"),
+            ("Upscayl", "https://upscayl.org/", "Software open-source gratuito para aumentar resolução de imagens. Especializado em usar IA local para 'upscaling' sem perder qualidade. Utilizado para recuperar fotos antigas ou de baixa resolução.", "design"),
+            ("Magnific AI", "https://magnific.ai/", "Upscaler e 're-imaginador' de imagens premium. Especializado em alucinar detalhes realistas em imagens de baixa resolução. Utilizado por profissionais para finalizar arte em 4K/8K.", "design"),
+            ("Topaz Photo AI", "https://www.topazlabs.com/", "Software desktop para restauração de imagens. Especializado em denoise, sharpening e upscaling de fotos e vídeos. Utilizado por fotógrafos profissionais.", "design"),
+            ("Khroma", "https://www.khroma.co/", "Ferramenta de cores que aprende seu gosto. Especializada em gerar combinações de paletas de cores infinitas baseadas em preferências. Utilizada por designers buscando inspiração cromática.", "design"),
+            ("Fontjoy", "https://fontjoy.com/", "Gerador de combinações de fontes usando Deep Learning. Especializado em encontrar pares de fontes que funcionam bem visualmente. Utilizado para definir tipografia em projetos web e print.", "design"),
+            ("Designs.ai", "https://designs.ai/", "Plataforma criativa integrada. Especializada em gerar logotipos, vídeos, banners e mockups em um só lugar. Utilizada por pequenas empresas montando identidade visual.", "design"),
+            ("Looka", "https://looka.com/", "Criador de logotipos e identidade de marca. Especializado em gerar kits de marca completos (logo, cartão, papel timbrado) a partir de preferências. Utilizado por empreendedores iniciando negócios.", "design"),
+            ("Brandmark", "https://brandmark.io/", "Outra ferramenta robusta de criação de logos. Especializada em designs minimalistas e modernos. Utilizada para branding rápido e eficaz.", "design"),
+            ("Uizard", "https://uizard.io/", "Ferramenta de design UI/UX rápida. Especializada em transformar rascunhos desenhados à mão em telas digitais funcionais. Utilizada para wireframing e prototipagem de apps.", "design"),
+            ("Visily", "https://visily.ai/", "Ferramenta de design de UI com recursos de IA poderosos. Especializada em converter screenshots de outros apps em designs editáveis. Utilizada por times de produto para inspiração e referência.", "design"),
+            ("Galileo AI", "https://www.usegalileo.ai/", "Co-piloto para design de interface. Especializado em gerar telas de UI mobile e web completas a partir de descrição texto no Figma. Utilizado para acelerar o início de projetos UI.", "design"),
+            ("Flair.ai", "https://flair.ai/", "Ferramenta de design para fotos de produtos (CPG). Especializada em colocar produtos em cenários de marca realistas. Utilizada para marketing de produtos físicos.", "design"),
+            ("Pebblely", "https://pebblely.com/", "Transforma fotos de produtos simples em ativos de marketing do Instagram. Especializada em gerar fundos contextuais com iluminação correta. Utilizada por marcas D2C.", "design"),
+            ("Stockimg.ai", "https://stockimg.ai/", "Gerador focado em categorias específicas como capas de livros, wallpapers e logos. Especializado em formatos predefinidos. Utilizado para necessidades visuais rápidas.", "design"),
+            ("Civitai", "https://civitai.com/", "O maior hub comunitário para modelos Stable Diffusion. Especializado em hospedar Fine-tunes, LoRAs e Embeddings. Utilizado para baixar modelos de estilos específicos (anime, realismo, 3D).", "design"),
+            ("Tensor.art", "https://tensor.art/", "Plataforma gratuita para rodar modelos Civitai na web. Especializada em acessibilidade a modelos complexos sem GPU potente. Utilizada por entusiastas de geração de imagem.", "design"),
+            ("Scenario", "https://www.scenario.com/", "Plataforma de criação de ativos para jogos. Especializada em treinar modelos com seu próprio estilo artístico. Utilizada por estúdios de games para consistência visual.", "design"),
+            ("PromptBase", "https://promptbase.com/", "Marketplace de prompts refinados. Especializado em compra e venda de prompts testados para Midjourney, GPT, etc. Utilizado para economizar tempo na engenharia de prompt.", "design"),
+
+             # --- Vídeo & Animação ---
+            ("Runway Gen-2", "https://runwayml.com/", "Suite criativa de IA para produção de vídeo. Especializada em Text-to-Video, Video-to-Video e inpainting. Utilizada por cineastas e artistas visuais para efeitos experimentais.", "video"),
+            ("Pika Labs", "https://pika.art/", "Ferramenta de geração de vídeo focada em animação. Especializada em animar imagens estáticas e alterar elementos de vídeos (lip sync). Utilizada para dar vida a artes estáticas e memes.", "video"),
+            ("Sora", "https://openai.com/sora", "Modelo revolucionário da OpenAI (acesso restrito). Especializado em vídeos de até 1 minuto com consistência temporal e fidelidade incríveis. Utilizado para demos tecnológicas e produção high-end.", "video"),
+            ("Luma Dream Machine", "https://lumalabs.ai/", "Gerador de vídeo rápido e de alta qualidade. Especializado em entender física e movimento realista. Utilizado para clipes rápidos e B-roll.", "video"),
+            ("Kling AI", "https://klingai.com/", "Modelo chinês de geração de vídeo de longa duração. Especializado em vídeos de até 5 minutos com grande realismo. Utilizado como alternativa poderosa aos modelos ocidentais.", "video"),
+            ("HeyGen", "https://www.heygen.com/", "Plataforma de criação de vídeos com avatares. Especializada em dublagem automática e sincronia labial perfeita. Utilizada para localização de conteúdo e treinamento corporativo.", "video"),
+            ("Synthesia", "https://www.synthesia.io/", "Líder em apresentadores virtuais de IA. Especializada em substituir câmeras e microfones por texto digitado. Utilizada para vídeos de onboarding e e-learning.", "video"),
+            ("D-ID", "https://www.d-id.com/", "Tecnologia de animação facial a partir de fotos. Especializada em fazer fotos antigas ou avatares falarem. Utilizada para apps interativos e marketing personalizado.", "video"),
+            ("Descript", "https://www.descript.com/", "Editor de vídeo e podcast revolucionário. Especializado em editar áudio/vídeo editando o texto da transcrição (como um doc). Utilizado por podcasters e youtubers.", "video"),
+            ("Wondershare Filmora", "https://filmora.wondershare.com/", "Editor de vídeo acessível com recursos de IA. Especializado em ferramentas como recorte inteligente e remoção de silêncio. Utilizado por criadores de conteúdo iniciantes/intermediários.", "video"),
+            ("CapCut", "https://www.capcut.com/", "Editor popular da ByteDance. Especializado em templates virais e legendagem automática precisa. Utilizado massivamente para TikTok e Reels.", "video"),
+            ("InVideo", "https://invideo.io/", "Gerador de vídeo completo a partir de prompts. Especializado em criar roteiro, buscar stock footage e montar o vídeo. Utilizado para criar vídeos 'faceless' para YouTube.", "video"),
+            ("Pictory", "https://pictory.ai/", "Transformador de conteúdo longo em curto. Especializado em extrair 'momentos dourados' de webinars e zooms. Utilizado por profissionais de marketing B2B.", "video"),
+            ("Opus Clip", "https://www.opus.pro/", "Ferramenta viral de reaproveitamento de vídeo. Especializada em cortar podcasts longos em shorts verticais com legendas dinâmicas. Utilizada para crescimento em redes sociais.", "video"),
+            ("Munch", "https://www.getmunch.com/", "Plataforma de inteligência de conteúdo. Especializada em extrair clipes baseados em tendências de mercado. Utilizada para maximizar o alcance de conteúdo existente.", "video"),
+            ("Vidyo.ai", "https://vidyo.ai/", "Automatizador de cortes para social media. Especializado em layouts personalizados para vídeos verticais. Utilizado por podcasters para distribuição multiplataforma.", "video"),
+            ("Veed.io", "https://www.veed.io/", "Editor online focado em legendas e agilidade. Especializado em adicionar legendas e ondinhas de áudio automaticamente. Utilizado para vídeos rápidos de social media.", "video"),
+            ("Kaiber", "https://kaiber.ai/", "Ferramenta de animação estilizada. Especializada em criar vídeos esteticamente únicos (estilo anime, pintura a óleo) a partir de música. Utilizada por músicos para videoclipes (ex: Linkin Park).", "video"),
+            ("Kyber", "https://kyber.ai/", "Ferramenta para criadores explorarem vídeo generativo. Especializada em controle de movimentos e estilos. Utilizada para arte digital em movimento.", "video"),
+            ("Wonder Dynamics", "https://wonderdynamics.com/", "Ferramenta de VFX automatizado. Especializada em substituir atores reais por personagens CGI automaticamente. Utilizada por cineastas independentes.", "video"),
+            ("Lumen5", "https://lumen5.com/", "Conversor de blog post em vídeo. Especializado em vídeo marketing corporativo simples. Utilizado para reciclar conteúdo escrito em vídeo.", "video"),
+            ("Steve.ai", "https://www.steve.ai/", "Criador de vídeos animados e live-action. Especializado em vídeos explicativos estilo cartoon. Utilizado para educação e explicações de produtos.", "video"),
+            ("Hour One", "https://hourone.ai/", "Avatares virtuais enterprise. Especializada em workflows automatizados para grandes empresas. Utilizada para notícias corporativas e atualizações.", "video"),
+            ("Colossyan", "https://www.colossyan.com/", "Criador de vídeos educativo com IA. Especializado em cenários de treinamento e suporte a múltiplos idiomas. Utilizado para T&D (Treinamento e Desenvolvimento).", "video"),
+            ("Fliki", "https://fliki.ai/", "Texto para vídeo com foco em narração. Especializado em combinar vozes neurais com bibliotecas de mídia stock. Utilizado para audiobooks visuais e vídeos info.", "video"),
+
+            # --- Áudio & Voz ---
+            ("ElevenLabs", "https://elevenlabs.io/", "A tecnologia de síntese de voz mais avançada atualmente. Especializada em vozes indistinguíveis de humanos e clonagem instantânea. Utilizada para dublagem, audiolivros e games.", "audio"),
+            ("Suno AI", "https://suno.com/", "O 'ChatGPT da música'. Especializada em gerar canções completas (instrumental + voz + letra) de alta qualidade. Utilizada para diversão, demos e trilhas sonoras.", "audio"),
+            ("Udio", "https://www.udio.com/", "Gerador musical de alta fidelidade. Especializado em complexidade musical e qualidade de áudio estéreo. Utilizado para criar samples e músicas completas.", "audio"),
+            ("Murf.ai", "https://murf.ai/", "Estúdio de voz profissional. Especializado em locução para vídeos explicativos e e-learning com controle de tom. Utilizado para criar narrações corporativas.", "audio"),
+            ("Lovo.ai", "https://lovo.ai/", "Gerador de voz focado em marketing e jogos. Especializado em vozes com emoções (tristeza, alegria, grito). Utilizado por criadores de conteúdo que precisam de atuação.", "audio"),
+            ("Play.ht", "https://play.ht/", "Plataforma de TTS (Text-to-Speech) ultra-realista. Especializada em clonagem de voz e hospedagem de áudio SEO. Utilizada por publishers de notícias e blogs.", "audio"),
+            ("Speechify", "https://speechify.com/", "Leitor de texto (TTS) focado em produtividade e acessibilidade. Especializado em ler PDFs, docs e livros em alta velocidade. Utilizado por estudantes e pessoas com TDAH/Dislexia.", "audio"),
+            ("Krisp", "https://krisp.ai/", "App de cancelamento de ruído em tempo real. Especializado em remover sons de fundo (latidos, teclado) e eco em chamadas. Utilizado por trabalhadores remotos e call centers.", "audio"),
+            ("Adobe Podcast", "https://podcast.adobe.com/", "Ferramenta de aprimoramento de áudio. Especializada em transformar áudio ruim de celular em 'qualidade de estúdio' (Enhance Speech). Utilizada por podcasters amadores.", "audio"),
+            ("Otter.ai", "https://otter.ai/", "Assistente de reuniões. Especializado em transcrever conversas ao vivo em inglês e gerar resumos. Utilizado para nunca perder detalhes de uma reunião.", "audio"),
+            ("Fireflies.ai", "https://fireflies.ai/", "Notetaker de IA que entra nas reuniões. Especializado em integração com CRMs e busca dentro de conversas de voz. Utilizado por times de vendas e recrutamento.", "audio"),
+            ("Fathom", "https://fathom.video/", "Gravador de reuniões totalmente gratuito. Especializado em clipes fáceis de compartilhar e resumos automáticos. Utilizado por usuários individuais de Zoom/Teams.", "audio"),
+            ("Riverside", "https://riverside.fm/", "Estúdio de gravação remota. Especializado em gravação local de áudio/vídeo para máxima qualidade, editado com IA. Utilizado por podcasters profissionais.", "audio"),
+            ("Podcastle", "https://podcastle.ai/", "Plataforma tudo-em-um para podcasts. Especializada em gravação, edição e limpeza de áudio na web. Utilizada para simplificar a produção de podcasts.", "audio"),
+            ("VocalRemover", "https://vocalremover.org/", "Ferramenta online simples. Especializada em separar voz da música (karaokê) e isolar instrumentos. Utilizada por DJs e produtores musicais.", "audio"),
+            ("Lalal.ai", "https://www.lalal.ai/", "Serviço premium de separação de stems na nuvem. Especializado em separar bateria, baixo, piano e voz com alta precisão. Utilizado para remixagem e sampling.", "audio"),
+            ("Soundraw", "https://soundraw.io/", "Gerador de música personalizável. Especializado em criar músicas royalty-free onde você define duração, tempo e humor. Utilizado por criadores de vídeo para evitar copyright.", "audio"),
+            ("AIVA", "https://www.aiva.ai/", "Compositor de IA clássico e cinemático. Especializado em trilhas sonoras emocionantes e MIDI exportável. Utilizado por compositores e criadores de jogos.", "audio"),
+            ("AudioPen", "https://audiopen.ai/", "Ferramenta de transcrição e resumo de pensamentos. Especializada em transformar divagações faladas em notas de texto claras e estruturadas. Utilizada para journaling e brainstorming.", "audio"),
+            ("Cleanvoice", "https://cleanvoice.ai/", "Limpador de áudio automatizado. Especializado em remover sons de preenchimento (hums, ahs), gaguejos e silêncios mortos. Utilizado para 'polir' podcasts automaticamente.", "audio"),
+
+            # --- Desenvolvimento & Código ---
+            ("GitHub Copilot", "https://github.com/features/copilot", "O assistente de codificação mais usado. Especializado em autocompletar linhas inteiras e funções baseadas no contexto do arquivo. Utilizado por desenvolvedores para escrever código mais rápido.", "coding"),
+            ("Cursor", "https://cursor.sh/", "Editor de código fork do VS Code construído para pair-programming com IA. Especializado em entender todo o projeto e permitir edições em linguagem natural. Utilizado como IDE principal por muitos devs modernos.", "coding"),
+            ("Tabnine", "https://www.tabnine.com/", "Assistente de código focado em privacidade e enterprises. Especializado em rodar modelos isolados e autocompletar localmente. Utilizado por empresas com estritos requisitos de segurança.", "coding"),
+            ("Amazon CodeWhisperer", "https://aws.amazon.com/codewhisperer/", "Assistente de código da AWS. Especializado em gerar código para serviços AWS e verificar segurança. Utilizado por desenvolvedores no ecossistema Amazon.", "coding"),
+            ("CodiumAI", "https://www.codium.ai/", "Ferramenta focada na integridade do código. Especializada em gerar testes unitários significativos e encontrar bugs antes do deploy. Utilizada para aumentar a cobertura de testes.", "coding"),
+            ("Replit Ghostwriter", "https://replit.com/site/ghostwriter", "IA integrada ao ambiente de desenvolvimento online Replit. Especializada em explicar, gerar e transformar código no navegador. Utilizada para prototipagem rápida e educação.", "coding"),
+            ("Codeium", "https://codeium.com/", "Alternativa gratuita e rápida ao Copilot. Especializada em ser leve e disponível para uma vasta gama de IDEs (Vim, JetBrains, VS Code). Utilizada por devs que buscam performance e gratuidade.", "coding"),
+            ("Blackbox", "https://www.blackbox.ai/", "IA treinada especificamente para responder perguntas de codificação. Especializada em fornecer a resposta direta com o código, sem enrolação. Utilizada para 'desbloquear' problemas rapidamente.", "coding"),
+            ("Phind", "https://www.phind.com/", "Motor de busca otimizado para desenvolvedores. Especializado em responder com guias passo-a-passo e snippets de código corretos. Utilizado como substituto do Google/StackOverflow.", "coding"),
+            ("Sourcegraph Cody", "https://about.sourcegraph.com/cody", "Assistente que indexa todo o seu repositório de código. Especializado em responder perguntas como 'onde está definida a autenticação?'. Utilizado em grandes codebases legados.", "coding"),
+            ("MarsCode", "https://www.marscode.com/", "IDE na nuvem com assistente de IA integrado. Especializada em oferecer um ambiente de dev pronto sem configuração local. Utilizada para projetos rápidos.", "coding"),
+            ("Mutable.ai", "https://mutable.ai/", "Ferramenta para acelerar o desenvolvimento. Especializada em converter código em documentação e refatoração automática. Utilizada para manutenção de projetos.", "coding"),
+            ("Bricabrac", "https://bricabrac.ai/", "Ferramenta 'Text-to-App'. Especializada em gerar front-ends funcionais (HTML/CSS/JS) a partir de uma descrição. Utilizada para criar pequenas ferramentas web rapidamente.", "coding"),
+            ("Durable", "https://durable.co/", "Construtor de sites de IA mais rápido. Especializado em gerar um site completo com texto, imagens e formulário em 30 segundos. Utilizado por pequenos negócios locais.", "coding"),
+            ("10Web", "https://10web.io/", "Plataforma que recria qualquer site em WordPress com IA. Especializada em clonagem de design e otimização de velocidade. Utilizada por agências WordPress.", "coding"),
+            ("Framer AI", "https://www.framer.com/", "Ferramenta de design e publicação web. Especializada em gerar sites visualmente impressionantes e responsivos com IA. Utilizada por designers que querem publicar sites.", "coding"),
+            ("Wix ADI", "https://www.wix.com/", "Inteligência de Design Artificial do Wix. Especializada em montar layouts personalizados baseados em perguntas simples. Utilizada por iniciantes na web.", "coding"),
+            ("Softr", "https://www.softr.io/", "Construtor de apps cliente/portal. Especializado em transformar bases de dados (Airtable/Google Sheets) em apps web. Utilizado para portais de clientes e ferramentas internas.", "coding"),
+            ("FlutterFlow", "https://flutterflow.io/", "Plataforma low-code para apps mobile. Especializada em gerar código Flutter real e usar IA para gerar componentes. Utilizada para construir apps nativos iOS/Android.", "coding"),
+            ("Bubble", "https://bubble.io/", "Líder em desenvolvimento visual no-code. Especializada em criar web apps complexos sem digitar código tradicionai. Utilizada por fundadores não-técnicos para criar MVPs.", "coding"),
+            ("Zapier", "https://zapier.com/", "Gigante da automação de integração. Especializado em conectar 5000+ apps. Utilizado para criar fluxos de trabalho que movem dados automaticamente.", "coding"),
+            ("Make", "https://www.make.com/", "Plataforma de automação visual (antigo Integromat). Especializada em cenários de automação complexos e lógicos. Utilizada para operações de backend no-code.", "coding"),
+            ("Bardeen", "https://www.bardeen.ai/", "Automação que roda no seu navegador. Especializada em raspar dados da web e automatizar tarefas repetitivas de clique. Utilizada para prospeção e pesquisa.", "coding"),
+            ("Cheat Layer", "https://cheatlayer.com/", "Automação usando linguagem natural. Especializado em resolver problemas que ferramentas como Zapier não conseguem (extração customizada). Utilizado por growth hackers.", "coding"),
+            ("Browse AI", "https://www.browse.ai/", "Robô de monitoramento e extração web fácil. Especializado em transformar qualquer site em uma API. Utilizado para monitorar preços e concorrentes.", "coding"),
+
+             # --- Produtividade & Negócios ---
+            ("Notion AI", "https://www.notion.so/", "IA integrada ao espaço de trabalho Notion. Especializada em resumir notas, melhorar a escrita e extrair insights de bancos de dados. Utilizada por equipes para organizar conhecimento.", "productivity"),
+            ("Coda AI", "https://coda.io/", "IA para documentos colaborativos poderosos. Especializada em automatizar tabelas e transformar rascunhos em wikis. Utilizada por product managers.", "productivity"),
+            ("ClickUp AI", "https://clickup.com/ai", "Assistente de IA para gerenciamento de projetos. Especializado em resumir threads de comentários e gerar subtarefas. Utilizado por equipes ágeis.", "productivity"),
+            ("Monday.com", "https://monday.com/", "Work OS que integra IA. Especializado em automatizar a criação de itens e geração de e-mails dentro do fluxo de trabalho. Utilizado por times de operações.", "productivity"),
+            ("Asana Intelligence", "https://asana.com/", "Camada de inteligência na gestão de projetos. Especializada em identificar riscos de projeto e otimizar alocação de recursos. Utilizada por gestores de projeto.", "productivity"),
+            ("Trello", "https://trello.com/", "Ferramenta visual de quadros. Especializada em organização simples, agora com ajuda de IA para gerar conteúdo de cards. Utilizada por times pequenos para organização.", "productivity"),
+            ("Todoist", "https://todoist.com/", "Gerenciador de tarefas pessoal. Especializado em reconhecimento de linguagem natural para agendar tarefas. Utilizado para produtividade pessoal.", "productivity"),
+            ("Motion", "https://www.usemotion.com/", "Calendário inteligente que planeja seu dia. Especializado em reorganizar automaticamente tarefas quando surgem imprevistos. Utilizado por executivos ocupados e pessoas com TDAH.", "productivity"),
+            ("Reclaim.ai", "https://reclaim.ai/", "Otimizador de agenda para Google Calendar. Especializado em proteger tempo para foco e hábitos (almoço, estudo). Utilizado para equilíbrio vida-trabalho.", "productivity"),
+            ("Clockwise", "https://www.getclockwise.com/", "Orquestrador de reuniões de equipe. Especializado em mover reuniões para criar blocos de tempo ininterrupto para todos. Utilizado por times de engenharia.", "productivity"),
+            ("Mem", "https://mem.ai/", "App de notas auto-organizado. Especializado em usar IA para conectar notas similares automaticamente, sem pastas. Utilizado para gestão de conhecimento pessoal (PKM).", "productivity"),
+            ("Obsidian (Plugins)", "https://obsidian.md/", "App de notas local e markdown. Especializado em conectividade de pensamento; plugins como Text Generator trazem IA. Utilizado por pesquisadores e pensadores.", "productivity"),
+            ("Reflect", "https://reflect.app/", "Notas em rede com assistente de IA. Especializado em transcrever áudio e reformular pensamentos. Utilizado para capturar ideias rápidas.", "productivity"),
+            ("Napkin", "https://napkin.ai/", "Ferramenta de visualização de ideias. Especializada em transformar texto em diagramas simples automaticamente. Utilizada para explicar conceitos complexos.", "productivity"),
+            ("Gamma", "https://gamma.app/", "Novo meio para apresentar ideias. Especializado em gerar decks de slides bonitos e sites a partir de prompt. Utilizado para criar apresentações em minutos em vez de horas.", "productivity"),
+            ("Beautiful.ai", "https://www.beautiful.ai/", "Software de apresentações que 'designa' por você. Especializado em manter slides sempre alinhados e estéticos automaticamente. Utilizada para decks corporativos.", "productivity"),
+            ("Tome", "https://tome.app/", "Formato de storytelling impulsionado por IA. Especializado em narrativas mobile-first com imagens geradas. Utilizado para pitch decks e histórias visuais.", "productivity"),
+            ("PopAi", "https://www.popai.pro/", "Assistente de leitura e criação. Especializado em interagir com documentos e gerar apresentações baseadas neles. Utilizado para estudo e trabalho de escritório.", "productivity"),
+            ("SlidesGO", "https://slidesgo.com/", "Grande biblioteca de templates. Especializada em fornecer designs prontos para Google Slides/PPT, agora com gerador IA. Utilizada por estudantes e professores.", "productivity"),
+            ("Decktopus", "https://decktopus.com/", "Gerador de apresentações focado em funil de vendas. Especializado em slides com formulários e CTAs integrados. Utilizado para webinars e propostas comerciais.", "productivity"),
+            ("ChatPDF", "https://www.chatpdf.com/", "Ferramenta simples para 'conversar' com PDFs. Especializada em encontrar respostas dentro de manuais ou artigos. Utilizada por estudantes e profissionais.", "productivity"),
+            ("Humata", "https://www.humata.ai/", "IA para análise de documentos longos. Especializada em citar a página exata de onde tirou a informação. Utilizada para revisão técnica e legal.", "productivity"),
+            ("Consensus", "https://consensus.app/", "Motor de busca para ciência. Especializado em responder perguntas baseando-se apenas em papers revisados por pares. Utilizado para embasamento científico.", "productivity"),
+            ("Scholarcy", "https://www.scholarcy.com/", "Resumidor de artigos acadêmicos. Especializado em transformar papers densos em flashcards digeríveis. Utilizado por pesquisadores para triagem de literatura.", "productivity"),
+            ("Scite", "https://scite.ai/", "Assistente para pesquisa confiável. Especializado em Smart Citations (mostra se o artigo apoia ou contesta a afirmação). Utilizado para escrita acadêmica séria.", "productivity"),
+            ("Elicit", "https://elicit.com/", "Assistente de pesquisa de IA. Especializado em automatizar revisões sistemáticas de literatura. Utilizado para encontrar papers relevantes rapidamente.", "productivity"),
+            ("Excel Formula Bot", "https://formulabot.com/", "Tradutor de texto para fórmula. Especializado em gerar fórmulas complexas de Excel/Sheets a partir de pedidos em português. Utilizado por analistas de dados.", "productivity"),
+            ("SheetAI", "https://www.sheetai.app/", "Extensão que traz o GPT para dentro do Google Sheets. Especializada em preencher colunas e limpar dados em massa. Utilizada para operações de planilhas.", "productivity"),
+            ("Rows", "https://rows.com/", "A planilha moderna. Especializada em integrações nativas e funções de IA para enriquecimento de dados. Utilizada por marketers para construir listas de leads.", "productivity"),
+            ("Arc Browser", "https://arc.net/", "Navegador que repensa a web. Especializado em recursos 'Max' como prévia de links e renomeação de abas com IA. Utilizado por power users da internet.", "productivity"),
+
+             # --- Outros & Especializados & Negócios ---
+            ("Hugging Face", "https://huggingface.co/", "A comunidade central de IA open-source. Especializada em hospedar modelos, datasets e demos (Spaces). Utilizada por data scientists para compartilhar e colaborar.", "business"),
+            ("Replicate", "https://replicate.com/", "Plataforma para rodar modelos de IA via API. Especializada em tornar fácil executar modelos open-source (como Llama, Stable Diffusion) na nuvem. Utilizada por desenvolvedores de software.", "business"),
+            ("LangChain", "https://www.langchain.com/", "O framework padrão para desenvolver apps com LLMs. Especializado em conectar modelos a dados e ferramentas externas. Utilizado por engenheiros de IA.", "business"),
+            ("Pinecone", "https://www.pinecone.io/", "Banco de dados vetorial gerenciado. Especializado em memória de longo prazo para IA (RAG). Utilizado para construir chatbots que lembram dados da empresa.", "business"),
+            ("Weights & Biases", "https://wandb.ai/", "Ferramenta essencial para MLOps. Especializada em rastrear experimentos e treinamento de modelos. Utilizada por engenheiros de ML para melhorar modelos.", "business"),
+            ("Gradio", "https://www.gradio.app/", "Biblioteca Python para criar demos de ML. Especializada em criar interfaces web simples para modelos em poucas linhas de código. Utilizada para mostrar protótipos de IA.", "business"),
+            ("Streamlit", "https://streamlit.io/", "Framework para Data Apps. Especializado em transformar scripts de dados em aplicativos web compartilháveis. Utilizado por cientistas de dados.", "business"),
+            ("Salesforce Einstein", "https://www.salesforce.com/products/einstein/overview/", "A primeira IA generativa para CRM. Especializada em personalizar a jornada do cliente e prever vendas. Utilizada por grandes equipes de vendas e serviço.", "business"),
+            ("HubSpot AI", "https://www.hubspot.com/", "Recursos de IA na plataforma HubSpot. Especializada em gerar conteúdo de blog, e-mails e relatórios. Utilizada por times de inbound marketing.", "business"),
+            ("Intercom Fin", "https://www.intercom.com/fin", "Bot de suporte ao cliente de última geração. Especializado em resolver tickets de suporte usando a base de conhecimento da empresa. Utilizado para reduzir volume de suporte humano.", "business"),
+            ("Zendesk AI", "https://www.zendesk.com/ai/", "Inteligência para atendimento ao cliente. Especializada em classificar intenção e sentimento dos tickets. Utilizada para priorizar atendimento.", "business"),
+            ("Drift", "https://www.drift.com/", "Plataforma de marketing conversacional. Especializada em engajar visitantes do site em tempo real com IA. Utilizada para gerar leads qualificados.", "business"),
+            ("Gong", "https://www.gong.io/", "Plataforma de Revenue Intelligence. Especializada em gravar e analisar chamadas de vendas para dar insights. Utilizada para treinar vendedores e prever fechamentos.", "business"),
+            ("Chorus.ai", "https://www.zoominfo.com/products/chorus", "Concorrente do Gong focado em análise de conversas. Especializado em identificar o que os melhores vendedores fazem diferente. Utilizado por líderes de vendas.", "business"),
+            ("LegalRobot", "https://legalrobot.com/", "Ferramenta de análise legal. Especializada em traduzir 'advogâs' para linguagem simples e verificar consistência. Utilizada para entender contratos.", "business"),
+            ("DoNotPay", "https://donotpay.com/", "O 'primeiro advogado robô do mundo'. Especializado em contestar multas e cancelar assinaturas automaticamente. Utilizado por consumidores para proteção de direitos.", "business"),
+            ("Harvey AI", "https://www.harvey.ai/", "IA exclusiva para escritórios de advocacia de elite. Especializada em pesquisa jurídica, análise de contratos e due diligence. Utilizada por grandes firmas de lei.", "business"),
+            ("Glass Health", "https://glass.health/", "Plataforma de gestão de conhecimento para médicos. Especializada em sugerir diagnósticos diferenciais e planos clínicos baseados em IA. Utilizada por médicos residentes e estudantes.", "business"),
+            ("BioGPT", "https://github.com/microsoft/BioGPT", "Modelo de linguagem da Microsoft treinado em literatura biomédica. Especializado em responder perguntas sobre pesquisas médicas. Utilizado por pesquisadores da área de saúde.", "business"),
+        ]
+
+        count = 0
+        self.stdout.write("Iniciando a importação de ferramentas de IA...")
+
+        for titulo, url, descricao, categoria in tools:
+            obj, created = FerramentaIA.objects.get_or_create(
+                titulo=titulo,
+                defaults={
+                    'url': url,
+                    'descricao': descricao,
+                    'categoria': categoria
+                }
+            )
+            
+            # Sempre atualiza a descrição e categoria para garantir que as melhorias sejam aplicadas
+            if not created:
+                obj.url = url
+                obj.descricao = descricao
+                obj.categoria = categoria
+                obj.save()
+            
+            count += 1
+                
+        self.stdout.write(self.style.SUCCESS(f'Concluído! {count} ferramentas processadas/atualizadas.'))

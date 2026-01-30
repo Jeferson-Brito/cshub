@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Desempenho do Time - Nexus{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/performance.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="page-title">
+                <i class="bi bi-activity"></i> Desempenho do Time
+            </h1>
+            <p class="page-subtitle">
+                {% if department %}
+                Análise de métricas - {{ department.name }}
+                {% else %}
+                Visão Geral Global
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+            <form method="get" class="d-flex gap-2">
+                <input type="date" name="start_date" class="form-control form-control-sm"
+                    value="{{ start_date|default:'' }}" title="Data Inicial">
+                <input type="date" name="end_date" class="form-control form-control-sm"
+                    value="{{ end_date|default:'' }}" title="Data Final">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-filter"></i> Filtrar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4 fade-in">
+    <!-- Summary Cards -->
+    <div class="col-md-4">
+        <div class="performance-card p-4 position-relative">
+            <div class="metric-value">{{ stats.avg_nps|default:"0.00" }}</div>
+            <div class="metric-label">NPS Médio</div>
+            <i class="bi bi-emoji-smile metric-icon text-warning"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="performance-card p-4 position-relative">
+            <div class="metric-value">{{ stats.total_chats|default:"0" }}</div>
+            <div class="metric-label">Total de Atendimentos</div>
+            <i class="bi bi-chat-dots metric-icon text-info"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="performance-card p-4 position-relative">
+            <div class="metric-value">{{ stats.avg_tme|default:"0" }}s</div>
+            <div class="metric-label">TME Médio (Segundos)</div>
+            <i class="bi bi-clock-history metric-icon text-danger"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row fade-in">
+    <div class="col-lg-8">
+        <!-- Ranking Table -->
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent py-3">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-trophy text-warning"></i> Ranking de Analistas
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle ranking-table mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Posição</th>
+                                <th>Analista</th>
+                                <th class="text-center">NPS</th>
+                                <th class="text-center">Chats</th>
+                                <th class="text-center">TME</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for analista in stats.ranking %}
+                            <tr>
+                                <td class="ps-4">
+                                    {% if forloop.counter == 1 %}
+                                    <i class="bi bi-award-fill text-warning fs-5"></i>
+                                    {% elif forloop.counter == 2 %}
+                                    <i class="bi bi-award-fill text-secondary fs-5"></i>
+                                    {% elif forloop.counter == 3 %}
+                                    <i class="bi bi-award-fill text-brown fs-5" style="color: #cd7f32;"></i>
+                                    {% else %}
+                                    <span class="text-muted fw-bold ms-1">{{ forloop.counter }}º</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ranking-avatar">
+                                            {{ analista.first_name|first|default:analista.username|first|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">{{
+                                                analista.get_full_name|default:analista.username }}</div>
+                                            <div class="small text-muted">{{ analista.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">
+                                        {{ analista.avg_nps|floatformat:2|default:"-" }}
+                                    </span>
+                                </td>
+                                <td class="text-center">{{ analista.total_chats|default:0 }}</td>
+                                <td class="text-center">{{ analista.avg_tme|floatformat:0|default:"-" }}s</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    Nenhum dado encontrado para o período selecionado.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Recent History / Observations -->
+        {% if analyst_history %}
+        <div class="card h-100">
+            <div class="card-header border-0 bg-transparent py-3">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-journal-text text-primary"></i> Seu Histórico
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="observation-timeline mt-2">
+                    {% for obs in analyst_history.observations %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-date">{{ obs.data|date:"d/m/Y" }}</div>
+                        <h6 class="fw-bold mb-1">{{ obs.get_tipo_display }}</h6>
+                        <p class="text-muted small mb-0">{{ obs.texto }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-4">Nenhuma observação recente.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card bg-light border-0 h-100 d-flex align-items-center justify-content-center p-4">
+            <div class="text-center text-muted">
+                <i class="bi bi-bar-chart-line fs-1 mb-3 d-block"></i>
+                <p>Selecione um analista para ver o histórico detalhado<br>(Em breve)</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Placeholder for future Chart.js implementation
+</script>
+{% endblock %}

@@ -1,0 +1,775 @@
+﻿<!DOCTYPE html>
+{% load static %}
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nexus{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'img/logo_transparente.png' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=15.4">
+    <link rel="stylesheet" href="{% static 'css/custom_timepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/floating_chat.css' %}">
+
+    <!-- EasyMDE -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {% block extra_css %}{% endblock %}
+
+
+    <style>
+        .editor-toolbar {
+            border-radius: 8px 8px 0 0 !important;
+            border-color: #e5e7eb !important;
+            background-color: #f9fafb !important;
+        }
+
+        .CodeMirror {
+            border-radius: 0 0 8px 8px !important;
+            border-color: #e5e7eb !important;
+            min-height: 150px !important;
+        }
+
+        /* Chat Badge */
+        .chat-unread-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    {% if user.is_authenticated %}
+    <!-- Mobile Toggle Navbar -->
+    <nav class="mobile-navbar d-lg-none">
+        <div class="mobile-navbar-container">
+            <div class="brand-full">
+                <span class="brand-grs">Nexus</span>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Vertical -->
+
+    <div class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-header">
+            <!-- Logo quando expandido -->
+            <div class="brand-full">
+                <span class="brand-grs">Nexus</span>
+            </div>
+            <!-- Logo quando recolhido (apenas badge) -->
+            <div class="brand-collapsed">NX</div>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Minimizar menu">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
+
+        {% if user.is_administrador %}
+        {% if all_departments %}
+        <div class="sidebar-dept-selector">
+            <div class="dept-label text-center">Departamento:</div>
+            <div class="dropdown">
+                <button class="btn btn-dept-select dropdown-toggle d-flex align-items-center justify-content-center"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+                    <i class="bi bi-diagram-3"></i>
+                    <span class="dept-name">
+                        {% if current_department %}
+                        {{ current_department.name }}
+                        {% else %}
+                        Global
+                        {% endif %}
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% for dept in all_departments %}
+                    <li>
+                        <a class="dropdown-item {% if current_department.id == dept.id %}active{% endif %}"
+                            href="{% url 'change_department' dept.id %}">
+                            {{ dept.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        {% if user.department %}
+        <div class="sidebar-dept-selector no-dropdown">
+            <div class="dept-label text-center">Departamento:</div>
+            <div class="btn btn-dept-select disabled text-center w-100 opacity-100"
+                style="cursor: default; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-diagram-3"></i>
+                <span class="dept-name ms-2">{{ user.department.name }}</span>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Menu de Navegação -->
+        <nav class="sidebar-nav">
+            {% if current_department.name == 'Reclame Aqui' %}
+            <!-- Reclame Aqui -->
+            <div class="nav-group-title">Operação</div>
+
+            <a href="#reclameAquiSubmenu"
+                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
+                aria-controls="reclameAquiSubmenu">
+                <i class="bi bi-headset"></i>
+                <span class="link-text">Reclame Aqui</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
+            </a>
+            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
+                id="reclameAquiSubmenu">
+                <div class="nav-submenu">
+                    <a href="{% url 'dashboard' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                        title="Dashboard">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                    <a href="{% url 'complaint_list' %}"
+                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Reclamações">
+                        <i class="bi bi-list-ul"></i>
+                        <span class="link-text">Reclamações</span>
+                    </a>
+                    <a href="{% url 'store_list' %}"
+                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Lojas">
+                        <i class="bi bi-shop"></i>
+                        <span class="link-text">Lojas</span>
+                    </a>
+                    <a href="{% url 'reports' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+                        title="Relatórios">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="link-text">Relatórios</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-group-title">Canais</div>
+            <a href="{% url 'google_meu_negocio' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
+                title="Google Meu Negócio">
+                <i class="bi bi-google"></i>
+                <span class="link-text">Google Meu Negócio</span>
+            </a>
+
+            {% elif current_department.name == 'NRS Suporte' %}
+            <!-- NRS Suporte -->
+            <div class="nav-group-title">Operação</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+            <a href="{% url 'quadro' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'quadro' %}active{% endif %}">
+                <i class="bi bi-grid-3x3"></i>
+                <span class="link-text">Quadro</span>
+            </a>
+            <a href="{% url 'calendario' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
+                <i class="bi bi-calendar3"></i>
+                <span class="link-text">Calendário</span>
+            </a>
+            <a href="{% url 'tasks_view' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
+                <i class="bi bi-list-check"></i>
+                <span class="link-text">Tarefas</span>
+            </a>
+            <a href="{% url 'verificacao_lojas' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
+                <i class="bi bi-shield-check"></i>
+                <span class="link-text">Verificação de Lojas</span>
+            </a>
+
+            <div class="nav-group-title">Informação</div>
+            <a href="{% url 'base_conhecimento' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
+                <i class="bi bi-book"></i>
+                <span class="link-text">Suporte</span>
+            </a>
+            <a href="{% url 'desempenho' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'desempenho' %}active{% endif %}">
+                <i class="bi bi-activity"></i>
+                <span class="link-text">Desempenho</span>
+
+            </a>
+
+
+            {% elif current_department.name == 'Onboarding' %}
+            <!-- Onboarding -->
+            <div class="nav-group-title">Implantação</div>
+            <a href="{% url 'onboarding_dev_1' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+            <a href="{% url 'onboarding_dev_2' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_2' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+            <a href="{% url 'onboarding_dev_3' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_3' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+
+            {% elif current_department.name == 'CS Clientes' %}
+
+            <!-- CS Clientes -->
+            <div class="nav-group-title">Operação</div>
+            <a href="#reclameAquiSubmenuCS"
+                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
+                aria-controls="reclameAquiSubmenuCS">
+                <i class="bi bi-headset"></i>
+                <span class="link-text">Reclame Aqui</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
+            </a>
+            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
+                id="reclameAquiSubmenuCS">
+                <div class="nav-submenu">
+                    <a href="{% url 'dashboard' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                        title="Dashboard">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                    <a href="{% url 'complaint_list' %}"
+                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Reclamações">
+                        <i class="bi bi-list-ul"></i>
+                        <span class="link-text">Reclamações</span>
+                    </a>
+                    <a href="{% url 'store_list' %}"
+                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Lojas">
+                        <i class="bi bi-shop"></i>
+                        <span class="link-text">Lojas</span>
+                    </a>
+                    <a href="{% url 'reports' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+                        title="Relatórios">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="link-text">Relatórios</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-group-title">Canais</div>
+            <a href="{% url 'google_meu_negocio' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
+                title="Google Meu Negócio">
+                <i class="bi bi-google"></i>
+                <span class="link-text">Google Meu Negócio</span>
+            </a>
+
+            <div class="nav-group-title">Atendimento</div>
+            <a href="{% url 'solicitacoes' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
+                <i class="bi bi-receipt-cutoff"></i>
+                <span class="link-text">Solicitações</span>
+            </a>
+            {% endif %}
+
+
+
+
+            {% if user.is_administrador %}
+            <div class="nav-group-title">Sistema</div>
+            <a href="{% url 'user_list' %}"
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
+                <i class="bi bi-people"></i>
+                <span class="link-text">Usuários</span>
+            </a>
+            {% elif user.is_gestor or user.is_administrador %}
+            <div class="nav-group-title">Gestão</div>
+            <a href="{% url 'user_list' %}"
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
+                <i class="bi bi-people"></i>
+                <span class="link-text">Equipe</span>
+            </a>
+            {% endif %}
+
+            <!-- Chat movido para o balÃ£o flutuante -->
+        </nav>
+
+        <!-- UsuÃ¡rio -->
+        <div class="sidebar-user">
+            <div class="user-avatar">{{ user.username|first|upper }}</div>
+            <div class="user-details">
+                <p class="user-name">{{ user.get_full_name|default:user.username }}</p>
+                <p class="user-role">
+                    {{ user.get_role_display }}
+                    {% if user.department %}
+                    - {{ user.department.name }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="user-actions">
+                <a href="{% url 'settings' %}" class="user-action" title="ConfiguraÃ§Ãµes">
+                    <i class="bi bi-gear"></i>
+                </a>
+                <button type="button" class="user-action" title="Sair" data-bs-toggle="modal"
+                    data-bs-target="#logoutModal">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de ConfirmaÃ§Ã£o de Logout -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirmar SaÃ­da</h5>
+                    <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#logoutModal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4 text-center">
+                    <i class="bi bi-box-arrow-right text-danger mb-3" style="font-size: 3rem;"></i>
+                    <p class="fs-5 mb-0">Deseja realmente sair da sua conta?</p>
+                </div>
+                <div class="modal-footer border-0 pb-4 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <a href="{% url 'logout' %}" class="btn btn-danger px-4 py-2">Sair agora</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ConteÃºdo Principal -->
+    <div class="{% if user.is_authenticated %}main-content{% endif %}">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Toast Container -->
+    <!-- Toast Container (Bottom Right via style.css) -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Processar mensagens do Django e mostrar como toast -->
+    {% if messages %}
+    <script id="django-messages" type="application/json">
+        [
+            {% for message in messages %}
+            {"message": "{{ message|escapejs }}", "tags": "{{ message.tags }}"}{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messagesEl = document.getElementById('django-messages');
+            if (messagesEl) {
+                const messages = JSON.parse(messagesEl.textContent);
+                messages.forEach(m => showToast(m.message, m.tags));
+            }
+        });
+    </script>
+    {% endif %}
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Carregar tema salvo ao carregar a pÃ¡gina
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        });
+    </script>
+
+    <!-- Sidebar Toggle Script -->
+    <script>
+        // Toggle Sidebar
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
+
+        if (sidebarToggle && sidebar) {
+            // Mobile toggle
+            const mobileToggle = document.getElementById('mobileToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            // Carregar estado salvo (apenas para desktop)
+            if (window.innerWidth > 991) {
+                const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (sidebarCollapsed) {
+                    document.body.classList.add('sidebar-collapsed');
+                    sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                }
+            }
+
+            // Desktop Toggle
+            sidebarToggle.addEventListener('click', function () {
+                document.body.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('collapsed');
+                if (mainContent) mainContent.classList.toggle('expanded');
+
+                // Salvar estado
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+
+                // Trocar Ã­cone
+                const icon = this.querySelector('i');
+                if (isCollapsed) {
+                    icon.classList.remove('bi-chevron-left');
+                    icon.classList.add('bi-chevron-right');
+                    this.title = 'Expandir menu';
+                } else {
+                    icon.classList.remove('bi-chevron-right');
+                    icon.classList.add('bi-chevron-left');
+                    this.title = 'Minimizar menu';
+                }
+            });
+
+            // Mobile Toggle
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', function () {
+                    sidebar.classList.add('mobile-show');
+                    sidebarOverlay.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function () {
+                    sidebar.classList.remove('mobile-show');
+                    sidebarOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
+                });
+            }
+        }
+
+    </script>
+
+    <script>
+        // Auto-fechamento do submenu Reclame Aqui -> 5 segundos
+        document.addEventListener('DOMContentLoaded', function () {
+            const submenu = document.getElementById('reclameAquiSubmenu');
+            if (submenu) {
+                let autoCloseTimer;
+
+                submenu.addEventListener('shown.bs.collapse', function () {
+                    autoCloseTimer = setTimeout(function () {
+                        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(submenu);
+                        bsCollapse.hide();
+                    }, 5000);
+                });
+
+                submenu.addEventListener('hidden.bs.collapse', function () {
+                    if (autoCloseTimer) clearTimeout(autoCloseTimer);
+                });
+            }
+        });
+    </script>
+
+    <!-- Script para submenu flutuante quando sidebar recolhida -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+
+            // Handle both Reclame Aqui submenus (original and CS Clientes)
+            const submenuConfigs = [
+                { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
+                { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') }
+            ];
+
+            submenuConfigs.forEach(config => {
+                const { toggle, submenu } = config;
+                if (!toggle || !submenu) return;
+
+                toggle.addEventListener('click', function (e) {
+                    // Se a sidebar estÃ¡ recolhida, forÃ§ar a abertura do submenu
+                    if (sidebar && sidebar.classList.contains('collapsed')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Posicionar o submenu ao lado do Ã­cone
+                        const rect = toggle.getBoundingClientRect();
+                        submenu.style.top = rect.top + 'px';
+
+                        // Toggle manual do submenu
+                        if (submenu.classList.contains('show')) {
+                            submenu.classList.remove('show');
+                        } else {
+                            // Fechar outros submenus primeiro
+                            submenuConfigs.forEach(c => {
+                                if (c.submenu && c.submenu !== submenu) {
+                                    c.submenu.classList.remove('show');
+                                }
+                            });
+                            submenu.classList.add('show');
+                        }
+                    }
+                });
+            });
+
+            // Fechar submenu ao clicar fora
+            document.addEventListener('click', function (e) {
+                if (sidebar && sidebar.classList.contains('collapsed')) {
+                    submenuConfigs.forEach(config => {
+                        const { toggle, submenu } = config;
+                        if (toggle && submenu && !toggle.contains(e.target) && !submenu.contains(e.target)) {
+                            submenu.classList.remove('show');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <!-- Custom Time Picker JS -->
+    <script src="{% static 'js/custom_timepicker.js' %}"></script>
+    <script>
+        const currentUserId = {{ user.id|default:"0" }};
+    </script>
+    <script src="{% static 'js/floating_chat.js' %}"></script>
+    {% block scripts %}{% endblock %}
+
+    <audio id="notificationSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check notifications/chat every 60 seconds (optimized)
+            // only if the page is visible to save server resources
+            const pollAll = () => {
+                if (document.visibilityState === 'visible') {
+                    checkNotifications();
+                    if (window.chatWidget && typeof window.chatWidget.updateTotalUnread === 'function') {
+                        window.chatWidget.updateTotalUnread();
+                    } else {
+                        checkChatUnread();
+                    }
+                }
+            };
+
+            setInterval(pollAll, 60000);
+
+            // Check when tab becomes visible
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "visible") {
+                    pollAll();
+                }
+            });
+
+            // Initial calls
+            pollAll();
+        });
+
+        // Verifica mensagens não lidas do chat e exibe notificações
+        // Usar localStorage para persistir IDs já notificados entre recarregamentos
+        function getNotifiedMessageIds() {
+            try {
+                const stored = localStorage.getItem('notifiedChatMsgIds');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    // Limpar IDs com mais de 24 horas
+                    const now = Date.now();
+                    const filtered = parsed.filter(item => now - item.time < 86400000);
+                    return new Set(filtered.map(item => item.id));
+                }
+            } catch (e) { }
+            return new Set();
+        }
+
+        function saveNotifiedMessageId(msgId) {
+            try {
+                const stored = localStorage.getItem('notifiedChatMsgIds');
+                let items = stored ? JSON.parse(stored) : [];
+                // Limpar IDs antigos (mais de 24 horas)
+                const now = Date.now();
+                items = items.filter(item => now - item.time < 86400000);
+                items.push({ id: msgId, time: now });
+                localStorage.setItem('notifiedChatMsgIds', JSON.stringify(items));
+            } catch (e) { }
+        }
+
+        let notifiedMessageIds = getNotifiedMessageIds();
+
+        async function checkChatUnread() {
+            try {
+                const res = await fetch('/api/chat/unread-count/?include_messages=true');
+                if (res.ok) {
+                    const data = await res.json();
+                    const badge = document.getElementById('chatUnreadBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    // Exibe notificações para novas mensagens (não lidas e não notificadas)
+                    if (data.messages && data.messages.length > 0) {
+                        let playedSound = false;
+                        let delay = 0;
+
+                        data.messages.forEach(msg => {
+                            // Evita notificar a mesma mensagem duas vezes (persiste entre recarregamentos)
+                            if (!notifiedMessageIds.has(msg.id)) {
+                                notifiedMessageIds.add(msg.id);
+                                saveNotifiedMessageId(msg.id);
+
+                                // Exibe toasts com delay para não sobrepor
+                                setTimeout(() => {
+                                    showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
+                                }, delay);
+                                delay += 500; // 500ms entre cada toast
+
+                                // Toca som apenas uma vez
+                                if (!playedSound) {
+                                    playNotificationSound();
+                                    playedSound = true;
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                // Silently fail - chat might not be available
+            }
+        }
+
+        // --------------------------------------------------
+        // Sistema de Toast Notifications (Premium SweetAlert2)
+        // --------------------------------------------------
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        function showGlobalToast(message, type = 'info') {
+            const typeMap = {
+                'success': 'success',
+                'error': 'error',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+
+            Toast.fire({
+                icon: typeMap[type] || 'info',
+                title: message
+            });
+        }
+
+        // Alias for compatibility
+        window.showToast = showGlobalToast;
+
+
+        async function checkNotifications() {
+            try {
+                const res = await fetch('/api/notifications/check/');
+                if (res.ok) {
+                    const data = await res.json();
+
+                    if (data.has_notifications && data.notifications) {
+                        let playedSound = false;
+
+                        data.notifications.forEach(n => {
+                            let type = 'info';
+                            if (n.type && (n.type.includes('warning') || n.type.includes('irregularity'))) type = 'warning';
+                            if (n.type && n.type.includes('new')) type = 'success';
+
+                            showGlobalToast(n.message, type);
+
+                            if (!playedSound) {
+                                playNotificationSound();
+                                playedSound = true;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao verificar notificaÃ§Ãµes', e);
+            }
+        }
+
+        function playNotificationSound() {
+            const audio = document.getElementById('notificationSound');
+            if (audio) {
+                audio.play().catch(e => console.log('Autoplay bloqueado', e));
+            }
+        }
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            const defaults = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            };
+            options.headers = { ...defaults.headers, ...options.headers };
+            return fetch(url, options);
+        }
+    </script>
+</body>
+
+</html>

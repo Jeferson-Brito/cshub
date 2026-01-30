@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Usuário - Nexus{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card fade-in">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmar Exclusão
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+                
+                <p>Tem certeza que deseja excluir o usuário <strong>{{ user.username }}</strong>?</p>
+                
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Usuário:</strong> {{ user.username }}</p>
+                        <p class="mb-1"><strong>E-mail:</strong> {{ user.email }}</p>
+                        <p class="mb-1"><strong>Perfil:</strong> {{ user.get_role_display }}</p>
+                        <p class="mb-0"><strong>Status:</strong> {% if user.ativo %}Ativo{% else %}Inativo{% endif %}</p>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'user_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Sim, Excluir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
