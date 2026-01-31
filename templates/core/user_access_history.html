@@ -116,8 +116,8 @@
                         <td class="text-muted small">
                             {% if log.detalhes_json %}
                             <i class="bi bi-laptop"></i> {{ log.detalhes_json.ip|default:"-" }}
-                            <span class="d-none d-lg-inline"> | {{ log.detalhes_json.user_agent|truncatechars:50
-                                }}</span>
+                            <span class="d-none d-lg-inline"> | {{ log.detalhes_json.user_agent|truncatechars:50 }}
+                                <!-- fix --></span>
                             {% else %}
                             -
                             {% endif %}
