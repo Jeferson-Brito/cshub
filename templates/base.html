@@ -78,11 +78,7 @@
         <!-- Logo -->
         <div class="sidebar-header">
             <!-- Logo quando expandido -->
-            <div class="brand-full">
-                <span class="brand-grs">Nexus</span>
-            </div>
-            <!-- Logo quando recolhido (apenas badge) -->
-            <div class="brand-collapsed">NX</div>
+            <!-- Logo removida (movida para o header) -->
             <button class="sidebar-toggle" id="sidebarToggle" title="Minimizar menu">
                 <i class="bi bi-chevron-left"></i>
             </button>
@@ -381,11 +377,11 @@
     <!-- ConteÃºdo Principal -->
     <div class="{% if user.is_authenticated %}main-content{% endif %}">
         {% if user.is_authenticated %}
-        <header class="top-header">
+        <header class="top-header d-none d-lg-flex">
             <div class="header-left">
-                <button class="header-toggle" id="headerSidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
+                <div class="brand-full ms-3">
+                    <span class="brand-grs text-dark" style="font-size: 1.8rem;">Nexus</span>
+                </div>
             </div>
 
             <div class="header-user-menu">
@@ -621,7 +617,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:"0" }};
+        const currentUserId = {{ user.id|default: "0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}

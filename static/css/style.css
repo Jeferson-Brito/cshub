@@ -3215,13 +3215,35 @@ body.sidebar-collapsed {
     border-bottom: 1px solid #e2e8f0;
     margin-bottom: 24px;
     min-height: 80px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: var(--transition);
+
+    /* Layout Full Width Correction */
+    margin-top: -0.5rem;
+    margin-left: -2rem;
+    margin-right: -2rem;
+    width: calc(100% + 4rem);
+    max-width: none;
+}
+
+@media (max-width: 991.98px) {
+    .top-header {
+        margin-top: -1rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        width: calc(100% + 2rem);
+    }
+}
+
+.top-header .brand-grs {
+    font-weight: 800;
+    letter-spacing: -0.5px;
 }
 
 /* Quando o sidebar está recolhido, o header expande junto com o main-content */
 body.sidebar-collapsed .top-header {
-    left: 80px; /* Ajuste se for fixo, mas aqui está dentro do main-content */
+    left: 80px;
+    /* Ajuste se for fixo, mas aqui está dentro do main-content */
 }
 
 .header-left {
@@ -3327,12 +3349,13 @@ body.sidebar-collapsed .top-header {
     color: var(--primary-color);
     background: #f8fafc;
     transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Ajustes para Mobile */
 @media (max-width: 991px) {
     .top-header {
-        display: none; /* Em mobile usa o header padrão mobile */
+        display: none;
+        /* Em mobile usa o header padrão mobile */
     }
 }
