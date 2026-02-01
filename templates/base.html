@@ -621,7 +621,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default: "0" }};
+        const currentUserId = {{ user.id|default:"0" }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
