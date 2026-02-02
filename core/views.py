@@ -1161,6 +1161,8 @@ def user_create(request):
                 }
             })
         
+        profile_photo = request.FILES.get('profile_photo')
+        
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -1169,7 +1171,8 @@ def user_create(request):
             department=department,
             ativo=ativo,
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            profile_photo=profile_photo
         )
 
         # Integração Escala NRS Suporte
@@ -1241,6 +1244,12 @@ def user_edit(request, pk):
         user_to_edit.first_name = request.POST.get('first_name', '')
         user_to_edit.last_name = request.POST.get('last_name', '')
         
+        # Profile Photo Handling
+        if 'profile_photo' in request.FILES:
+            user_to_edit.profile_photo = request.FILES['profile_photo']
+        elif request.POST.get('remove_photo') == 'on':
+            user_to_edit.profile_photo = None
+            
         password = request.POST.get('password')
         if password:
             user_to_edit.set_password(password)

@@ -21,6 +21,7 @@ class User(AbstractUser):
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='analista')
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
     ativo = models.BooleanField(default=True)
     
     def is_gestor(self):

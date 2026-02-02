@@ -3726,8 +3726,10 @@ body.sidebar-collapsed .top-header {
     }
 
     .sidebar {
-        top: 0 !important;
-        height: 100vh !important;
+        top: 60px !important;
+        /* Start below mobile-navbar */
+        height: calc(100vh - 60px) !important;
+        z-index: 1050;
     }
 }
 
@@ -3737,9 +3739,9 @@ body.sidebar-collapsed .top-header {
 .side-chat-menu {
     position: fixed;
     right: 0;
-    top: 72px;
+    top: 80px;
     /* Adjusted for top-header height */
-    height: calc(100vh - 72px);
+    height: calc(100vh - 80px);
     width: 64px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
