@@ -1865,6 +1865,127 @@ body.dark-theme .card-body {
     color: #e2e8f0;
 }
 
+/* ============================================
+   PERFORMANCE PAGE DARK MODE
+   ============================================ */
+body.dark-theme .page-header-desempenho,
+body.dark-theme .chart-card,
+body.dark-theme .kpi-table-section,
+body.dark-theme .podium-card,
+body.dark-theme .select-analista,
+body.dark-theme .select-period {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+    box-shadow: none;
+}
+
+body.dark-theme .page-title-desempenho {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .kpi-table th {
+    background: #0f172a !important;
+    color: #94a3b8;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .kpi-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+}
+
+body.dark-theme .kpi-table tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-theme .chart-title {
+    color: #e2e8f0 !important;
+}
+
+/* ============================================
+   KANBAN BOARD DARK MODE
+   ============================================ */
+body.dark-theme .kanban-page-header,
+body.dark-theme .kanban-board-area {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-theme .kanban-page-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .kanban-list {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .kanban-list-header {
+    background: #0f172a !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .kanban-list-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .kanban-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+body.dark-theme .kanban-card-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .kanban-add-list {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .kanban-add-list:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   SUPPORT / KNOWLEDGE BASE DARK MODE
+   ============================================ */
+body.dark-theme .kb-card,
+body.dark-theme .kb-header,
+body.dark-theme .kb-search-bar {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0;
+    box-shadow: none;
+}
+
+body.dark-theme .kb-title,
+body.dark-theme .kb-subtitle,
+body.dark-theme .kb-card h3 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .kb-card p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme #kb-search-input {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+body.dark-theme .kb-tool-card {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .kb-tool-card h4 {
+    color: #e2e8f0;
+}
+
 
 .page-header {
     background: #ffffff;
