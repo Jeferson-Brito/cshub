@@ -3101,6 +3101,12 @@ body.sidebar-collapsed {
     /* Largura aumentada para melhor aproveitamento de espaço */
 }
 
+@media (min-width: 992px) {
+    .main-content {
+        padding-right: 80px !important;
+    }
+}
+
 .main-content.expanded {
     margin-left: 0;
 }
@@ -3526,6 +3532,8 @@ body.sidebar-collapsed {
     justify-content: space-between;
     align-items: center;
     padding: 12px 32px;
+    padding-right: 96px;
+    /* Space for side-chat-menu */
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
     margin-bottom: 24px;
@@ -3729,9 +3737,9 @@ body.sidebar-collapsed .top-header {
 .side-chat-menu {
     position: fixed;
     right: 0;
-    top: 56px;
-    /* Below top header */
-    height: calc(100vh - 56px);
+    top: 72px;
+    /* Adjusted for top-header height */
+    height: calc(100vh - 72px);
     width: 64px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
