@@ -1781,6 +1781,91 @@ body.dark-theme .btn-outline-secondary:hover {
     color: #fff;
 }
 
+body.dark-theme .page-header {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Force Dark Mode on Tables deeply */
+body.dark-theme .table,
+body.dark-theme .table>tbody,
+body.dark-theme .table>tbody>tr,
+body.dark-theme .table>tbody>tr>td,
+body.dark-theme .table>thead>tr>th {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-theme .table-striped>tbody>tr:nth-of-type(odd)>td,
+body.dark-theme .table-striped>tbody>tr:nth-of-type(odd),
+body.dark-theme .table-striped>tbody>tr:nth-of-type(odd)>th {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .table-hover>tbody>tr:hover>td,
+body.dark-theme .table-hover>tbody>tr:hover,
+body.dark-theme .table-hover>tbody>tr:hover>th {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+/* Calendar Specific Dark Mode */
+body.dark-theme .fc-theme-standard .fc-scrollgrid,
+body.dark-theme .fc-theme-standard td,
+body.dark-theme .fc-theme-standard th {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .fc-day {
+    background-color: #1e293b !important;
+}
+
+body.dark-theme .fc-day-today {
+    background-color: rgba(37, 99, 235, 0.15) !important;
+}
+
+body.dark-theme .fc-toolbar-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .fc-button {
+    background-color: #334155;
+    border-color: #475569;
+    color: white;
+}
+
+body.dark-theme .fc-button-primary:not(:disabled):active,
+body.dark-theme .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Modal Dark Mode Fixes */
+body.dark-theme .modal-content {
+    background-color: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+body.dark-theme .modal-header,
+body.dark-theme .modal-footer {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .close,
+body.dark-theme .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Specific Card Overrides */
+body.dark-theme .card-body {
+    background-color: #1e293b !important;
+    color: #e2e8f0;
+}
+
+
 .page-header {
     background: #ffffff;
     padding: 1.5rem 2rem;
