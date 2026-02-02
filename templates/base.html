@@ -57,6 +57,21 @@
 
 <body>
     {% if user.is_authenticated %}
+    <!-- Side Chat Menu (Bitrix Style) -->
+    <div class="side-chat-menu" id="sideChatMenu">
+        <button class="side-chat-new" id="sideChatNew" title="Nova Conversa">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+        <div id="sideChatList" class="d-flex flex-column align-items-center w-100">
+            <!-- Recent chats will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Chat Popups Container -->
+    <div class="chat-popups-container" id="chatPopupsContainer">
+        <!-- Multiple chat windows will appear here -->
+    </div>
+
     <!-- Mobile Toggle Navbar -->
     <nav class="mobile-navbar d-lg-none">
         <div class="mobile-navbar-container">
@@ -659,10 +674,13 @@
 
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
+    {% if user.is_authenticated %}
     <script>
         const currentUserId = {{ user.id|default: 0 }};
+        const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 
     <audio id="notificationSound" preload="auto">
@@ -727,6 +745,40 @@
         }
 
         let notifiedMessageIds = getNotifiedMessageIds();
+
+        // --------------------------------------------------
+        // Sistema de Toast Notifications (Premium SweetAlert2)
+        // --------------------------------------------------
+        function showGlobalToast(message, type = 'info') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            const typeMap = {
+                'success': 'success',
+                'error': 'error',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+
+            Toast.fire({
+                icon: typeMap[type] || 'info',
+                title: message
+            });
+        }
+
+        // Alias for compatibility
+        window.showToast = showGlobalToast;
+
 
         async function checkChatUnread() {
             try {
