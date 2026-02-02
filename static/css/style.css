@@ -1986,6 +1986,36 @@ body.dark-theme .kb-tool-card h4 {
     color: #e2e8f0;
 }
 
+/* ============================================
+   TOP HEADER DARK MODE
+   ============================================ */
+body.dark-theme .top-header {
+    background: #1e293b !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+}
+
+body.dark-theme .top-header .brand-grs,
+body.dark-theme .top-header .user-info .text-dark {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .header-search input {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .header-search i,
+body.dark-theme .header-right .text-secondary,
+body.dark-theme .header-right .bi-chevron-down {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .header-right .btn:hover i {
+    color: #e2e8f0 !important;
+}
+
 
 .page-header {
     background: #ffffff;
