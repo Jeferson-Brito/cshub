@@ -1588,11 +1588,80 @@ body.dark-theme {
 body.dark-theme {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     color: #e2e8f0;
+    --primary-color: #60a5fa;
+    /* Lighter blue for better contrast on dark */
+    --primary-dark: #3b82f6;
+    --primary-light: #93c5fd;
 }
 
 body.dark-theme .navbar {
     background: rgba(15, 23, 42, 0.95) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Sidebar Dark Mode */
+body.dark-theme .sidebar {
+    background: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .sidebar .brand-text {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.dark-theme .sidebar .nav-link {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff !important;
+}
+
+body.dark-theme .sidebar .nav-link.active {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa !important;
+}
+
+body.dark-theme .sidebar-user {
+    background: #0f172a;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .user-name {
+    color: #e2e8f0;
+}
+
+body.dark-theme .user-action {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+}
+
+body.dark-theme .user-action:hover {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+    border-color: #60a5fa;
+}
+
+/* Bootstrap Overrides for Dark Mode */
+body.dark-theme .bg-light {
+    background-color: #334155 !important;
+}
+
+body.dark-theme .bg-white {
+    background-color: #1e293b !important;
+}
+
+body.dark-theme .text-dark {
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .border {
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 body.dark-theme .card {
@@ -1632,7 +1701,17 @@ body.dark-theme .form-control:focus {
 }
 
 body.dark-theme .table {
+    background-color: #1e293b;
     color: #e2e8f0;
+}
+
+body.dark-theme .table thead {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+
+body.dark-theme .table td,
+body.dark-theme .table th {
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-theme .table-striped>tbody>tr:nth-of-type(odd)>td {
