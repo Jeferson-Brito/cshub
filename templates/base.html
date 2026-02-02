@@ -660,7 +660,7 @@
     <!-- Custom Time Picker JS -->
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
     {% block scripts %}{% endblock %}
@@ -774,40 +774,6 @@
             }
         }
 
-        // --------------------------------------------------
-        // Sistema de Toast Notifications (Premium SweetAlert2)
-        // --------------------------------------------------
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'bottom-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        });
-
-        function showGlobalToast(message, type = 'info') {
-            const typeMap = {
-                'success': 'success',
-                'error': 'error',
-                'danger': 'error',
-                'warning': 'warning',
-                'info': 'info'
-            };
-
-            Toast.fire({
-                icon: typeMap[type] || 'info',
-                title: message
-            });
-        }
-
-        // Alias for compatibility
-        window.showToast = showGlobalToast;
-
-
         async function checkNotifications() {
             try {
                 const res = await fetch('/api/notifications/check/');
@@ -832,7 +798,7 @@
                     }
                 }
             } catch (e) {
-                console.error('Erro ao verificar notificaÃ§Ãµes', e);
+                console.error('Erro ao verificar notificações', e);
             }
         }
 
