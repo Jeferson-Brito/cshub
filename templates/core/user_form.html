@@ -58,14 +58,14 @@
                             </label>
                             <select class="form-control" name="role" required>
                                 <option value="">Selecione...</option>
-                                <option value="analista" {% if target_user and target_user.role=='analista' %}selected{%
-                                    elif form_data and form_data.role=='analista' %}selected{% endif %}>Analista
+                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{%
+                                    elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista
                                 </option>
-                                <option value="gestor" {% if target_user and target_user.role=='gestor' %}selected{%
-                                    elif form_data and form_data.role=='gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{%
+                                    elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
                                 {% if request.user.is_administrador %}
-                                <option value="administrador" {% if target_user and target_user.role=='administrador'
-                                    %}selected{% elif form_data and form_data.role=='administrador' %}selected{% endif
+                                <option value="administrador" {% if target_user and target_user.role == 'administrador'
+                                    %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif
                                     %}>Administrador</option>
                                 {% endif %}
                             </select>
