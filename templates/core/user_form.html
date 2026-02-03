@@ -11,7 +11,7 @@
             {% if form_type == 'create' %}Novo UsuÃ¡rio{% else %}Editar UsuÃ¡rio{% endif %}
         </h1>
         <p class="dashboard-subtitle">
-            {% if form_type == 'create' %}Crie um novo usuÃ¡rio no sistema{% else %}Edite as informaÃ§Ãµes do usuÃ¡rio{%
+            {% if form_type == 'create' %}Crie um novo usuário no sistema{% else %}Edite as informações do usuário{% endif %}
             endif %}
         </p>
     </div>
@@ -58,15 +58,10 @@
                             </label>
                             <select class="form-control" name="role" required>
                                 <option value="">Selecione...</option>
-                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{%
-                                    elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista
-                                </option>
-                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{%
-                                    elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
+                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
                                 {% if request.user.is_administrador %}
-                                <option value="administrador" {% if target_user and target_user.role == 'administrador'
-                                    %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif
-                                    %}>Administrador</option>
+                                <option value="administrador" {% if target_user and target_user.role == 'administrador' %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif %}>Administrador</option>
                                 {% endif %}
                             </select>
                         </div>
@@ -74,14 +69,10 @@
                             <label class="form-label">
                                 <i class="bi bi-diagram-3"></i> Departamento
                             </label>
-                            <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{%
-                                endif %}>
+                            <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{% endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
-                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id
-                                    %}selected{% elif form_data and form_data.department_id|add:"0"==dept.id
-                                    %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id
-                                    %}selected{% endif %}>
+                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id %}selected{% elif form_data and form_data.department_id|add:"0" == dept.id %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id %}selected{% endif %}>
                                     {{ dept.name }}
                                 </option>
                                 {% endfor %}
@@ -100,9 +91,7 @@
                                 <i class="bi bi-toggle-on"></i> Status
                             </label>
                             <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if
-                                    target_user and target_user.ativo %}checked{% elif form_data and form_data.ativo
-                                    %}checked{% endif %}>
+                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if target_user and target_user.ativo %}checked{% elif form_data and form_data.ativo %}checked{% endif %}>
                                 <label class="form-check-label" for="ativo">
                                     UsuÃ¡rio Ativo
                                 </label>
@@ -140,12 +129,10 @@
 
             <div class="mb-3">
                 <label class="form-label">
-                    <i class="bi bi-lock"></i> Senha {% if form_type == 'edit' %}(deixe em branco para nÃ£o
-                    alterar){% else %}<span class="text-danger">*</span>{% endif %}
+                    <i class="bi bi-lock"></i> Senha {% if form_type == 'edit' %}(deixe em branco para não alterar){% else %}<span class="text-danger">*</span>{% endif %}
                 </label>
                 <div class="password-input-wrapper">
-                    <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type == 'create' %}required{% endif %} minlength="6">
+                    <input type="password" class="form-control" name="password" id="user-password" {% if form_type == 'create' %}required{% endif %} minlength="6">
                     <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
                         <i class="bi bi-eye" id="user-password-icon"></i>
                     </button>
@@ -160,8 +147,7 @@
                     <i class="bi bi-arrow-left"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> {% if form_type == 'create' %}Criar UsuÃ¡rio{% else %}Salvar
-                    AlteraÃ§Ãµes{% endif %}
+                    <i class="bi bi-check-circle"></i> {% if form_type == 'create' %}Criar Usuário{% else %}Salvar Alterações{% endif %}
                 </button>
             </div>
             </form>
