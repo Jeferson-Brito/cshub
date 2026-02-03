@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
 
-{% block title %}{% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %} - Nexus{% endblock %}
+{% block title %}{% if form_type == 'create' %}Novo UsuÃ¡rio{% else %}Editar UsuÃ¡rio{% endif %} - Nexus{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="dashboard-title">
             <i class="bi bi-person-{% if form_type == 'create' %}plus{% else %}pencil{% endif %}"></i>
-            {% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %}
+            {% if form_type == 'create' %}Novo UsuÃ¡rio{% else %}Editar UsuÃ¡rio{% endif %}
         </h1>
         <p class="dashboard-subtitle">
-            {% if form_type == 'create' %}Crie um novo usuário no sistema{% else %}Edite as informações do usuário{%
+            {% if form_type == 'create' %}Crie um novo usuÃ¡rio no sistema{% else %}Edite as informaÃ§Ãµes do usuÃ¡rio{%
             endif %}
         </p>
     </div>
@@ -22,7 +22,7 @@
         <div class="card fade-in">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="bi bi-info-circle"></i> Informações do Usuário
+                    <i class="bi bi-info-circle"></i> InformaÃ§Ãµes do UsuÃ¡rio
                 </h5>
             </div>
             <div class="card-body">
@@ -32,13 +32,13 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">
-                                <i class="bi bi-person"></i> Nome de Usuário <span class="text-danger">*</span>
+                                <i class="bi bi-person"></i> Nome de UsuÃ¡rio <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" name="username"
                                 value="{% if target_user %}{{ target_user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
-                                {% if form_type=='edit' %}readonly{% endif %} required>
+                                {% if form_type == 'edit' %}readonly{% endif %} required>
                             {% if form_type == 'edit' %}
-                            <small class="text-muted">O nome de usuário não pode ser alterado</small>
+                            <small class="text-muted">O nome de usuÃ¡rio nÃ£o pode ser alterado</small>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -58,14 +58,14 @@
                             </label>
                             <select class="form-control" name="role" required>
                                 <option value="">Selecione...</option>
-                                <option value="analista" {% if target_user and target_user.role=='analista' %}selected{%
-                                    elif form_data and form_data.role=='analista' %}selected{% endif %}>Analista
+                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{%
+                                    elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista
                                 </option>
-                                <option value="gestor" {% if target_user and target_user.role=='gestor' %}selected{%
-                                    elif form_data and form_data.role=='gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{%
+                                    elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
                                 {% if request.user.is_administrador %}
-                                <option value="administrador" {% if target_user and target_user.role=='administrador'
-                                    %}selected{% elif form_data and form_data.role=='administrador' %}selected{% endif
+                                <option value="administrador" {% if target_user and target_user.role == 'administrador'
+                                    %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif
                                     %}>Administrador</option>
                                 {% endif %}
                             </select>
@@ -78,9 +78,9 @@
                                 endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
-                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id==dept.id
+                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id
                                     %}selected{% elif form_data and form_data.department_id|add:"0"==dept.id
-                                    %}selected{% elif request.user.is_gestor and request.user.department_id==dept.id
+                                    %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id
                                     %}selected{% endif %}>
                                     {{ dept.name }}
                                 </option>
@@ -88,7 +88,7 @@
                             </select>
                             {% if request.user.is_gestor %}
                             <input type="hidden" name="department" value="{{ request.user.department_id }}">
-                            <small class="text-muted">Gestores só podem criar usuários no seu próprio
+                            <small class="text-muted">Gestores sÃ³ podem criar usuÃ¡rios no seu prÃ³prio
                                 departamento</small>
                             {% endif %}
                         </div>
@@ -104,7 +104,7 @@
                                     target_user and target_user.ativo %}checked{% elif form_data and form_data.ativo
                                     %}checked{% endif %}>
                                 <label class="form-check-label" for="ativo">
-                                    Usuário Ativo
+                                    UsuÃ¡rio Ativo
                                 </label>
                             </div>
                         </div>
@@ -140,18 +140,18 @@
 
             <div class="mb-3">
                 <label class="form-label">
-                    <i class="bi bi-lock"></i> Senha {% if form_type == 'edit' %}(deixe em branco para não
+                    <i class="bi bi-lock"></i> Senha {% if form_type == 'edit' %}(deixe em branco para nÃ£o
                     alterar){% else %}<span class="text-danger">*</span>{% endif %}
                 </label>
                 <div class="password-input-wrapper">
                     <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type=='create' %}required{% endif %} minlength="6">
+                        form_type == 'create' %}required{% endif %} minlength="6">
                     <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
                         <i class="bi bi-eye" id="user-password-icon"></i>
                     </button>
                 </div>
                 {% if form_type == 'edit' %}
-                <small class="text-muted">Deixe em branco se não quiser alterar a senha</small>
+                <small class="text-muted">Deixe em branco se nÃ£o quiser alterar a senha</small>
                 {% endif %}
             </div>
 
@@ -160,8 +160,8 @@
                     <i class="bi bi-arrow-left"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> {% if form_type == 'create' %}Criar Usuário{% else %}Salvar
-                    Alterações{% endif %}
+                    <i class="bi bi-check-circle"></i> {% if form_type == 'create' %}Criar UsuÃ¡rio{% else %}Salvar
+                    AlteraÃ§Ãµes{% endif %}
                 </button>
             </div>
             </form>
