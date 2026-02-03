@@ -3543,11 +3543,9 @@ body.sidebar-collapsed {
     transition: var(--transition);
 
     /* Layout Full Width Correction */
-    margin-top: -0.5rem;
-    margin-left: -2rem;
-    margin-right: -2rem;
-    width: calc(100% + 4rem);
-    max-width: none;
+    /* Reset Layout */
+    margin: 0;
+    width: 100%;
 }
 
 @media (max-width: 991.98px) {
@@ -3566,8 +3564,7 @@ body.sidebar-collapsed {
 
 /* Quando o sidebar está recolhido, o header expande junto com o main-content */
 body.sidebar-collapsed .top-header {
-    left: 80px;
-    /* Ajuste se for fixo, mas aqui está dentro do main-content */
+    left: 0;
 }
 
 .header-left {
