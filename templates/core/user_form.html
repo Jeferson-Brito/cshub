@@ -36,7 +36,7 @@
                             </label>
                             <input type="text" class="form-control" name="username"
                                 value="{% if target_user %}{{ target_user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
-                                {% if form_type=='edit' %}readonly{% endif %} required>
+                                {% if form_type == 'edit' %}readonly{% endif %} required>
                             {% if form_type == 'edit' %}
                             <small class="text-muted">O nome de usuário não pode ser alterado</small>
                             {% endif %}
@@ -74,8 +74,7 @@
                             <label class="form-label">
                                 <i class="bi bi-diagram-3"></i> Departamento
                             </label>
-                            <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{%
-                                endif %}>
+                            <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{% endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
                                 <option value="{{ dept.id }}" {% if target_user and target_user.department_id==dept.id
@@ -145,7 +144,7 @@
                 </label>
                 <div class="password-input-wrapper">
                     <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type=='create' %}required{% endif %} minlength="6">
+                        form_type == 'create' %}required{% endif %} minlength="6">
                     <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
                         <i class="bi bi-eye" id="user-password-icon"></i>
                     </button>
