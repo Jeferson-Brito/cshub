@@ -2601,13 +2601,15 @@ body.dark-theme .dropdown-item:hover {
 .sidebar {
     position: fixed;
     left: 0;
-    top: 70px;
-    height: calc(100vh - 70px);
+    top: 80px;
+    /* Alinhado com o novo cabeçalho */
+    height: calc(100vh - 80px);
     width: 300px;
     background: #ffffff;
     border-right: 1px solid #e5e7eb;
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.05);
-    z-index: 1000;
+    z-index: 1040;
+    /* Acima do cabeçalho fixo do Bootstrap (1030) */
     display: flex;
     flex-direction: column;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
