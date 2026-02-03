@@ -97,6 +97,10 @@
             <!-- Logo hidden in sidebar -->
         </div>
 
+        <button type="button" class="sidebar-toggle" id="sidebarToggle">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
         {% if user.is_administrador %}
         {% if all_departments %}
         <div class="sidebar-dept-selector">
@@ -184,6 +188,11 @@
                         <i class="bi bi-graph-up"></i>
                         <span class="link-text">Relatórios</span>
                     </a>
+                    <a href="#" class="nav-link sub-link disabled" title="Tickets (Em desenvolvimento)"
+                        style="opacity: 0.6;">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
+                    </a>
                 </div>
             </div>
 
@@ -223,6 +232,10 @@
                 <i class="bi bi-shield-check"></i>
                 <span class="link-text">Verificação de Lojas</span>
             </a>
+            <a href="#" class="nav-link disabled" title="Tickets (Em desenvolvimento)" style="opacity: 0.6;">
+                <i class="bi bi-ticket-perforated"></i>
+                <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
+            </a>
 
             <div class="nav-group-title">Informação</div>
             <a href="{% url 'base_conhecimento' %}"
@@ -255,6 +268,10 @@
                 class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_3' %}active{% endif %}">
                 <i class="bi bi-hammer"></i>
                 <span class="link-text">Em desenvolvimento</span>
+            </a>
+            <a href="#" class="nav-link disabled" title="Tickets (Em desenvolvimento)" style="opacity: 0.6;">
+                <i class="bi bi-ticket-perforated"></i>
+                <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
             </a>
 
             {% elif current_department.name == 'CS Clientes' %}
@@ -296,6 +313,11 @@
                         title="Relatórios">
                         <i class="bi bi-graph-up"></i>
                         <span class="link-text">Relatórios</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled" title="Tickets (Em desenvolvimento)"
+                        style="opacity: 0.6;">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
                     </a>
                 </div>
             </div>
@@ -393,6 +415,9 @@
         <div class="header-container container-fluid d-flex align-items-center justify-content-between h-100">
             <!-- Left: Logo -->
             <div class="header-left d-flex align-items-center">
+                <button class="btn btn-link text-dark me-2 d-none d-lg-block" id="headerSidebarToggle">
+                    <i class="bi bi-list" style="font-size: 1.5rem;"></i>
+                </button>
                 <a href="{% url 'dashboard' %}" class="d-flex align-items-center text-decoration-none">
                     <div class="header-logo-icon me-2">
                         <i class="bi bi-hexagon-fill text-primary" style="font-size: 1.5rem;"></i>
@@ -676,7 +701,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>

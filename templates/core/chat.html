@@ -478,7 +478,13 @@
         <!-- Sidebar de Conversas -->
         <div class="chat-sidebar" id="chatSidebar">
             <div class="chat-sidebar-header">
-                <h5><i class="bi bi-chat-dots me-2"></i>Mensagens</h5>
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-link text-white me-1 p-0"
+                        title="Voltar ao Nexus">
+                        <i class="bi bi-arrow-left-short fs-4"></i>
+                    </a>
+                    <h5>Mensagens</h5>
+                </div>
                 <button class="btn-new-chat" data-bs-toggle="modal" data-bs-target="#newChatModal"
                     title="Nova conversa">
                     <i class="bi bi-plus-lg"></i>
@@ -557,7 +563,7 @@
 
 {% block scripts %}
 <script>
-    const currentUserId = {{ user.id }};
+    const currentUserId = parseInt("{{ user.id|default:0 }}");
     let currentConversationId = null;
     let chatSocket = null;
     let notificationSocket = null;
