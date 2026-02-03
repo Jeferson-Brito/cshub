@@ -86,7 +86,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
+        "APP_DIRS": False,  # Must be False when using loaders
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -94,6 +94,11 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.departments",
+            ],
+            "loaders": [
+                # DISABLE cached loader to force template reload
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
             ],
         },
     },
