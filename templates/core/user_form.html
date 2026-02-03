@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{# Force deploy refresh #}
 
 {% block title %}{% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %} - Nexus{% endblock %}
 
@@ -35,7 +36,7 @@
                             </label>
                             <input type="text" class="form-control" name="username"
                                 value="{% if target_user %}{{ target_user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
-                                {% if form_type == 'edit' %}readonly{% endif %} required>
+                                {% if form_type=='edit' %}readonly{% endif %} required>
                             {% if form_type == 'edit' %}
                             <small class="text-muted">O nome de usuário não pode ser alterado</small>
                             {% endif %}
@@ -57,14 +58,14 @@
                             </label>
                             <select class="form-control" name="role" required>
                                 <option value="">Selecione...</option>
-                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{%
-                                    elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista
+                                <option value="analista" {% if target_user and target_user.role=='analista' %}selected{%
+                                    elif form_data and form_data.role=='analista' %}selected{% endif %}>Analista
                                 </option>
-                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{%
-                                    elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="gestor" {% if target_user and target_user.role=='gestor' %}selected{%
+                                    elif form_data and form_data.role=='gestor' %}selected{% endif %}>Gestor</option>
                                 {% if request.user.is_administrador %}
-                                <option value="administrador" {% if target_user and target_user.role == 'administrador'
-                                    %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif
+                                <option value="administrador" {% if target_user and target_user.role=='administrador'
+                                    %}selected{% elif form_data and form_data.role=='administrador' %}selected{% endif
                                     %}>Administrador</option>
                                 {% endif %}
                             </select>
@@ -77,9 +78,9 @@
                                 endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
-                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id
+                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id==dept.id
                                     %}selected{% elif form_data and form_data.department_id|add:"0"==dept.id
-                                    %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id
+                                    %}selected{% elif request.user.is_gestor and request.user.department_id==dept.id
                                     %}selected{% endif %}>
                                     {{ dept.name }}
                                 </option>
@@ -144,7 +145,7 @@
                 </label>
                 <div class="password-input-wrapper">
                     <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type == 'create' %}required{% endif %} minlength="6">
+                        form_type=='create' %}required{% endif %} minlength="6">
                     <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
                         <i class="bi bi-eye" id="user-password-icon"></i>
                     </button>
