@@ -36,7 +36,7 @@
                             </label>
                             <input type="text" class="form-control" name="username"
                                 value="{% if target_user %}{{ target_user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
-                                {% if form_type=='edit' %}readonly{% endif %} required>
+                                {% if form_type == 'edit' %}readonly{% endif %} required>
                             {% if form_type == 'edit' %}
                             <small class="text-muted">O nome de usuário não pode ser alterado</small>
                             {% endif %}
@@ -145,7 +145,7 @@
                 </label>
                 <div class="password-input-wrapper">
                     <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type=='create' %}required{% endif %} minlength="6">
+                        form_type == 'create' %}required{% endif %} minlength="6">
                     <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
                         <i class="bi bi-eye" id="user-password-icon"></i>
                     </button>
