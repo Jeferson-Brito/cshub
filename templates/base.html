@@ -232,10 +232,28 @@
                 <i class="bi bi-shield-check"></i>
                 <span class="link-text">Verificação de Lojas</span>
             </a>
-            <a href="#" class="nav-link disabled" title="Tickets (Em desenvolvimento)" style="opacity: 0.6;">
-                <i class="bi bi-ticket-perforated"></i>
-                <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
+            <a href="#hubAtendimentoSubmenu" class="nav-link dropdown-toggle-custom collapsed" data-bs-toggle="collapse"
+                aria-expanded="false" aria-controls="hubAtendimentoSubmenu">
+                <i class="bi bi-headset"></i>
+                <span class="link-text">Hub de Atendimento</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container" id="hubAtendimentoSubmenu">
+                <div class="nav-submenu">
+                    <a href="#" class="nav-link sub-link disabled" style="opacity: 0.6;">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <span class="link-text">Tickets <small class="text-xs">(Breve)</small></span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled" style="opacity: 0.6;">
+                        <i class="bi bi-chat-dots"></i>
+                        <span class="link-text">Chats <small class="text-xs">(Breve)</small></span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled" style="opacity: 0.6;">
+                        <i class="bi bi-telephone"></i>
+                        <span class="link-text">Ligações <small class="text-xs">(Breve)</small></span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Informação</div>
             <a href="{% url 'base_conhecimento' %}"
@@ -415,7 +433,7 @@
         <div class="header-container container-fluid d-flex align-items-center justify-content-between h-100">
             <!-- Left: Logo -->
             <div class="header-left d-flex align-items-center">
-                <button class="btn btn-link text-dark me-2 d-none d-lg-block" id="headerSidebarToggle">
+                <button class="btn btn-link text-dark me-2 d-none" id="headerSidebarToggle">
                     <i class="bi bi-list" style="font-size: 1.5rem;"></i>
                 </button>
                 <a href="{% url 'dashboard' %}" class="d-flex align-items-center text-decoration-none">
@@ -650,7 +668,8 @@
             // Handle both Reclame Aqui submenus (original and CS Clientes)
             const submenuConfigs = [
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
-                { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') }
+                { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') },
+                { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') }
             ];
 
             submenuConfigs.forEach(config => {
@@ -701,7 +720,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
