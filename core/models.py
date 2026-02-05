@@ -1197,9 +1197,9 @@ class DailyAuditQuota(models.Model):
             if delta < 0:
                 return True
             
-            # Ciclo de 8 dias (6 trabalho + 2 folga)
+            # Ciclo de 8 dias (2 folga + 6 trabalho, já que data_primeira_folga marca o início das folgas)
             cycle_pos = delta % 8
-            if cycle_pos >= 6: # 6 e 7 são dias de folga
+            if cycle_pos < 2: # 0 e 1 são dias de folga (o dia marcado e o seguinte)
                 return False
         
         return True
