@@ -1118,7 +1118,7 @@ def api_get_monthly_kpi(request):
     Retorna KPIs das últimas 4-5 semanas do mês atual para o analista
     Mostra desempenho semanal ao longo do mês
     """
-    from datetime import timedelta
+    from datetime import timedelta, datetime
     from core.models import WeeklyVerificationKPI
     
     analyst_id = request.GET.get('analyst_id', request.user.id)
