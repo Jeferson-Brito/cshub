@@ -1093,6 +1093,131 @@ class WeeklyVerificationKPI(models.Model):
         }
 
 
+class DailyAuditQuota(models.Model):
+    """
+    Rastreamento de auditorias diárias por analista.
+    Impede que analistas excedam a meta diária de auditorias.
+    """
+    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='daily_quotas')
+    date = models.DateField(verbose_name="Data")
+    
+    # Meta diária (calculada dinamicamente baseada em lojas pendentes e dias restantes)
+    daily_quota = models.IntegerField(default=0, verbose_name="Meta Diária")
+    
+    # Auditorias realizadas neste dia
+    audits_completed = models.IntegerField(default=0, verbose_name="Auditorias Realizadas")
+    
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['analyst', 'date']
+        ordering = ['-date']
+        verbose_name = "Quota Diária de Auditoria"
+        verbose_name_plural = "Quotas Diárias de Auditoria"
+        indexes = [
+            models.Index(fields=['analyst', 'date']),
+            models.Index(fields=['date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.analyst.get_full_name() or self.analyst.username} - {self.date} ({self.audits_completed}/{self.daily_quota})"
+    
+    @property
+    def is_quota_reached(self):
+        """Verifica se a quota diária foi atingida"""
+        return self.audits_completed >= self.daily_quota
+    
+    @property
+    def remaining_audits(self):
+        """Retorna quantas auditorias ainda podem ser feitas hoje"""
+        return max(0, self.daily_quota - self.audits_completed)
+    
+    @property
+    def completion_percentage(self):
+        """Porcentagem de conclusão da meta diária"""
+        if self.daily_quota == 0:
+            return 0
+        return min(100, (self.audits_completed / self.daily_quota) * 100)
+    
+    @classmethod
+    def get_or_create_today(cls, analyst):
+        """
+        Busca ou cria quota de hoje para o analista.
+        Recalcula a meta diária automaticamente.
+        """
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        quota, created = cls.objects.get_or_create(
+            analyst=analyst,
+            date=today,
+            defaults={'daily_quota': 0, 'audits_completed': 0}
+        )
+        
+        # Recalcular quota diária (pode mudar se lojas forem atribuídas/removidas durante o dia)
+        quota.daily_quota = quota.calculate_daily_target()
+        quota.save()
+        
+        return quota
+    
+    def calculate_daily_target(self):
+        """Calcula meta diária do analista baseado em lojas pendentes e dias restantes"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        today = timezone.now().date()
+        assignments = AnalystAssignment.objects.filter(analyst=self.analyst, active=True)
+        
+        if not assignments.exists():
+            return 0
+        
+        # Calcular início da semana (segunda-feira)
+        start_of_week = today - timedelta(days=today.weekday())
+        start_datetime = timezone.make_aware(
+            timezone.datetime.combine(start_of_week, timezone.datetime.min.time())
+        )
+        
+        # Buscar lojas verificadas esta semana
+        stores_verified_this_week = set()
+        for assignment in assignments:
+            week_audits = StoreAudit.objects.filter(
+                analyst=self.analyst,
+                store=assignment.store,
+                created_at__gte=start_datetime
+            ).exists()
+            
+            if week_audits:
+                stores_verified_this_week.add(assignment.store.id)
+        
+        total_stores = assignments.count()
+        pending_stores = total_stores - len(stores_verified_this_week)
+        
+        # Pegar o menor número de dias restantes entre todas as atribuições
+        days_remaining = None
+        for assignment in assignments:
+            assignment_days = assignment.get_days_remaining()
+            if days_remaining is None or assignment_days < days_remaining:
+                days_remaining = assignment_days
+        
+        # Se não há dias restantes definidos, usar dias até domingo
+        if days_remaining is None or days_remaining == 0:
+            days_until_sunday = (6 - today.weekday()) % 7
+            days_remaining = days_until_sunday if days_until_sunday > 0 else 1
+        
+        # Meta diária = lojas pendentes / dias restantes
+        daily_target = max(1, round(pending_stores / max(1, days_remaining))) if pending_stores > 0 else 0
+        
+        return daily_target
+    
+    def increment_audits(self):
+        """Incrementa contador de auditorias realizadas hoje"""
+        self.audits_completed += 1
+        self.save()
+        return not self.is_quota_reached  # Retorna True se ainda pode auditar
+
+
 # ========================================
 # MODELOS PARA CHAT INTERNO
 # ========================================

@@ -2557,6 +2557,19 @@ def store_audit_create(request, store_id):
     store = get_object_or_404(Store, id=store_id)
     
     if request.method == 'POST':
+        # NOVO: Verificar quota diária para analistas
+        if request.user.role == 'analista':
+            from .models import DailyAuditQuota
+            daily_quota = DailyAuditQuota.get_or_create_today(request.user)
+            
+            if daily_quota.is_quota_reached:
+                messages.error(
+                    request,
+                    f'⚠️ Limite diário atingido! Você já auditou {daily_quota.audits_completed}/{daily_quota.daily_quota} lojas hoje. '
+                    f'Aguarde até amanhã às 00:00 para continuar auditando.'
+                )
+                return redirect('verificacao_lojas')
+        
         audit = StoreAudit.objects.create(analyst=request.user, store=store)
         
         items_slugs = ['cameras', 'estofados', 'cestos_medidas', 'layout', 'tv', 'totem', 'limpeza', 'marketing']
@@ -2610,6 +2623,20 @@ def store_audit_create(request, store_id):
         store.last_audit_result = 'irregular' if has_irregularity else 'conforme'
         store.needs_reverification = False  # Resetar flag de reverificação
         store.save()
+        
+        # NOVO: Incrementar contador de auditorias diárias
+        if request.user.role == 'analista':
+            from .models import DailyAuditQuota
+            daily_quota = DailyAuditQuota.get_or_create_today(request.user)
+            can_continue = daily_quota.increment_audits()
+            
+            if not can_continue:
+                # Quota atingida exatamente agora
+                messages.warning(
+                    request,
+                    f'✅ Meta diária concluída! Você auditou {daily_quota.audits_completed}/{daily_quota.daily_quota} lojas hoje. '
+                    f'Parabéns! Aguarde até amanhã para continuar.'
+                )
         
         if has_irregularity:
             messages.warning(request, f"Auditoria da loja {store.code} finalizada com irregularidades detectadas. Gestor notificado.")

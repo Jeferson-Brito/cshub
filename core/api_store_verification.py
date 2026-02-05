@@ -660,6 +660,56 @@ def api_get_analyst_dashboard(request):
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
     analyst = get_object_or_404(User, id=analyst_id)
+
+
+def get_daily_quota_info(analyst):
+    """
+    Helper function to get daily quota information for an analyst.
+    Returns dict with quota details.
+    """
+    from core.models import DailyAuditQuota
+    from datetime import datetime
+    
+    daily_quota = DailyAuditQuota.get_or_create_today(analyst)
+    
+    # Calculate time until midnight (reset time)
+    now = timezone.now()
+    tomorrow = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+    tomorrow_aware = timezone.make_aware(tomorrow)
+    time_until_reset = tomorrow_aware - now
+    
+    hours_until_reset = int(time_until_reset.total_seconds() // 3600)
+    minutes_until_reset = int((time_until_reset.total_seconds() % 3600) // 60)
+    
+    return {
+        'target': daily_quota.daily_quota,
+        'completed': daily_quota.audits_completed,
+        'remaining': daily_quota.remaining_audits,
+        'is_blocked': daily_quota.is_quota_reached,
+        'percentage': round(daily_quota.completion_percentage, 1),
+        'reset_time': '00:00',
+        'hours_until_reset': hours_until_reset,
+        'minutes_until_reset': minutes_until_reset
+    }
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_analyst_dashboard(request):
+    """Retorna métricas para o dashboard do analista"""
+    analyst_id = request.GET.get('analyst_id')
+    
+    # Se não foi especificado analista, usa o usuário logado
+    if not analyst_id:
+        analyst_id = request.user.id
+    else:
+        analyst_id = int(analyst_id)
+    
+    # Verificar permissão
+    if request.user.role == 'analista' and request.user.id != analyst_id:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    analyst = get_object_or_404(User, id=analyst_id)
     
     # Buscar atribuições
     assignments = AnalystAssignment.objects.filter(
@@ -747,7 +797,8 @@ def api_get_analyst_dashboard(request):
             'daily_target': daily_target,
             'days_remaining': days_remaining,
             'period_end_day': period_end_day  # Day name for display
-        }
+        },
+        'daily_quota': get_daily_quota_info(analyst)
     })
 
 

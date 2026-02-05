@@ -239,6 +239,46 @@
                             </div>
                         </div>
 
+                        <!-- Daily Quota Section -->
+                        <div class="card border-primary mb-3" id="dailyQuotaCard">
+                            <div class="card-header bg-primary bg-opacity-10 border-primary">
+                                <div class="d-flex just ify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold">
+                                        <i class="bi bi-calendar-check me-2"></i>
+                                        Meta de Hoje
+                                    </h6>
+                                    <span class="badge bg-primary" id="dailyQuotaBadge">-</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Lojas auditadas hoje:</span>
+                                    <span class="fw-bold" id="dailyQuotaText">-/-</span>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div id="dailyQuotaProgress"
+                                        class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                        role="progressbar" style="width: 0%">
+                                        <span id="dailyQuotaPercentage">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alert quando quota atingida -->
+                        <div id="dailyQuotaBlocked" class="alert alert-warning border-warning d-none mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-lock-fill fs-4 me-3"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">🎉 Meta Diária Concluída!</h6>
+                                    <p class="mb-1">Você já auditou todas as lojas permitidas hoje.</p>
+                                    <small class="text-muted">
+                                        Próximo reset em: <strong id="resetCountdown">-</strong>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Progresso Semanal</span>
@@ -3075,7 +3115,81 @@
     if (document.getElementById('monthlyKpiContent')) {
         loadMonthlyKPI();
     }
+
+    // Load Daily Quota for analysts
+    if (document.getElementById('dailyQuotaCard')) {
+        loadDailyQuota();
+        // Update every minute to refresh countdown
+        setInterval(loadDailyQuota, 60000);
+    }
     {% endif %}
+
+    // Daily Quota Functions
+    async function loadDailyQuota() {
+        try {
+            const response = await fetch('/api/store-verification/analyst/dashboard/');
+            const data = await response.json();
+
+            if (data.success && data.daily_quota) {
+                const quota = data.daily_quota;
+
+                // Update text displays
+                document.getElementById('dailyQuotaText').textContent = `${quota.completed}/${quota.target}`;
+                document.getElementById('dailyQuotaBadge').textContent = `${quota.remaining} restantes`;
+
+                // Update progress bar
+                const percentage = Math.min(100, quota.percentage);
+                const progressBar = document.getElementById('dailyQuotaProgress');
+                progressBar.style.width = `${percentage}%`;
+                document.getElementById('dailyQuotaPercentage').textContent = `${percentage.toFixed(0)}%`;
+
+                // Change color based on completion
+                progressBar.classList.remove('bg-primary', 'bg-success', 'bg-warning');
+                if (quota.is_blocked) {
+                    progressBar.classList.add('bg-success');
+                } else if (percentage >= 75) {
+                    progressBar.classList.add('bg-warning');
+                } else {
+                    progressBar.classList.add('bg-primary');
+                }
+
+                // Show/hide blocked alert
+                const blockedAlert = document.getElementById('dailyQuotaBlocked');
+                const quotaCard = document.getElementById('dailyQuotaCard');
+
+                if (quota.is_blocked) {
+                    blockedAlert.classList.remove('d-none');
+                    quotaCard.classList.add('border-success');
+                    quotaCard.classList.remove('border-primary');
+
+                    // Update countdown
+                    document.getElementById('resetCountdown').textContent =
+                        `${quota.hours_until_reset}h ${quota.minutes_until_reset}min`;
+
+                    // Disable audit buttons (if they exist)
+                    disableAuditButtons();
+                } else {
+                    blockedAlert.classList.add('d-none');
+                    quotaCard.classList.remove('border-success');
+                    quotaCard.classList.add('border-primary');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading daily quota:', error);
+        }
+    }
+
+    function disableAuditButtons() {
+        // Disable main "Auditar Loja" buttons
+        document.querySelectorAll('a[href*="/store-audit/"]').forEach(link => {
+            if (!link.classList.contains('disabled')) {
+                link.classList.add('disabled', 'quota-disabled');
+                link.style.opacity = '0.5';
+                link.style.pointerEvents = 'none';
+                link.title = 'Limite diário atingido - Aguarde até amanhã';
+            }
+        });
+    }
 </script>
 
 {% endblock %}
