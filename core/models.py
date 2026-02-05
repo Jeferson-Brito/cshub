@@ -1179,7 +1179,7 @@ class DailyAuditQuota(models.Model):
 
         # 1. Verificar se tem folga manual registrada (Folga, Férias, Atestado)
         manual_folga = FolgaManual.objects.filter(
-            analyst=escala_profile,
+            analista=escala_profile,
             data=date_to_check
         ).first()
 
