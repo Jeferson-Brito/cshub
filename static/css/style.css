@@ -204,18 +204,7 @@ body {
     margin-bottom: 20px;
 }
 
-.login-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 20px;
-    background: var(--gradient-primary);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-lg);
-    animation: pulse 2s infinite;
-}
+/* .login-icon removed or simplified if necessary, but focusing on header-logo-icon which might be missing or shared */
 
 .login-icon i {
     font-size: 40px;
@@ -3993,4 +3982,24 @@ body.dark-theme .chat-popup-input {
     align-items: center;
     justify-content: center;
     border: none;
+}
+/* Header Logo Fix */
+.header-logo-icon {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.brand-grs {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+}
+
+.bg-primary {
+    color: white !important;
+}
+
+.badge.bg-primary {
+    color: white !important;
 }
