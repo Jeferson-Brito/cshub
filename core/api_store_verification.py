@@ -669,11 +669,9 @@ def api_get_analyst_dashboard(request):
     
     total_stores = assignments.count()
     
-    # MUDANÇA: Usar período personalizado
-    total_audited = 0
-    total_target = 0
+    # Track unique stores audited this week (for progress calculation)
+    stores_audited_this_week = set()
     days_remaining = None  # Será o menor entre todas as atribuições
-    stores_audited_this_week = set()  # Track unique stores audited this week
     
     # Calcular início da semana
     today = timezone.now().date()
@@ -681,11 +679,6 @@ def api_get_analyst_dashboard(request):
     start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
     
     for assignment in assignments:
-        # Usar método novo que respeita período personalizado
-        progress = assignment.get_period_progress()
-        total_audited += progress['completed']
-        total_target += progress['target']
-        
         # Check if this store was audited this week
         week_audits = StoreAudit.objects.filter(
             analyst=analyst,
@@ -706,7 +699,10 @@ def api_get_analyst_dashboard(request):
         days_until_sunday = (6 - today.weekday()) % 7
         days_remaining = days_until_sunday if days_until_sunday > 0 else 0
     
-    percentage = (total_audited / total_target * 100) if total_target > 0 else 0
+    # FIXED: Calculate percentage based on unique stores verified vs total stores
+    # This ensures progress never exceeds 100% even if same store is audited multiple times
+    stores_verified_count = len(stores_audited_this_week)
+    percentage = (stores_verified_count / total_stores * 100) if total_stores > 0 else 0
     
     # Auditorias de hoje
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -715,11 +711,9 @@ def api_get_analyst_dashboard(request):
         created_at__gte=today_start
     ).count()
     
-    # Meta Diária ajustada baseada em dias restantes
-    daily_target = max(1, round((total_target - total_audited) / max(1, days_remaining))) if total_target > total_audited else 0
-    
-    # Calculate pending stores: total stores - stores audited this week
-    pending_stores = total_stores - len(stores_audited_this_week)
+    # Meta Diária ajustada baseada em lojas restantes e dias restantes
+    pending_stores = total_stores - stores_verified_count
+    daily_target = max(1, round(pending_stores / max(1, days_remaining))) if pending_stores > 0 else 0
     
     # Find the end date to show the correct day name
     period_end_day = None
@@ -745,10 +739,10 @@ def api_get_analyst_dashboard(request):
         },
         'metrics': {
             'total_stores': total_stores,
-            'total_audited': len(stores_audited_this_week),  # Unique stores audited this week
-            'total_target': total_target,
+            'total_audited': stores_verified_count,  # Unique stores verified this week
+            'total_target': total_stores,  # Target is to verify all stores
             'progress_percentage': round(percentage, 1),
-            'pending': pending_stores,  # FIXED: Now shows actual stores pending
+            'pending': pending_stores,
             'today_audits': today_audits,
             'daily_target': daily_target,
             'days_remaining': days_remaining,
@@ -1025,4 +1019,142 @@ def api_unassign_all_stores(request):
         })
         
     except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_monthly_kpi(request):
+    """
+    Retorna KPIs das últimas 4-5 semanas do mês atual para o analista
+    Mostra desempenho semanal ao longo do mês
+    """
+    from datetime import timedelta
+    from core.models import WeeklyVerificationKPI
+    
+    analyst_id = request.GET.get('analyst_id', request.user.id)
+    
+    # Verificar permissão
+    if int(analyst_id) != request.user.id and request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+    
+    try:
+        analyst = get_object_or_404(User, id=analyst_id)
+        
+        # Buscar semana atual
+        today = timezone.now().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        # Buscar KPIs das últimas 5 semanas (incluindo semana atual)
+        # Calcula data de início (5 semanas atrás)
+        five_weeks_ago = start_of_week - timedelta(weeks=4)
+        
+        # Buscar KPIs existentes
+        kpis = WeeklyVerificationKPI.objects.filter(
+            analyst=analyst,
+            week_start_date__gte=five_weeks_ago,
+            week_start_date__lte=start_of_week
+        ).order_by('week_start_date')
+        
+        # Preparar dados das semanas
+        weeks_data = []
+        current_date = five_weeks_ago
+        
+        for i in range(5):
+            week_kpi = kpis.filter(week_start_date=current_date).first()
+            
+            if week_kpi:
+                # KPI existe, usar dados salvos
+                week_info = {
+                    'week_number': week_kpi.week_number,
+                    'week_start': week_kpi.week_start_date.strftime('%d/%m'),
+                    'week_end': (week_kpi.week_start_date + timedelta(days=6)).strftime('%d/%m'),
+                    'is_current': current_date == start_of_week,
+                    'total_assigned': week_kpi.total_assigned_stores,
+                    'stores_verified': week_kpi.stores_verified,
+                    'total_audits': week_kpi.total_audits_performed,
+                    'percentage': float(week_kpi.completion_percentage),
+                    'goal_met': week_kpi.goal_met,
+                    'status': 'complete' if week_kpi.goal_met else 'incomplete'
+                }
+            else:
+                # KPI não existe, calcular em tempo real para semana atual ou passada
+                week_end = current_date + timedelta(days=6)
+                week_num = current_date.isocalendar()[1]
+                
+                # Calcular métricas para esta semana
+                start_datetime = timezone.make_aware(
+                    timezone.datetime.combine(current_date, timezone.datetime.min.time())
+                )
+                end_datetime = timezone.make_aware(
+                    timezone.datetime.combine(week_end, timezone.datetime.max.time())
+                )
+                
+                # Buscar atribuições ativas
+                from core.models import AnalystAssignment, StoreAudit
+                assignments = AnalystAssignment.objects.filter(
+                    analyst=analyst,
+                    active=True,
+                    created_at__lte=end_datetime
+                )
+                
+                total_assigned = assignments.count()
+                stores_verified_set = set()
+                total_audits = 0
+                
+                for assignment in assignments:
+                    audits = StoreAudit.objects.filter(
+                        analyst=analyst,
+                        store=assignment.store,
+                        created_at__gte=start_datetime,
+                        created_at__lte=end_datetime
+                    )
+                    
+                    if audits.exists():
+                        stores_verified_set.add(assignment.store.id)
+                        total_audits += audits.count()
+                
+                stores_verified = len(stores_verified_set)
+                percentage = (stores_verified / total_assigned * 100) if total_assigned > 0 else 0
+                goal_met = stores_verified >= total_assigned
+                
+                week_info = {
+                    'week_number': week_num,
+                    'week_start': current_date.strftime('%d/%m'),
+                    'week_end': week_end.strftime('%d/%m'),
+                    'is_current': current_date == start_of_week,
+                    'total_assigned': total_assigned,
+                    'stores_verified': stores_verified,
+                    'total_audits': total_audits,
+                    'percentage': round(percentage, 1),
+                    'goal_met': goal_met,
+                    'status': 'current' if current_date == start_of_week else ('complete' if goal_met else 'incomplete')
+                }
+            
+            weeks_data.append(week_info)
+            current_date += timedelta(weeks=1)
+        
+        # Calcular taxa de sucesso mensal (% de semanas com meta atingida)
+        completed_weeks = sum(1 for w in weeks_data if w['goal_met'] and not w['is_current'])
+        total_past_weeks = sum(1 for w in weeks_data if not w['is_current'])
+        monthly_success_rate = (completed_weeks / total_past_weeks * 100) if total_past_weeks > 0 else 0
+        
+        return JsonResponse({
+            'success': True,
+            'analyst': {
+                'id': analyst.id,
+                'name': analyst.get_full_name() or analyst.username
+            },
+            'weeks': weeks_data,
+            'monthly_stats': {
+                'total_weeks': len(weeks_data),
+                'completed_weeks': completed_weeks,
+                'success_rate': round(monthly_success_rate, 1)
+            }
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in api_get_monthly_kpi: {error_details}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

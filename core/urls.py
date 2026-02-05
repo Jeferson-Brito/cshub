@@ -184,6 +184,7 @@ urlpatterns = [
     path('api/store-verification/analyst/unassign/<int:assignment_id>/', api_store_verification.api_unassign_store, name='api_unassign_store'),
     path('api/store-verification/analyst/unassign-all/', api_store_verification.api_unassign_all_stores, name='api_unassign_all_stores'),
     path('api/store-verification/analyst/dashboard/', api_store_verification.api_get_analyst_dashboard, name='api_get_analyst_dashboard'),
+    path('api/store-verification/analyst/monthly-kpi/', api_store_verification.api_get_monthly_kpi, name='api_get_monthly_kpi'),
     path('api/store-verification/analyst/overview/', api_store_verification.api_get_analysts_overview, name='api_get_analysts_overview'),
     
     # Chat

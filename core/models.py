@@ -989,6 +989,110 @@ class AnalystAssignment(models.Model):
         }
 
 
+class WeeklyVerificationKPI(models.Model):
+    """
+    Rastreamento de KPI semanal para analistas de verificação de lojas.
+    Registra o desempenho de cada semana para visualização de progresso mensal.
+    """
+    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='weekly_kpis')
+    
+    # Identificação da semana
+    week_start_date = models.DateField(verbose_name="Início da Semana (Segunda)")
+    week_number = models.IntegerField(verbose_name="Número da Semana")  # 1-53
+    year = models.IntegerField(verbose_name="Ano")
+    
+    # Métricas de desempenho
+    total_assigned_stores = models.IntegerField(default=0, verbose_name="Lojas Atribuídas")
+    stores_verified = models.IntegerField(default=0, verbose_name="Lojas Verificadas")
+    total_audits_performed = models.IntegerField(default=0, verbose_name="Total de Auditorias")
+    
+    # Resultado
+    goal_met = models.BooleanField(default=False, verbose_name="Meta Atingida")
+    completion_percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0,
+        verbose_name="% de Conclusão"
+    )
+    
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-year', '-week_number']
+        unique_together = ['analyst', 'year', 'week_number']
+        verbose_name = "KPI Semanal de Verificação"
+        verbose_name_plural = "KPIs Semanais de Verificação"
+        indexes = [
+            models.Index(fields=['analyst', 'year', 'week_number']),
+            models.Index(fields=['week_start_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.analyst.get_full_name() or self.analyst.username} - Semana {self.week_number}/{self.year} ({self.completion_percentage}%)"
+    
+    def calculate_metrics(self):
+        """Calcula e atualiza as métricas desta semana"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Calcular fim da semana (domingo)
+        week_end_date = self.week_start_date + timedelta(days=6)
+        
+        # Converter para datetime com timezone
+        start_datetime = timezone.make_aware(
+            timezone.datetime.combine(self.week_start_date, timezone.datetime.min.time())
+        )
+        end_datetime = timezone.make_aware(
+            timezone.datetime.combine(week_end_date, timezone.datetime.max.time())
+        )
+        
+        # Buscar atribuições ativas naquela semana
+        assignments = AnalystAssignment.objects.filter(
+            analyst=self.analyst,
+            active=True,
+            created_at__lte=end_datetime
+        )
+        
+        self.total_assigned_stores = assignments.count()
+        
+        # Contar lojas únicas verificadas
+        store_ids_verified = set()
+        total_audits = 0
+        
+        for assignment in assignments:
+            audits = StoreAudit.objects.filter(
+                analyst=self.analyst,
+                store=assignment.store,
+                created_at__gte=start_datetime,
+                created_at__lte=end_datetime
+            )
+            
+            if audits.exists():
+                store_ids_verified.add(assignment.store.id)
+                total_audits += audits.count()
+        
+        self.stores_verified = len(store_ids_verified)
+        self.total_audits_performed = total_audits
+        
+        # Calcular porcentagem e meta atingida
+        if self.total_assigned_stores > 0:
+            self.completion_percentage = (self.stores_verified / self.total_assigned_stores) * 100
+            self.goal_met = self.stores_verified >= self.total_assigned_stores
+        else:
+            self.completion_percentage = 0
+            self.goal_met = False
+        
+        self.save()
+        return {
+            'stores_verified': self.stores_verified,
+            'total_assigned': self.total_assigned_stores,
+            'percentage': float(self.completion_percentage),
+            'goal_met': self.goal_met
+        }
+
+
 # ========================================
 # MODELOS PARA CHAT INTERNO
 # ========================================
