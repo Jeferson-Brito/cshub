@@ -1226,21 +1226,29 @@ class DailyAuditQuota(models.Model):
                 timezone.datetime.combine(start_of_week, timezone.datetime.min.time())
             )
             
-            # Buscar lojas verificadas esta semana
-            stores_verified_this_week = set()
+            # Definir início de HOJE para excluir auditorias de hoje do cálculo de "pendentes antes de hoje"
+            today_start = timezone.make_aware(
+                timezone.datetime.combine(today, timezone.datetime.min.time())
+            )
+            
+            # Buscar lojas verificadas esta semana (ANTES de hoje)
+            # A meta deve ser baseada no que faltava no INÍCIO do dia
+            stores_verified_before_today = set()
             for assignment in assignments:
-                # Otimização: buscar de uma vez seria melhor, mas mantendo padrão por enquanto
                 week_audits = StoreAudit.objects.filter(
                     analyst=self.analyst,
                     store=assignment.store,
-                    created_at__gte=start_datetime
+                    created_at__gte=start_datetime,
+                    created_at__lt=today_start  # Apenas até o inicio de hoje
                 ).exists()
                 
                 if week_audits:
-                    stores_verified_this_week.add(assignment.store.id)
+                    stores_verified_before_today.add(assignment.store.id)
             
             total_stores = assignments.count()
-            pending_stores = total_stores - len(stores_verified_this_week)
+            # Pendentes são: Total - Verificadas ANTES de hoje
+            # As verificadas HOJE contam como "parte da meta", não reduzem a meta em si
+            pending_stores = total_stores - len(stores_verified_before_today)
             
             if pending_stores <= 0:
                 return 0

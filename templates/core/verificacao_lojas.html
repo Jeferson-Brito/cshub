@@ -263,6 +263,17 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Weekly Schedule Container -->
+                            <div id="weeklyScheduleContainer" class="card-footer bg-white border-top">
+                                <h6 class="small fw-bold text-muted mb-3"><i class="bi bi-calendar-week me-1"></i> Sua
+                                    Escala Nesta Semana</h6>
+                                <div class="d-flex justify-content-between align-items-center" id="weeklyScheduleList">
+                                    <div class="text-center w-100">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Alert quando quota atingida -->
@@ -3226,7 +3237,8 @@
                         </div>
                         
                         <div class="small text-muted mb-2">
-                            Taxa de Sucesso Mensal
+                             Taxa de Sucesso Mensal
+                             ${analyst.last_audit_date ? `<br><small class="text-primary"><i class="bi bi-clock-history me-1"></i>Última auditoria: ${analyst.last_audit_date}</small>` : '<br><small class="text-muted">Nenhuma auditoria recente</small>'}
                         </div>
                         
                         <div class="d-flex justify-content-between small mb-2 border-bottom pb-2">
@@ -3298,6 +3310,41 @@
                     blockedAlert.classList.add('d-none');
                     quotaCard.classList.remove('border-success');
                     quotaCard.classList.add('border-primary');
+                }
+
+                // RENDER WEEKLY SCHEDULE
+                if (data.metrics && data.metrics.weekly_schedule) {
+                    const scheduleList = document.getElementById('weeklyScheduleList');
+                    if (scheduleList) {
+                        scheduleList.innerHTML = data.metrics.weekly_schedule.map(day => {
+                            let badgeClass = 'bg-secondary bg-opacity-10 text-muted';
+                            let icon = '';
+
+                            if (day.status === 'work') {
+                                if (day.is_today) {
+                                    badgeClass = 'bg-primary text-white shadow-sm';
+                                    icon = '<i class="bi bi-briefcase-fill me-1"></i>';
+                                } else {
+                                    badgeClass = 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25';
+                                }
+                            } else {
+                                // Folga
+                                badgeClass = 'bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25';
+                                icon = '<i class="bi bi-house-door me-1"></i>';
+                            }
+
+                            return `
+                                <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                                    <small class="d-block text-muted mb-1" style="font-size: 0.75rem;">${day.day_name.substring(0, 3)}</small>
+                                    <span class="badge ${badgeClass} d-flex align-items-center justify-content-center" 
+                                          style="height: 28px; min-width: 60px; font-weight: 500;"
+                                          title="${day.status === 'work' ? 'Dia de Trabalho' : 'Folga'} - ${day.date}">
+                                        ${icon}${day.date}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('');
+                    }
                 }
             }
         } catch (error) {

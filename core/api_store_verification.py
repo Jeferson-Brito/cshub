@@ -723,11 +723,41 @@ def api_get_analyst_dashboard(request):
     stores_audited_this_week = set()
     days_remaining = None  # Será o menor entre todas as atribuições
     
-    # Calcular início da semana
     today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
     start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
     
+    # Construir calendário da semana
+    from core.models import DailyAuditQuota
+    
+    # Instância para usar o método is_working_day (gambiarra técnica pois é método de instância)
+    # Mas podemos usar DailyAuditQuota.get_or_create_today(analyst) para ter uma instância vinculada
+    quota_helper = DailyAuditQuota.get_or_create_today(analyst)
+    
+    weekly_schedule = []
+    days_of_week = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    
+    for i in range(7):
+        date_check = start_of_week + timedelta(days=i)
+        is_today = (date_check == today)
+        is_working = quota_helper.is_working_day(date_check)
+        
+        status = 'work' if is_working else 'off'
+        if date_check > today:
+            status_display = 'Futuro'
+        elif date_check < today:
+            status_display = 'Passado'
+        else:
+            status_display = 'Hoje'
+            
+        weekly_schedule.append({
+            'day_name': days_of_week[i],
+            'date': date_check.strftime('%d/%m'),
+            'is_working': is_working,
+            'is_today': is_today,
+            'status': status
+        })
+
     for assignment in assignments:
         # Check if this store was audited this week
         week_audits = StoreAudit.objects.filter(
@@ -781,6 +811,10 @@ def api_get_analyst_dashboard(request):
     else:
         period_end_day = 'domingo'  # Default to Sunday if no period_end set
     
+    # Buscar data da última auditoria realizada
+    last_audit = StoreAudit.objects.filter(analyst=analyst).order_by('-created_at').first()
+    last_audit_date = last_audit.created_at.strftime('%d/%m/%Y %H:%M') if last_audit else None
+
     return JsonResponse({
         'success': True,
         'analyst': {
@@ -796,9 +830,11 @@ def api_get_analyst_dashboard(request):
             'today_audits': today_audits,
             'daily_target': daily_target,
             'days_remaining': days_remaining,
-            'period_end_day': period_end_day  # Day name for display
+            'period_end_day': period_end_day,  # Day name for display
+            'weekly_schedule': weekly_schedule, # Calendário da semana
+            'last_audit_date': last_audit_date # Data da última auditoria
         },
-        'daily_quota': get_daily_quota_info(analyst)
+        'daily_quota': get_daily_quota_info(analyst) # Info da nova tabela de cotas
     })
 
 
@@ -1348,10 +1384,15 @@ def api_get_all_analysts_monthly_kpi(request):
             if completed_weeks_count > 0:
                 success_rate = round((goal_met_count / completed_weeks_count) * 100, 1)
                 
+            # Buscar última auditoria global deste analista
+            last_audit_global = StoreAudit.objects.filter(analyst=analyst).order_by('-created_at').first()
+            last_audit_date_global = last_audit_global.created_at.strftime('%d/%m/%Y %H:%M') if last_audit_global else None
+                
             all_analysts_data.append({
                 'analyst': {
                     'id': analyst.id,
-                    'name': analyst.get_full_name() or analyst.username
+                    'name': analyst.get_full_name() or analyst.username,
+                    'last_audit_date': last_audit_date_global  # Novo campo
                 },
                 'weeks': weeks_data,
                 'monthly_stats': {
