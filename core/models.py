@@ -1162,12 +1162,64 @@ class DailyAuditQuota(models.Model):
         
         return quota
     
+    def is_working_day(self, date_to_check):
+        """
+        Verifica se é dia de trabalho para o analista, considerando:
+        1. Folgas manuais (FolgaManual)
+        2. Escala 6x2 (AnalistaEscala)
+        """
+        # 1. Verificar Folgas Manuais
+        from .models import FolgaManual, AnalistaEscala
+        
+        # Tentar buscar perfil de escala
+        try:
+           escala_profile = self.analyst.escala_perfil
+        except:
+           # Se não tiver perfil de escala, assume que trabalha todo dia (comportamento padrão antigo)
+           return True
+
+        # Verificar se tem folga manual registrada (Folga, Férias, Atestado)
+        manual_folga = FolgaManual.objects.filter(
+            analyst=escala_profile,
+            data=date_to_check
+        ).first()
+
+        if manual_folga:
+            # Se for marcado como 'trabalho', sobrescreve folga automática
+            if manual_folga.tipo == 'trabalho':
+                return True
+            return False # É folga/férias/atestado
+
+        # 2. Calcular Escala 6x2
+        if escala_profile.data_primeira_folga:
+            delta = (date_to_check - escala_profile.data_primeira_folga).days
+            # Ciclo de 8 dias (6 trabalho + 2 folga)
+            # Dias 0 a 5: Trabalho (se delta positivo)
+            # Dias 6 e 7: Folga
+            # O operador % 8 retorna a posição no ciclo
+            cycle_pos = delta % 8
+            
+            # Se delta for negativo (data anterior ao início), assumimos trabalho padrão ou precisamos de outra lógica
+            # Aqui assumiremos trabalho se não tivermos info
+            if delta < 0:
+                return True
+                
+            if cycle_pos >= 6: # 6 e 7 são dias de folga
+                return False
+        
+        return True
+
     def calculate_daily_target(self):
-        """Calcula meta diária do analista baseado em lojas pendentes e dias restantes"""
+        """Calcula meta diária do analista baseado em lojas pendentes e dias DE TRABALHO restantes"""
         from django.utils import timezone
         from datetime import timedelta
         
         today = timezone.now().date()
+        
+        # Se HOJE for folga, meta é 0
+        if not self.is_working_day(today):
+            return 0
+
         assignments = AnalystAssignment.objects.filter(analyst=self.analyst, active=True)
         
         if not assignments.exists():
@@ -1182,6 +1234,7 @@ class DailyAuditQuota(models.Model):
         # Buscar lojas verificadas esta semana
         stores_verified_this_week = set()
         for assignment in assignments:
+            # Otimização: buscar de uma vez seria melhor, mas mantendo padrão por enquanto
             week_audits = StoreAudit.objects.filter(
                 analyst=self.analyst,
                 store=assignment.store,
@@ -1194,20 +1247,32 @@ class DailyAuditQuota(models.Model):
         total_stores = assignments.count()
         pending_stores = total_stores - len(stores_verified_this_week)
         
-        # Pegar o menor número de dias restantes entre todas as atribuições
-        days_remaining = None
-        for assignment in assignments:
-            assignment_days = assignment.get_days_remaining()
-            if days_remaining is None or assignment_days < days_remaining:
-                days_remaining = assignment_days
+        if pending_stores <= 0:
+            return 0
+
+        # Calcular dias ÚTEIS restantes na semana (Hoje até Domingo)
+        # Iterar de hoje até domingo e contar quantos são work_days
+        days_until_sunday = (6 - today.weekday()) % 7 # Dias restantes EXCLUINDO hoje? Não, incluindo hoje se não trabalhou?
+        # A lógica original era: stores / days_remaining.
+        # Se hoje é segunda e faltam 10 lojas e trabalho seg, ter, qua, qui, sex. (5 dias) -> 2 lojas/dia.
         
-        # Se não há dias restantes definidos, usar dias até domingo
-        if days_remaining is None or days_remaining == 0:
-            days_until_sunday = (6 - today.weekday()) % 7
-            days_remaining = days_until_sunday if days_until_sunday > 0 else 1
+        # Vamos iterar de HOJE até DOMINGO
+        working_days_count = 0
+        current_iter_date = today
         
-        # Meta diária = lojas pendentes / dias restantes
-        daily_target = max(1, round(pending_stores / max(1, days_remaining))) if pending_stores > 0 else 0
+        # Loop até domingo
+        days_to_check = (6 - current_iter_date.weekday()) + 1 # +1 para incluir hoje
+        
+        for i in range(days_to_check):
+            date_check = today + timedelta(days=i)
+            if self.is_working_day(date_check):
+                working_days_count += 1
+        
+        # Garantir divisor mínimo de 1 para não dividir por zero
+        divisor = max(1, working_days_count)
+        
+        # Meta diária = lojas pendentes / dias úteis restantes
+        daily_target = max(1, round(pending_stores / divisor))
         
         return daily_target
     
