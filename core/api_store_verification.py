@@ -1066,7 +1066,7 @@ def api_get_monthly_kpi(request):
             if week_kpi:
                 # KPI existe, usar dados salvos
                 week_info = {
-                    'week_number': week_kpi.week_number,
+                    'week_number': i + 1,  # Relative week number (1-5)
                     'week_start': week_kpi.week_start_date.strftime('%d/%m'),
                     'week_end': (week_kpi.week_start_date + timedelta(days=6)).strftime('%d/%m'),
                     'is_current': current_date == start_of_week,
@@ -1080,7 +1080,6 @@ def api_get_monthly_kpi(request):
             else:
                 # KPI não existe, calcular em tempo real para semana atual ou passada
                 week_end = current_date + timedelta(days=6)
-                week_num = current_date.isocalendar()[1]
                 
                 # Calcular métricas para esta semana
                 start_datetime = timezone.make_aware(
@@ -1119,7 +1118,7 @@ def api_get_monthly_kpi(request):
                 goal_met = stores_verified >= total_assigned
                 
                 week_info = {
-                    'week_number': week_num,
+                    'week_number': i + 1,  # Relative week number (1-5)
                     'week_start': current_date.strftime('%d/%m'),
                     'week_end': week_end.strftime('%d/%m'),
                     'is_current': current_date == start_of_week,
