@@ -1272,8 +1272,34 @@ def api_get_all_analysts_monthly_kpi(request):
                             goal_met_count += 1
                 else:
                     # Calcular em tempo real (fallback ou semana atual)
+                    # OTIMIZAÇÃO: Evitar queries dentro do loop
+                    if not 'fetched_audits' in locals():
+                         # Buscar TODAS as auditorias do período de uma vez só
+                        period_start_dt = timezone.make_aware(
+                            timezone.datetime.combine(five_weeks_ago, timezone.datetime.min.time())
+                        )
+                        period_end_dt = timezone.make_aware(
+                            timezone.datetime.combine(start_of_week + timedelta(days=6), timezone.datetime.max.time())
+                        )
+                        
+                        # Trazer apenas os dados necessários (.values)
+                        raw_audits = StoreAudit.objects.filter(
+                            analyst=analyst,
+                            created_at__gte=period_start_dt,
+                            created_at__lte=period_end_dt
+                        ).values('store_id', 'created_at')
+                        
+                        # Buscar atribuições ativas uma vez
+                        active_assignments = AnalystAssignment.objects.filter(
+                            analyst=analyst, 
+                            active=True
+                        ).values_list('store_id', flat=True)
+                        
+                        fetched_assigned_ids = set(active_assignments)
+                        fetched_audits = list(raw_audits)
+
+                    # Filtrar na memória
                     week_end = current_iter_date + timedelta(days=6)
-                    
                     start_datetime = timezone.make_aware(
                         timezone.datetime.combine(current_iter_date, timezone.datetime.min.time())
                     )
@@ -1281,27 +1307,23 @@ def api_get_all_analysts_monthly_kpi(request):
                         timezone.datetime.combine(week_end, timezone.datetime.max.time())
                     )
                     
-                    # Calcular total atribuído no período
-                    # Simplificação: usar atribuições ativas hoje como proxy se for semana atual
-                    # Para semanas passadas, ideal seria histórico, mas assignment atual serve como approx
-                    current_assignments = AnalystAssignment.objects.filter(analyst=analyst, active=True)
-                    total_assigned = current_assignments.count()
+                    total_assigned = len(fetched_assigned_ids)
                     
-                    stores_verified_set = set()
-                    for assignment in current_assignments:
-                        audits = StoreAudit.objects.filter(
-                            analyst=analyst,
-                            store=assignment.store,
-                            created_at__gte=start_datetime,
-                            created_at__lte=end_datetime
-                        ).exists()
-                        if audits:
-                            stores_verified_set.add(assignment.store.id)
+                    # Verificar quais lojas atribuídas têm auditoria nesta semana
+                    stores_verified_count = 0
+                    for store_id in fetched_assigned_ids:
+                        # Check existance in pre-fetched list
+                        has_audit = any(
+                            a['store_id'] == store_id and 
+                            start_datetime <= a['created_at'] <= end_datetime
+                            for a in fetched_audits
+                        )
+                        if has_audit:
+                            stores_verified_count += 1
                     
-                    stores_verified = len(stores_verified_set)
-                    percentage = (stores_verified / total_assigned * 100) if total_assigned > 0 else 0
-                    percentage = min(100, percentage) # Cap at 100
-                    goal_met = stores_verified >= total_assigned and total_assigned > 0
+                    percentage = (stores_verified_count / total_assigned * 100) if total_assigned > 0 else 0
+                    percentage = min(100, percentage)
+                    goal_met = stores_verified_count >= total_assigned and total_assigned > 0
                     
                     week_info = {
                         'week_number': i + 1,
@@ -1310,7 +1332,7 @@ def api_get_all_analysts_monthly_kpi(request):
                         'percentage': round(percentage, 1),
                         'goal_met': goal_met,
                         'total_assigned': total_assigned,
-                        'stores_verified': stores_verified
+                        'stores_verified': stores_verified_count
                     }
                     
                     if not is_current_week:
@@ -1321,7 +1343,7 @@ def api_get_all_analysts_monthly_kpi(request):
                 weeks_data.append(week_info)
                 current_iter_date += timedelta(weeks=1)
                 
-            # Calcular taxa de sucesso
+            # Calcular taxa de sucesso -> OTIMIZADO
             success_rate = 0
             if completed_weeks_count > 0:
                 success_rate = round((goal_met_count / completed_weeks_count) * 100, 1)
