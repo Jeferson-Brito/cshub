@@ -3,7 +3,7 @@ services:
     name: cshub
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "daphne -b 0.0.0.0 -p $PORT gestao_reclame_aqui.asgi:application"
+    startCommand: "python manage.py migrate && daphne -b 0.0.0.0 -p $PORT gestao_reclame_aqui.asgi:application"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.6"
