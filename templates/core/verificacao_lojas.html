@@ -105,7 +105,7 @@
             href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
                 <div class="stat-icon">
-                    {% if user.role in 'gestor,administrador' %}
+                    {% if user.is_gestor or user.is_administrador %}
                     <i class="bi bi-people"></i>
                     {% else %}
                     <i class="bi bi-trophy"></i>
@@ -114,7 +114,7 @@
             </div>
             <div>
                 <div class="stat-title">
-                    {% if user.role in 'gestor,administrador' %}
+                    {% if user.is_gestor or user.is_administrador %}
                     Gestão de Analistas
                     {% else %}
                     Minhas Metas
@@ -185,18 +185,18 @@
 
 
             <!-- Seção de Gestão de Analistas -->
-            {% if user.role in 'gestor,administrador,analista' %}
+            {% if user.is_gestor or user.is_administrador or user.is_analista %}
             <div class="card mb-4 border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold text-dark">
-                            {% if user.role in 'gestor,administrador' %}
+                            {% if user.is_gestor or user.is_administrador %}
                             <i class="bi bi-people me-2 text-primary"></i> Gestão de Analistas
                             {% else %}
                             <i class="bi bi-trophy me-2 text-warning"></i> Minhas Metas Semanais
                             {% endif %}
                         </h5>
-                        {% if user.role in 'gestor,administrador' %}
+                        {% if user.is_gestor or user.is_administrador %}
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
                             data-bs-target="#assignStoreModal">
                             <i class="bi bi-plus-circle me-1"></i> Atribuir Loja
@@ -206,7 +206,7 @@
                 </div>
                 <div class="card-body">
                     <!-- Dashboard do Analista -->
-                    {% if user.role == 'analista' %}
+                    {% if user.is_analista %}
                     <div id="analystDashboard">
                         <div class="row mb-3">
                             <div class="col-md-3">
@@ -381,6 +381,31 @@
                         </div>
                     </div>
                     {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Manager KPI Dashboard -->
+            {% if user.is_gestor or user.is_administrador %}
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-graph-up-arrow me-2 text-primary"></i> Desempenho Mensal da Equipe
+                    </h6>
+                </div>
+                <div class="card-body bg-light bg-opacity-50">
+                    <div id="managerKpiLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2 text-muted small">Carregando indicadores...</p>
+                    </div>
+
+                    <div id="managerKpiContent" class="d-none">
+                        <div id="managerKpiList" class="row g-3">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -3123,6 +3148,107 @@
         setInterval(loadDailyQuota, 60000);
     }
     {% endif %}
+
+    // Load Manager KPI Dashboard
+    if (document.getElementById('managerKpiList')) {
+        loadManagerKpiDashboard();
+    }
+
+    // Manager KPI Functions
+    async function loadManagerKpiDashboard() {
+        const loading = document.getElementById('managerKpiLoading');
+        const content = document.getElementById('managerKpiContent');
+        const listContainer = document.getElementById('managerKpiList');
+
+        try {
+            const response = await fetch('/api/store-verification/manager/all-analysts-kpi/');
+            const data = await response.json();
+
+            if (data.success) {
+                renderManagerKpi(data.analysts, listContainer);
+                loading.classList.add('d-none');
+                content.classList.remove('d-none');
+            } else {
+                loading.innerHTML = `<p class="text-danger">Erro ao carregar dados: ${data.error}</p>`;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar KPI de gestor:', error);
+            loading.innerHTML = `<p class="text-danger">Erro de conexão</p>`;
+        }
+    }
+
+    function renderManagerKpi(analysts, container) {
+        if (!analysts || analysts.length === 0) {
+            container.innerHTML = '<div class="col-12"><p class="text-muted text-center">Nenhum analista com atribuições encontrado.</p></div>';
+            return;
+        }
+
+        let html = '';
+
+        analysts.forEach(item => {
+            const analyst = item.analyst;
+            const stats = item.monthly_stats;
+            const weeks = item.weeks;
+
+            // Determine badge color based on success rate
+            let badgeClass = 'bg-secondary';
+            if (stats.success_rate >= 80) badgeClass = 'bg-success';
+            else if (stats.success_rate >= 50) badgeClass = 'bg-warning text-dark';
+            else badgeClass = 'bg-danger';
+
+            // Generate weeks HTML small visualization
+            let weeksHtml = '<div class="d-flex gap-1 mt-2">';
+            weeks.forEach(week => {
+                let color = 'bg-secondary bg-opacity-10'; // Future/unknown
+                if (!week.is_current) {
+                    if (week.goal_met) color = 'bg-success';
+                    else color = 'bg-danger';
+                } else {
+                    color = 'bg-primary bg-opacity-75'; // Current
+                }
+
+                weeksHtml += `
+                    <div data-bs-toggle="tooltip" title="Semana ${week.week_number}: ${week.stores_verified}/${week.total_assigned} (${week.percentage}%)" 
+                         style="width: 20px; height: 20px; border-radius: 4px;" class="${color}"></div>
+                `;
+            });
+            weeksHtml += '</div>';
+
+            html += `
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0 text-truncate" title="${analyst.name}">
+                                <i class="bi bi-person-circle me-1 text-muted"></i> ${analyst.name}
+                            </h6>
+                            <span class="badge ${badgeClass}">${stats.success_rate}%</span>
+                        </div>
+                        
+                        <div class="small text-muted mb-2">
+                            Taxa de Sucesso Mensal
+                        </div>
+                        
+                        <div class="d-flex justify-content-between small mb-2 border-bottom pb-2">
+                            <span>Metas Batidas: <strong>${stats.completed_weeks}/${stats.weeks_evaluated}</strong></span>
+                            <span>Total Lojas: <strong>${weeks[weeks.length - 1].total_assigned}</strong></span> <!-- Using last week/current as proxy for total load -->
+                        </div>
+                        
+                        ${weeksHtml}
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    }
 
     // Daily Quota Functions
     async function loadDailyQuota() {

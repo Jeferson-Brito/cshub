@@ -186,6 +186,7 @@ urlpatterns = [
     path('api/store-verification/analyst/dashboard/', api_store_verification.api_get_analyst_dashboard, name='api_get_analyst_dashboard'),
     path('api/store-verification/analyst/monthly-kpi/', api_store_verification.api_get_monthly_kpi, name='api_get_monthly_kpi'),
     path('api/store-verification/analyst/overview/', api_store_verification.api_get_analysts_overview, name='api_get_analysts_overview'),
+    path('api/store-verification/manager/all-analysts-kpi/', api_store_verification.api_get_all_analysts_monthly_kpi, name='api_get_all_analysts_monthly_kpi'),
     
     # Chat
     path('chat/', views.chat_view, name='chat'),
