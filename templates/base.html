@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <html lang="pt-BR">
 
@@ -146,11 +146,11 @@
         {% endif %}
         {% endif %}
 
-        <!-- Menu de Navegação -->
+        <!-- Menu de NavegaÃ§Ã£o -->
         <nav class="sidebar-nav">
             {% if current_department.name == 'Reclame Aqui' %}
             <!-- Reclame Aqui -->
-            <div class="nav-group-title">Operação</div>
+            <div class="nav-group-title">OperaÃ§Ã£o</div>
 
             <a href="#reclameAquiSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -172,9 +172,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Reclamações">
+                        title="ReclamaÃ§Ãµes">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">Reclamações</span>
+                        <span class="link-text">ReclamaÃ§Ãµes</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -184,9 +184,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="Relatórios">
+                        title="RelatÃ³rios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">Relatórios</span>
+                        <span class="link-text">RelatÃ³rios</span>
                     </a>
                     <a href="#" class="nav-link sub-link disabled" title="Tickets (Em desenvolvimento)"
                         style="opacity: 0.6;">
@@ -199,14 +199,14 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Negócio">
+                title="Google Meu NegÃ³cio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Negócio</span>
+                <span class="link-text">Google Meu NegÃ³cio</span>
             </a>
 
             {% elif current_department.name == 'NRS Suporte' %}
             <!-- NRS Suporte -->
-            <div class="nav-group-title">Operação</div>
+            <div class="nav-group-title">OperaÃ§Ã£o</div>
             <a href="{% url 'escala' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
                 <i class="bi bi-calendar-event"></i>
@@ -220,7 +220,7 @@
             <a href="{% url 'calendario' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
                 <i class="bi bi-calendar3"></i>
-                <span class="link-text">Calendário</span>
+                <span class="link-text">CalendÃ¡rio</span>
             </a>
             <a href="{% url 'tasks_view' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
@@ -230,7 +230,7 @@
             <a href="{% url 'verificacao_lojas' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
                 <i class="bi bi-shield-check"></i>
-                <span class="link-text">Verificação de Lojas</span>
+                <span class="link-text">VerificaÃ§Ã£o de Lojas</span>
             </a>
             <a href="#hubAtendimentoSubmenu" class="nav-link dropdown-toggle-custom collapsed" data-bs-toggle="collapse"
                 aria-expanded="false" aria-controls="hubAtendimentoSubmenu">
@@ -250,12 +250,12 @@
                     </a>
                     <a href="#" class="nav-link sub-link disabled" style="opacity: 0.6;">
                         <i class="bi bi-telephone"></i>
-                        <span class="link-text">Ligações <small class="text-xs">(Breve)</small></span>
+                        <span class="link-text">LigaÃ§Ãµes <small class="text-xs">(Breve)</small></span>
                     </a>
                 </div>
             </div>
 
-            <div class="nav-group-title">Informação</div>
+            <div class="nav-group-title">InformaÃ§Ã£o</div>
             <a href="{% url 'base_conhecimento' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
                 <i class="bi bi-book"></i>
@@ -271,7 +271,7 @@
 
             {% elif current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
-            <div class="nav-group-title">Implantação</div>
+            <div class="nav-group-title">ImplantaÃ§Ã£o</div>
             <a href="{% url 'onboarding_dev_1' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
                 <i class="bi bi-hammer"></i>
@@ -295,7 +295,7 @@
             {% elif current_department.name == 'CS Clientes' %}
 
             <!-- CS Clientes -->
-            <div class="nav-group-title">Operação</div>
+            <div class="nav-group-title">OperaÃ§Ã£o</div>
             <a href="#reclameAquiSubmenuCS"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
                 data-bs-toggle="collapse"
@@ -316,9 +316,9 @@
                     </a>
                     <a href="{% url 'complaint_list' %}"
                         class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Reclamações">
+                        title="ReclamaÃ§Ãµes">
                         <i class="bi bi-list-ul"></i>
-                        <span class="link-text">Reclamações</span>
+                        <span class="link-text">ReclamaÃ§Ãµes</span>
                     </a>
                     <a href="{% url 'store_list' %}"
                         class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
@@ -328,9 +328,9 @@
                     </a>
                     <a href="{% url 'reports' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="Relatórios">
+                        title="RelatÃ³rios">
                         <i class="bi bi-graph-up"></i>
-                        <span class="link-text">Relatórios</span>
+                        <span class="link-text">RelatÃ³rios</span>
                     </a>
                     <a href="#" class="nav-link sub-link disabled" title="Tickets (Em desenvolvimento)"
                         style="opacity: 0.6;">
@@ -343,16 +343,16 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Negócio">
+                title="Google Meu NegÃ³cio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Negócio</span>
+                <span class="link-text">Google Meu NegÃ³cio</span>
             </a>
 
             <div class="nav-group-title">Atendimento</div>
             <a href="{% url 'solicitacoes' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
                 <i class="bi bi-receipt-cutoff"></i>
-                <span class="link-text">Solicitações</span>
+                <span class="link-text">SolicitaÃ§Ãµes</span>
             </a>
             {% endif %}
 
@@ -362,23 +362,23 @@
             {% if user.is_administrador %}
             <div class="nav-group-title">Sistema</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="UsuÃ¡rios">
                 <i class="bi bi-people"></i>
-                <span class="link-text">Usuários</span>
+                <span class="link-text">UsuÃ¡rios</span>
             </a>
             {% elif user.is_gestor or user.is_administrador %}
-            <div class="nav-group-title">Gestão</div>
+            <div class="nav-group-title">GestÃ£o</div>
             <a href="{% url 'user_list' %}"
-                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="Usuários">
+                class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" title="UsuÃ¡rios">
                 <i class="bi bi-people"></i>
                 <span class="link-text">Equipe</span>
             </a>
             {% endif %}
 
-            <!-- Chat movido para o balÃ£o flutuante -->
+            <!-- Chat movido para o balÃƒÂ£o flutuante -->
         </nav>
 
-        <!-- Usuário Mobile (Visível apenas em telas menores) -->
+        <!-- UsuÃ¡rio Mobile (VisÃ­vel apenas em telas menores) -->
         <div class="sidebar-user d-lg-none">
             <div class="user-avatar">{{ user.username|first|upper }}</div>
             <div class="user-details">
@@ -391,7 +391,7 @@
                 </p>
             </div>
             <div class="user-actions">
-                <a href="{% url 'settings' %}" class="user-action" title="Configurações">
+                <a href="{% url 'settings' %}" class="user-action" title="ConfiguraÃ§Ãµes">
                     <i class="bi bi-gear"></i>
                 </a>
                 <button type="button" class="user-action" title="Sair" data-bs-toggle="modal"
@@ -404,12 +404,12 @@
 
     </div>
 
-    <!-- Modal de ConfirmaÃ§Ã£o de Logout -->
+    <!-- Modal de ConfirmaÃƒÂ§ÃƒÂ£o de Logout -->
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header bg-light border-0 py-3">
-                    <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirmar SaÃ­da</h5>
+                    <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirmar SaÃƒÂ­da</h5>
                     <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#logoutModal"
                         aria-label="Close"></button>
                 </div>
@@ -464,7 +464,7 @@
                             class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                             style="font-size: 0.6rem; display: none;"></span>
                     </button>
-                    <button class="btn btn-link text-secondary p-0 position-relative" title="Notificações">
+                    <button class="btn btn-link text-secondary p-0 position-relative" title="NotificaÃ§Ãµes">
                         <i class="bi bi-bell" style="font-size: 1.25rem;"></i>
                         <span
                             class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
@@ -487,7 +487,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i>
-                                Configurações</a></li>
+                                ConfiguraÃ§Ãµes</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -504,7 +504,7 @@
     </header>
     {% endif %}
 
-    <!-- ConteÃºdo Principal -->
+    <!-- ConteÃƒÂºdo Principal -->
     <div class="{% if user.is_authenticated %}main-content{% endif %}">
         {% if user.is_authenticated %}
         <!-- Header antigo removido -->
@@ -540,7 +540,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Carregar tema salvo ao carregar a pÃ¡gina
+        // Carregar tema salvo ao carregar a pÃƒÂ¡gina
         document.addEventListener('DOMContentLoaded', function () {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
@@ -581,7 +581,7 @@
                 const isCollapsed = sidebar.classList.contains('collapsed');
                 localStorage.setItem('sidebarCollapsed', isCollapsed);
 
-                // Trocar ícones nos botões (se existirem)
+                // Trocar Ã­cones nos botÃµes (se existirem)
                 const toggleBtns = [sidebarToggle, document.getElementById('headerSidebarToggle')];
 
                 toggleBtns.forEach(btn => {
@@ -592,10 +592,10 @@
                                 icon.classList.remove('bi-chevron-left');
                                 icon.classList.remove('bi-list'); // Remove list icon if it was list
 
-                                // Se for o botão do header, mantemos 'list' ou usamos outra lógica?
-                                // A referência visual sugere hamburger menu.
-                                // Geralmente hamburger menu não muda de ícone, mas vamos manter simples.
-                                // Se for o toggle da sidebar (seta), vira direita. Se for hambúrguer, pode ficar hambúrguer ou virar X.
+                                // Se for o botÃ£o do header, mantemos 'list' ou usamos outra lÃ³gica?
+                                // A referÃªncia visual sugere hamburger menu.
+                                // Geralmente hamburger menu nÃ£o muda de Ã­cone, mas vamos manter simples.
+                                // Se for o toggle da sidebar (seta), vira direita. Se for hambÃºrguer, pode ficar hambÃºrguer ou virar X.
 
                                 if (btn.id === 'sidebarToggle') {
                                     icon.classList.add('bi-chevron-right');
@@ -678,12 +678,12 @@
                 if (!toggle || !submenu) return;
 
                 toggle.addEventListener('click', function (e) {
-                    // Se a sidebar estÃ¡ recolhida, forÃ§ar a abertura do submenu
+                    // Se a sidebar estÃƒÂ¡ recolhida, forÃƒÂ§ar a abertura do submenu
                     if (sidebar && sidebar.classList.contains('collapsed')) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        // Posicionar o submenu ao lado do Ã­cone
+                        // Posicionar o submenu ao lado do ÃƒÂ­cone
                         const rect = toggle.getBoundingClientRect();
                         submenu.style.top = rect.top + 'px';
 
@@ -721,7 +721,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default: 0 }};
+        const currentUserId = {{ user.id|default:0 }};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
@@ -761,8 +761,8 @@
             pollAll();
         });
 
-        // Verifica mensagens não lidas do chat e exibe notificações
-        // Usar localStorage para persistir IDs já notificados entre recarregamentos
+        // Verifica mensagens nÃ£o lidas do chat e exibe notificaÃ§Ãµes
+        // Usar localStorage para persistir IDs jÃ¡ notificados entre recarregamentos
         function getNotifiedMessageIds() {
             try {
                 const stored = localStorage.getItem('notifiedChatMsgIds');
@@ -840,7 +840,7 @@
                         }
                     }
 
-                    // Exibe notificações para novas mensagens (não lidas e não notificadas)
+                    // Exibe notificaÃ§Ãµes para novas mensagens (nÃ£o lidas e nÃ£o notificadas)
                     if (data.messages && data.messages.length > 0) {
                         let playedSound = false;
                         let delay = 0;
@@ -851,7 +851,7 @@
                                 notifiedMessageIds.add(msg.id);
                                 saveNotifiedMessageId(msg.id);
 
-                                // Exibe toasts com delay para não sobrepor
+                                // Exibe toasts com delay para nÃ£o sobrepor
                                 setTimeout(() => {
                                     showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
                                 }, delay);
@@ -895,7 +895,7 @@
                     }
                 }
             } catch (e) {
-                console.error('Erro ao verificar notificações', e);
+                console.error('Erro ao verificar notificaÃ§Ãµes', e);
             }
         }
 
