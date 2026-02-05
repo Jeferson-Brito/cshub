@@ -852,12 +852,12 @@ def api_get_analysts_overview(request):
         
     try:
         from django.db.models import Count, Prefetch
-        from datetime import timedelta
+        from datetime import timedelta, datetime
         
         # Calcular início da semana (segunda-feira)
         today = timezone.now().date()
         start_of_week = today - timedelta(days=today.weekday())
-        start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
+        start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         
         # 1. Buscar todos os analistas com suas atribuições pré-carregadas
@@ -1172,10 +1172,10 @@ def api_get_monthly_kpi(request):
                 
                 # Calcular métricas para esta semana
                 start_datetime = timezone.make_aware(
-                    timezone.datetime.combine(current_date, timezone.datetime.min.time())
+                    datetime.combine(current_date, datetime.min.time())
                 )
                 end_datetime = timezone.make_aware(
-                    timezone.datetime.combine(week_end, timezone.datetime.max.time())
+                    datetime.combine(week_end, datetime.max.time())
                 )
                 
                 # Buscar atribuições ativas
@@ -1267,7 +1267,7 @@ def api_get_all_analysts_monthly_kpi(request):
     # Importar funções auxiliares necessárias
     from .models import WeeklyVerificationKPI, StoreAudit
     from django.utils import timezone
-    from datetime import timedelta
+    from datetime import timedelta, datetime
     
     today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
@@ -1314,10 +1314,10 @@ def api_get_all_analysts_monthly_kpi(request):
                     if not 'fetched_audits' in locals():
                          # Buscar TODAS as auditorias do período de uma vez só
                         period_start_dt = timezone.make_aware(
-                            timezone.datetime.combine(five_weeks_ago, timezone.datetime.min.time())
+                            datetime.combine(five_weeks_ago, datetime.min.time())
                         )
                         period_end_dt = timezone.make_aware(
-                            timezone.datetime.combine(start_of_week + timedelta(days=6), timezone.datetime.max.time())
+                            datetime.combine(start_of_week + timedelta(days=6), datetime.max.time())
                         )
                         
                         # Trazer apenas os dados necessários (.values)
@@ -1339,10 +1339,10 @@ def api_get_all_analysts_monthly_kpi(request):
                     # Filtrar na memória
                     week_end = current_iter_date + timedelta(days=6)
                     start_datetime = timezone.make_aware(
-                        timezone.datetime.combine(current_iter_date, timezone.datetime.min.time())
+                        datetime.combine(current_iter_date, datetime.min.time())
                     )
                     end_datetime = timezone.make_aware(
-                        timezone.datetime.combine(week_end, timezone.datetime.max.time())
+                        datetime.combine(week_end, datetime.max.time())
                     )
                     
                     total_assigned = len(fetched_assigned_ids)

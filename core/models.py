@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from datetime import datetime, timedelta
 
 
 class Department(models.Model):
@@ -926,7 +927,7 @@ class AnalystAssignment(models.Model):
         # Calcula o início da semana (segunda-feira)
         today = timezone.now().date()
         start_of_week = today - timedelta(days=today.weekday())
-        start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
+        start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
         
         # Conta auditorias feitas nesta semana
         audits_this_week = StoreAudit.objects.filter(
@@ -968,10 +969,10 @@ class AnalystAssignment(models.Model):
         
         # Converter datas para datetime com timezone
         start_datetime = timezone.make_aware(
-            timezone.datetime.combine(self.period_start, timezone.datetime.min.time())
+            datetime.combine(self.period_start, datetime.min.time())
         )
         end_datetime = timezone.make_aware(
-            timezone.datetime.combine(self.period_end, timezone.datetime.max.time())
+            datetime.combine(self.period_end, datetime.max.time())
         )
         
         # Contar auditorias no período
@@ -1042,10 +1043,10 @@ class WeeklyVerificationKPI(models.Model):
         
         # Converter para datetime com timezone
         start_datetime = timezone.make_aware(
-            timezone.datetime.combine(self.week_start_date, timezone.datetime.min.time())
+            datetime.combine(self.week_start_date, datetime.min.time())
         )
         end_datetime = timezone.make_aware(
-            timezone.datetime.combine(week_end_date, timezone.datetime.max.time())
+            datetime.combine(week_end_date, datetime.max.time())
         )
         
         # Buscar atribuições ativas naquela semana
