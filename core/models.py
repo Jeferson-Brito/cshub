@@ -1206,7 +1206,7 @@ class DailyAuditQuota(models.Model):
     def calculate_daily_target(self):
         """Calcula meta diária do analista baseado em lojas pendentes e dias DE TRABALHO restantes"""
         from django.utils import timezone
-        from datetime import timedelta
+        from datetime import timedelta, datetime
         
         try:
             today = timezone.now().date()
@@ -1223,12 +1223,12 @@ class DailyAuditQuota(models.Model):
             # Calcular início da semana (segunda-feira)
             start_of_week = today - timedelta(days=today.weekday())
             start_datetime = timezone.make_aware(
-                timezone.datetime.combine(start_of_week, timezone.datetime.min.time())
+                datetime.combine(start_of_week, datetime.min.time())
             )
             
             # Definir início de HOJE para excluir auditorias de hoje do cálculo de "pendentes antes de hoje"
             today_start = timezone.make_aware(
-                timezone.datetime.combine(today, timezone.datetime.min.time())
+                datetime.combine(today, datetime.min.time())
             )
             
             # Buscar lojas verificadas esta semana (ANTES de hoje)

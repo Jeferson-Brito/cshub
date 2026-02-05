@@ -723,9 +723,11 @@ def api_get_analyst_dashboard(request):
     stores_audited_this_week = set()
     days_remaining = None  # Será o menor entre todas as atribuições
     
+    # Calcular início da semana
+    from datetime import datetime
     today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
-    start_datetime = timezone.make_aware(timezone.datetime.combine(start_of_week, timezone.datetime.min.time()))
+    start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
     
     # Construir calendário da semana
     from core.models import DailyAuditQuota
