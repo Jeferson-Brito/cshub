@@ -1275,6 +1275,10 @@ def api_get_all_analysts_monthly_kpi(request):
     
     for analyst in analysts:
         try:
+            # Initializar variáveis de cache para este analista
+            fetched_audits = None
+            fetched_assigned_ids = None
+
             # Buscar KPIs existentes deste analista
             kpis = WeeklyVerificationKPI.objects.filter(
                 analyst=analyst,
@@ -1311,7 +1315,7 @@ def api_get_all_analysts_monthly_kpi(request):
                 else:
                     # Calcular em tempo real (fallback ou semana atual)
                     # OTIMIZAÇÃO: Evitar queries dentro do loop
-                    if not 'fetched_audits' in locals():
+                    if fetched_audits is None:
                          # Buscar TODAS as auditorias do período de uma vez só
                         period_start_dt = timezone.make_aware(
                             datetime.combine(five_weeks_ago, datetime.min.time())
