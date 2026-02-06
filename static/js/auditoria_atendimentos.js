@@ -132,11 +132,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 select.remove(1);
             }
 
-            // Adicionar analistas
+            // Atualizar texto da primeira opção se for o select de cadastro
+            if (select.id === 'analista_auditado_id' && select.options.length > 0) {
+                select.options[0].text = 'Selecione...';
+            }
+
             state.analistas.forEach(analista => {
                 const option = document.createElement('option');
                 option.value = analista.id;
-                option.textContent = analista.nome_completo;
+                // Combinar nome ou usar username
+                let nome = analista.username;
+                if (analista.first_name) {
+                    nome = `${analista.first_name} ${analista.last_name || ''}`.trim();
+                }
+                option.textContent = nome;
                 select.appendChild(option);
             });
         });
