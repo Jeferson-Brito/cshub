@@ -268,6 +268,14 @@
 
             </a>
 
+            {% if user.is_gestor or user.is_administrador %}
+            <a href="{% url 'auditoria_atendimentos' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'auditoria_atendimentos' %}active{% endif %}">
+                <i class="bi bi-clipboard-check"></i>
+                <span class="link-text">Auditoria de Atendimentos</span>
+            </a>
+            {% endif %}
+
 
             {% elif current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
@@ -721,7 +729,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>

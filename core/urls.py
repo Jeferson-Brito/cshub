@@ -12,7 +12,9 @@ from . import api_stores
 from . import api_chat
 from . import api_kanban
 from . import api_store_verification
+from . import api_auditoria
 from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
+
 
 
 urlpatterns = [
@@ -224,5 +226,21 @@ urlpatterns = [
     # Label CRUD
     path('api/kanban/boards/<int:board_id>/labels/', api_kanban.api_board_labels, name='api_kanban_board_labels'),
     path('api/kanban/labels/<int:label_id>/', api_kanban.api_label_detail, name='api_kanban_label_detail'),
+    
+    # Auditoria de Atendimentos
+    path('auditoria-atendimentos/', views.auditoria_atendimentos_view, name='auditoria_atendimentos'),
+    
+    # API Auditoria de Atendimentos
+    path('api/auditoria/create/', api_auditoria.api_auditoria_create, name='api_auditoria_create'),
+    path('api/auditoria/list/', api_auditoria.api_auditoria_list, name='api_auditoria_list'),
+    path('api/auditoria/<int:pk>/', api_auditoria.api_auditoria_detail, name='api_auditoria_detail'),
+    path('api/auditoria/<int:pk>/update/', api_auditoria.api_auditoria_update, name='api_auditoria_update'),
+    path('api/auditoria/<int:pk>/delete/', api_auditoria.api_auditoria_delete, name='api_auditoria_delete'),
+    path('api/auditoria/ranking/', api_auditoria.api_ranking_analistas, name='api_ranking_analistas'),
+    path('api/auditoria/analista/<int:analista_id>/', api_auditoria.api_estatisticas_analista, name='api_estatisticas_analista'),
+    path('api/auditoria/dashboard/', api_auditoria.api_dashboard_auditoria, name='api_dashboard_auditoria'),
+    path('api/auditoria/config/', api_auditoria.api_configuracao_get, name='api_configuracao_get'),
+    path('api/auditoria/config/update/', api_auditoria.api_configuracao_update, name='api_configuracao_update'),
+    path('api/auditoria/analistas/', api_auditoria.api_analistas_list, name='api_auditoria_analistas_list'),
 ]
 

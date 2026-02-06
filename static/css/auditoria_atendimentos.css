@@ -1,0 +1,387 @@
+/* ========================================
+   AUDITORIA DE ATENDIMENTOS - ESTILOS
+   ======================================== */
+
+/* Tabs customizadas */
+#auditoriaTabs .nav-link {
+    color: #6c757d;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+#auditoriaTabs .nav-link:hover {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+}
+
+#auditoriaTabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: 600;
+    border-bottom-color: #0d6efd;
+    background-color: transparent;
+}
+
+/* Critérios de avaliação */
+.criterio-item {
+    padding: 1rem;
+    border-left: 3px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.criterio-item:hover {
+    border-left-color: #0d6efd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.criterio-switch {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+.criterio-switch:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.criterio-switch:not(:checked) {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.erro-descricao textarea {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+/* Badges de classificação */
+.badge-excelente {
+    background-color: #198754;
+    color: white;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.badge-bom {
+    background-color: #0dcaf0;
+    color: #000;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.badge-regular {
+    background-color: #ffc107;
+    color: #000;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.badge-insatisfatorio {
+    background-color: #dc3545;
+    color: white;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Progress bar customizada */
+.progress-bar {
+    background-color: #198754;
+    font-weight: 600;
+    transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.progress-bar.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+.progress-bar.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* Resultado em tempo real */
+#resultado-preview {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+    border: 2px solid #0d6efd;
+    border-radius: 0.5rem;
+}
+
+#nota-display {
+    color: #0d6efd;
+    font-size: 2.5rem;
+}
+
+/* Ranking de analistas */
+.ranking-item {
+    padding: 1.5rem;
+    border-left: 4px solid #e9ecef;
+    background-color: #fff;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.ranking-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-item.top-1 {
+    border-left-color: #ffd700;
+    background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
+}
+
+.ranking-item.top-2 {
+    border-left-color: #c0c0c0;
+    background: linear-gradient(135deg, #f8f8f8 0%, #fff 100%);
+}
+
+.ranking-item.top-3 {
+    border-left-color: #cd7f32;
+    background: linear-gradient(135deg, #fff5f0 0%, #fff 100%);
+}
+
+.posicao-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.posicao-badge.top-1 {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #000;
+}
+
+.posicao-badge.top-2 {
+    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+    color: #000;
+}
+
+.posicao-badge.top-3 {
+    background: linear-gradient(135deg, #cd7f32 0%, #e3a672 100%);
+    color: #fff;
+}
+
+/* Cards de analistas */
+.analista-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.analista-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.analista-card.has-alert {
+    border-left: 4px solid #dc3545;
+}
+
+.analista-card .badge-alert {
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Estatísticas do analista */
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+.stat-item .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.stat-item .stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Tabela de auditorias */
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table tbody tr.row-alert {
+    background-color: #fff5f5;
+}
+
+.table tbody tr.row-alert td {
+    border-left: 3px solid #dc3545;
+}
+
+/* Ícone de alerta */
+.icon-alert {
+    color: #dc3545;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Filtros */
+#filtrosPanel {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-top: 1rem;
+}
+
+/* Paginação */
+.pagination .page-link {
+    color: #0d6efd;
+    border: 1px solid #dee2e6;
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Configurações */
+#formConfig input[type="number"] {
+    width: 150px;
+}
+
+/* Modal de detalhes */
+#detalhes-content .criterio-detail {
+    padding: 0.75rem;
+    border-left: 3px solid #e9ecef;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+#detalhes-content .criterio-detail.success {
+    border-left-color: #198754;
+}
+
+#detalhes-content .criterio-detail.error {
+    border-left-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    #resultado-preview .col-md-4 {
+        margin-bottom: 1rem;
+    }
+
+    .ranking-item {
+        padding: 1rem;
+    }
+
+    .posicao-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+
+    #nota-display {
+        font-size: 2rem;
+    }
+}
+
+/* Animações */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading spinner personalizado */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Badge pequeno para alerta */
+.badge-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Estilos para distribuição de classificações */
+.classificacao-bar {
+    height: 20px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.classificacao-segment {
+    height: 100%;
+    display: inline-block;
+    transition: width 0.3s ease;
+}
+
+.classificacao-segment.excelente {
+    background-color: #198754;
+}
+
+.classificacao-segment.bom {
+    background-color: #0dcaf0;
+}
+
+.classificacao-segment.regular {
+    background-color: #ffc107;
+}
+
+.classificacao-segment.insatisfatorio {
+    background-color: #dc3545;
+}

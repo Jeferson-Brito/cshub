@@ -2923,3 +2923,25 @@ def import_stores_xlsx(request):
 def chat_view(request):
     """Página principal do sistema de chat"""
     return render(request, 'core/chat.html')
+
+
+# ========================================
+# AUDITORIA DE ATENDIMENTOS
+# ========================================
+
+@login_required
+def auditoria_atendimentos_view(request):
+    """Página de Auditoria de Atendimentos - Gestores e Admins apenas"""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        messages.error(request, "Acesso negado. Apenas gestores e administradores podem acessar esta página.")
+        return redirect('dashboard')
+    
+    # Obter departamento
+    department = request.session.get('current_department_obj') or request.user.department
+    
+    context = {
+        'title': 'Auditoria de Atendimentos',
+        'department': department,
+        'is_admin': request.user.is_administrador(),
+    }
+    return render(request, 'core/auditoria_atendimentos.html', context)

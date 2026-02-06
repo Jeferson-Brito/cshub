@@ -1590,3 +1590,211 @@ class CardActivity(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.action} - {self.card.title}"
+
+
+# ========================================
+# MODELOS PARA AUDITORIA DE ATENDIMENTOS
+# ========================================
+
+class ConfiguracaoAuditoria(models.Model):
+    """Configurações globais para o sistema de auditoria de atendimentos"""
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='config_auditoria')
+    percentual_minimo_aceitavel = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=77.78,
+        help_text="Percentual mínimo de pontuação (0-100) para não gerar alerta. Padrão: 77.78% (7/9 critérios)"
+    )
+    ativo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Configuração de Auditoria'
+        verbose_name_plural = 'Configurações de Auditoria'
+        unique_together = ['department']
+    
+    def __str__(self):
+        return f"Config Auditoria - {self.department.name} (Mínimo: {self.percentual_minimo_aceitavel}%)"
+
+
+class AuditoriaAtendimento(models.Model):
+    """Registro de auditoria de atendimento de analista"""
+    TIPO_ATENDIMENTO_CHOICES = [
+        ('cliente', 'Cliente'),
+        ('franqueado', 'Franqueado'),
+    ]
+    
+    CLASSIFICACAO_CHOICES = [
+        ('excelente', 'Excelente'),
+        ('bom', 'Bom'),
+        ('regular', 'Regular'),
+        ('insatisfatorio', 'Insatisfatório'),
+    ]
+    
+    # Informações básicas
+    data_atendimento = models.DateField(verbose_name="Data do Atendimento")
+    id_conversa = models.CharField(max_length=200, verbose_name="ID da Conversa")
+    tipo_atendimento = models.CharField(max_length=20, choices=TIPO_ATENDIMENTO_CHOICES)
+    
+    # Relacionamentos
+    analista_auditado = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='auditorias_recebidas',
+        verbose_name="Analista Auditado"
+    )
+    auditor = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='auditorias_realizadas',
+        verbose_name="Auditor"
+    )
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='auditorias_atendimento')
+    
+    # Critérios de avaliação (9 critérios)
+    apresentou_corretamente = models.BooleanField(
+        default=True, 
+        verbose_name="1. Apresentou-se corretamente?"
+    )
+    erro_apresentacao = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    analisou_historico = models.BooleanField(
+        default=True, 
+        verbose_name="2. Analisou o histórico?"
+    )
+    erro_historico = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    entendeu_solicitacao = models.BooleanField(
+        default=True, 
+        verbose_name="3. Entendeu a solicitação do cliente/franqueado?"
+    )
+    erro_entendimento = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    informacao_clara = models.BooleanField(
+        default=True, 
+        verbose_name="4. Passou a informação de forma clara?"
+    )
+    erro_informacao = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    acordo_espera = models.BooleanField(
+        default=True, 
+        verbose_name="5. Realizou acordo de espera corretamente?"
+    )
+    erro_acordo_espera = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    atendimento_respeitoso = models.BooleanField(
+        default=True, 
+        verbose_name="6. Realizou atendimento de forma respeitosa?"
+    )
+    erro_respeito = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    portugues_correto = models.BooleanField(
+        default=True, 
+        verbose_name="7. Usou a língua portuguesa de forma correta?"
+    )
+    erro_portugues = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    finalizacao_correta = models.BooleanField(
+        default=True, 
+        verbose_name="8. Realizou finalização do atendimento corretamente?"
+    )
+    erro_finalizacao = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    procedimento_correto = models.BooleanField(
+        default=True, 
+        verbose_name="9. Seguiu o procedimento correto?"
+    )
+    erro_procedimento = models.TextField(blank=True, verbose_name="Descrição do erro")
+    
+    # Campos calculados automaticamente
+    pontuacao = models.IntegerField(default=0, verbose_name="Pontuação (0-9)")
+    nota = models.DecimalField(max_digits=4, decimal_places=2, default=0.0, verbose_name="Nota (0-10)")
+    classificacao = models.CharField(
+        max_length=20, 
+        choices=CLASSIFICACAO_CHOICES, 
+        default='excelente',
+        verbose_name="Classificação"
+    )
+    requer_acao = models.BooleanField(
+        default=False, 
+        verbose_name="Requer Ação (Alerta)",
+        help_text="Marcado automaticamente quando nota está abaixo do percentual mínimo aceitável"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-data_atendimento', '-created_at']
+        verbose_name = 'Auditoria de Atendimento'
+        verbose_name_plural = 'Auditorias de Atendimento'
+        indexes = [
+            models.Index(fields=['analista_auditado', 'data_atendimento']),
+            models.Index(fields=['department', 'data_atendimento']),
+            models.Index(fields=['classificacao']),
+            models.Index(fields=['requer_acao']),
+        ]
+    
+    def calcular_pontuacao(self):
+        """Calcula pontuação com base nos critérios atendidos"""
+        criterios = [
+            self.apresentou_corretamente,
+            self.analisou_historico,
+            self.entendeu_solicitacao,
+            self.informacao_clara,
+            self.acordo_espera,
+            self.atendimento_respeitoso,
+            self.portugues_correto,
+            self.finalizacao_correta,
+            self.procedimento_correto,
+        ]
+        return sum(1 for c in criterios if c)
+    
+    def calcular_nota(self, pontuacao):
+        """Calcula nota de 0 a 10 com base na pontuação"""
+        return round((pontuacao / 9) * 10, 2)
+    
+    def calcular_classificacao(self, pontuacao):
+        """Determina classificação com base na pontuação"""
+        if pontuacao == 9:
+            return 'excelente'
+        elif pontuacao >= 7:
+            return 'bom'
+        elif pontuacao >= 5:
+            return 'regular'
+        else:
+            return 'insatisfatorio'
+    
+    def verificar_alerta(self, nota):
+        """Verifica se a nota está abaixo do percentual mínimo aceitável"""
+        try:
+            config = ConfiguracaoAuditoria.objects.filter(
+                department=self.department, 
+                ativo=True
+            ).first()
+            if config:
+                return nota < float(config.percentual_minimo_aceitavel)
+            return False
+        except:
+            return False
+    
+    def save(self, *args, **kwargs):
+        """Override save para calcular automaticamente pontuação, nota e classificação"""
+        # Calcular pontuação
+        self.pontuacao = self.calcular_pontuacao()
+        
+        # Calcular nota
+        self.nota = self.calcular_nota(self.pontuacao)
+        
+        # Determinar classificação
+        self.classificacao = self.calcular_classificacao(self.pontuacao)
+        
+        # Verificar se requer ação
+        self.requer_acao = self.verificar_alerta(self.nota)
+        
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Auditoria #{self.id} - {self.analista_auditado.username} - {self.data_atendimento} (Nota: {self.nota})"
