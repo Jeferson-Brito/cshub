@@ -97,14 +97,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadAnalistas() {
         fetch('/api/auditoria/analistas/')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     state.analistas = data.analistas;
                     populateAnalistasSelect();
+                } else {
+                    console.error('API retornou success=false:', data);
+                    alert('Erro ao carregar analistas: ' + (data.error || 'Erro desconhecido'));
                 }
             })
-            .catch(error => console.error('Erro ao carregar analistas:', error));
+            .catch(error => {
+                console.error('Erro ao carregar analistas:', error);
+                alert('Erro ao carregar analistas: ' + error.message);
+            });
     }
 
     function populateAnalistasSelect() {
