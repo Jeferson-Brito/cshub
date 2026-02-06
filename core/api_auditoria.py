@@ -25,6 +25,17 @@ def gestor_or_admin_required(view_func):
     return wrapper
 
 
+def gestor_admin_or_analyst_required(view_func):
+    """Decorator para permitir gestores, administradores e analistas"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Não autenticado'}, status=401)
+        if not (request.user.is_gestor() or request.user.is_administrador() or request.user.is_analista()):
+            return JsonResponse({'error': 'Acesso negado'}, status=403)
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def admin_required(view_func):
     """Decorator para permitir apenas administradores"""
     def wrapper(request, *args, **kwargs):
@@ -137,7 +148,7 @@ def api_auditoria_create(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@gestor_or_admin_required
+@gestor_admin_or_analyst_required
 @require_GET
 def api_auditoria_list(request):
     """Lista auditorias com filtros opcionais"""
@@ -155,6 +166,11 @@ def api_auditoria_list(request):
         
         # Base queryset
         queryset = AuditoriaAtendimento.objects.filter(department=department)
+
+        # Se for analista, filtrar apenas as suas próprias auditorias
+        if request.user.is_analista():
+            queryset = queryset.filter(analista_auditado=request.user)
+
         
         # Filtros
         analista_id = request.GET.get('analista_id')
@@ -227,7 +243,7 @@ def api_auditoria_list(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@gestor_or_admin_required
+@gestor_admin_or_analyst_required
 @require_GET
 def api_auditoria_detail(request, pk):
     """Detalhes de uma auditoria específica"""
@@ -244,6 +260,11 @@ def api_auditoria_detail(request, pk):
         
         if auditoria.department != department:
             return JsonResponse({'error': 'Acesso negado'}, status=403)
+
+        # Se for analista, só pode ver sua própria auditoria
+        if request.user.is_analista() and auditoria.analista_auditado != request.user:
+            return JsonResponse({'error': 'Acesso negado'}, status=403)
+
         
         data = {
             'id': auditoria.id,
@@ -513,7 +534,7 @@ def api_estatisticas_analista(request, analista_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@gestor_or_admin_required
+@gestor_admin_or_analyst_required
 @require_GET
 def api_dashboard_auditoria(request):
     """Dashboard geral de auditorias"""
@@ -539,6 +560,11 @@ def api_dashboard_auditoria(request):
             data_atendimento__gte=data_inicio,
             data_atendimento__lte=data_fim
         )
+
+        # Se for analista, filtrar apenas as suas próprias auditorias
+        if request.user.is_analista():
+            auditorias = auditorias.filter(analista_auditado=request.user)
+
         
         total = auditorias.count()
         nota_media_geral = auditorias.aggregate(Avg('nota'))['nota__avg'] or 0

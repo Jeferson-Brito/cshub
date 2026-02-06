@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', function () {
         loadConfig();
         setupEventListeners();
         setupCriteriosHandlers();
+
+        // Verificar se estamos na visão de analista
+        if (document.querySelector('.card-dashboard')) {
+            initAnalystView();
+        }
     }
 
     // ========================================
@@ -795,13 +800,114 @@ document.addEventListener('DOMContentLoaded', function () {
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
                 }
             }
         }
         return cookieValue;
     }
+
+    // ========================================
+    // VISÃO DO ANALISTA (NOVO)
+    // ========================================
+
+    function initAnalystView() {
+        // Carregar stats para os cards
+        fetch('/api/auditoria/dashboard/', { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.distribuicao) {
+                        document.getElementById('count-excelente').textContent = data.distribuicao.excelente || 0;
+                        document.getElementById('count-bom').textContent = data.distribuicao.bom || 0;
+                        document.getElementById('count-regular').textContent = data.distribuicao.regular || 0;
+                        document.getElementById('count-insatisfatorio').textContent = data.distribuicao.insatisfatorio || 0;
+                    }
+                }
+            })
+            .catch(error => console.error('Erro ao carregar dashboard analista:', error));
+    }
+
+    window.filterAnalystList = function (classificacao) {
+        // Atualizar label
+        const map = {
+            'excelente': 'Excelente',
+            'bom': 'Bom',
+            'regular': 'Regular',
+            'insatisfatorio': 'Insatisfatório'
+        };
+        document.getElementById('current-filter-label').textContent = map[classificacao] || classificacao;
+
+        // Mostrar container
+        const container = document.getElementById('analyst-list-container');
+        container.style.display = 'block';
+        container.scrollIntoView({ behavior: 'smooth' });
+
+        // Carregar auditorias
+        loadAnalystAudits(classificacao);
+    };
+
+    function loadAnalystAudits(classificacao) {
+        const tbody = document.getElementById('lista-auditorias-analista');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+        // Usar API de lista com filtro
+        const params = new URLSearchParams({
+            classificacao: classificacao,
+            per_page: 50 // Mostrar mais itens por ser uma lista focada
+        });
+
+        fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderAnalystAudits(data.auditorias, tbody);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Erro ao carregar auditorias</td></tr>';
+            });
+    }
+
+    function renderAnalystAudits(auditorias, tbody) {
+        if (auditorias.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Nenhuma auditoria encontrada com esta classificação</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        auditorias.forEach(aud => {
+            const tr = document.createElement('tr');
+            if (aud.requer_acao) {
+                tr.classList.add('row-alert');
+            }
+
+            const badgeClass = `badge-${aud.classificacao}`;
+            const dataFormatada = new Date(aud.data_atendimento).toLocaleDateString('pt-BR');
+
+            tr.innerHTML = `
+                <td>${dataFormatada}</td>
+                <td>${aud.id_conversa}</td>
+                <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
+                <td>${aud.pontuacao}/9</td>
+                <td class="fw-bold">${aud.nota.toFixed(1)}</td>
+                <td>
+                    <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
+                    ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
+                        <i class="bi bi-eye"></i> Detalhes
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
 
     // Inicializar preview na carga
     updatePreview();

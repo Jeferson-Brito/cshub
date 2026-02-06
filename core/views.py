@@ -2931,9 +2931,9 @@ def chat_view(request):
 
 @login_required
 def auditoria_atendimentos_view(request):
-    """Página de Auditoria de Atendimentos - Gestores e Admins apenas"""
-    if not (request.user.is_gestor() or request.user.is_administrador()):
-        messages.error(request, "Acesso negado. Apenas gestores e administradores podem acessar esta página.")
+    """Página de Auditoria de Atendimentos - Gestores, Admins e Analistas"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or request.user.is_analista()):
+        messages.error(request, "Acesso negado. Você não tem permissão para acessar esta página.")
         return redirect('dashboard')
     
     # Obter departamento
@@ -2943,5 +2943,7 @@ def auditoria_atendimentos_view(request):
         'title': 'Auditoria de Atendimentos',
         'department': department,
         'is_admin': request.user.is_administrador(),
+        'is_gestor': request.user.is_gestor(),
+        'is_analista': request.user.is_analista(),
     }
     return render(request, 'core/auditoria_atendimentos.html', context)
