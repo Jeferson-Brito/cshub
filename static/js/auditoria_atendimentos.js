@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ========================================
 
     window.viewDetails = function (id) {
-        fetch(`/api/auditoria/${id}/`)
+        fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {

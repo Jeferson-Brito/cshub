@@ -238,6 +238,9 @@ def api_auditoria_detail(request, pk):
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
+            
+        if not department:
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
         
         if auditoria.department != department:
             return JsonResponse({'error': 'Acesso negado'}, status=403)
