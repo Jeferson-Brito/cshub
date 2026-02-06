@@ -140,12 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
             state.analistas.forEach(analista => {
                 const option = document.createElement('option');
                 option.value = analista.id;
-                // Combinar nome ou usar username
-                let nome = analista.username;
-                if (analista.first_name) {
-                    nome = `${analista.first_name} ${analista.last_name || ''}`.trim();
-                }
-                option.textContent = nome;
+                option.textContent = analista.nome_completo;
                 select.appendChild(option);
             });
         });
