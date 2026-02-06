@@ -17,6 +17,8 @@ from .models import AuditoriaAtendimento, ConfiguracaoAuditoria, User, Departmen
 def gestor_or_admin_required(view_func):
     """Decorator para permitir apenas gestores e administradores"""
     def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Não autenticado'}, status=401)
         if not (request.user.is_gestor() or request.user.is_administrador()):
             return JsonResponse({'error': 'Acesso negado'}, status=403)
         return view_func(request, *args, **kwargs)
@@ -648,7 +650,6 @@ def api_configuracao_update(request):
 # HELPER - LISTA DE ANALISTAS
 # ========================================
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_analistas_list(request):
