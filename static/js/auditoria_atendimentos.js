@@ -229,15 +229,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData(e.target);
         const data = {};
 
-        form.forEach((value, key) => {
-            if (key.startsWith('erro_') || key === 'csrfmiddlewaretoken') {
-                data[key] = value;
-            } else if (key.endsWith('_id')) {
-                data[key] = value;
-            } else {
-                // Campos de switch (checkboxes)
-                data[key] = formData.get(key) ? true : false;
-            }
+        // Coletar dados básicos
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Tratar explicitamente os checkboxes (switches) para garantir booleanos
+        document.querySelectorAll('.criterio-switch').forEach(switchInput => {
+            data[switchInput.name] = switchInput.checked;
         });
 
         // Validar descrições de erro
