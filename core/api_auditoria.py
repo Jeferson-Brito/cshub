@@ -38,7 +38,6 @@ def admin_required(view_func):
 # CRUD DE AUDITORIAS
 # ========================================
 
-@login_required
 @gestor_or_admin_required
 @require_POST
 def api_auditoria_create(request):
@@ -47,9 +46,13 @@ def api_auditoria_create(request):
         data = json.loads(request.body)
         
         # Obter departamento
+        # Obter departamento
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
+        
+        if not department:
+            return JsonResponse({'error': 'Usuário sem departamento vinculado'}, status=400)
         
         # Validar campos obrigatórios
         required_fields = ['data_atendimento', 'id_conversa', 'tipo_atendimento', 'analista_auditado_id']
@@ -131,7 +134,6 @@ def api_auditoria_create(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_auditoria_list(request):
@@ -216,7 +218,6 @@ def api_auditoria_list(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_auditoria_detail(request, pk):
@@ -284,7 +285,6 @@ def api_auditoria_detail(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @admin_required
 @require_POST
 def api_auditoria_update(request, pk):
@@ -342,7 +342,6 @@ def api_auditoria_update(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @admin_required
 @require_POST
 def api_auditoria_delete(request, pk):
@@ -361,7 +360,6 @@ def api_auditoria_delete(request, pk):
 # ESTATÍSTICAS E RANKING
 # ========================================
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_ranking_analistas(request):
@@ -424,7 +422,6 @@ def api_ranking_analistas(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_estatisticas_analista(request, analista_id):
@@ -498,7 +495,6 @@ def api_estatisticas_analista(request, analista_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_dashboard_auditoria(request):
@@ -580,7 +576,6 @@ def api_dashboard_auditoria(request):
 # CONFIGURAÇÕES
 # ========================================
 
-@login_required
 @gestor_or_admin_required
 @require_GET
 def api_configuracao_get(request):
@@ -608,7 +603,6 @@ def api_configuracao_get(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
 @admin_required
 @require_POST
 def api_configuracao_update(request):
