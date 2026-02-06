@@ -322,6 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const erroContainer = document.getElementById(`${erroField}_container`);
             erroContainer.style.display = 'none';
             document.getElementById(erroField).value = '';
+            document.getElementById(erroField).required = false;
         });
 
         // Resetar data para hoje
