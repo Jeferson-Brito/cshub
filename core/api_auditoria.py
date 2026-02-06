@@ -45,14 +45,17 @@ def api_auditoria_create(request):
     try:
         data = json.loads(request.body)
         
-        # Obter departamento
-        # Obter departamento
+        # Obter departamento com fallback para ID 1 (NRS Suporte)
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
         
         if not department:
-            return JsonResponse({'error': 'Usuário sem departamento vinculado'}, status=400)
+            # Fallback: Tentar pegar NRS Suporte (ID 1) ou o primeiro disponível
+            department = Department.objects.filter(id=1).first() or Department.objects.first()
+            
+        if not department:
+            return JsonResponse({'error': 'Nenhum departamento encontrado no sistema'}, status=400)
         
         # Validar campos obrigatórios
         required_fields = ['data_atendimento', 'id_conversa', 'tipo_atendimento', 'analista_auditado_id']
@@ -145,7 +148,10 @@ def api_auditoria_list(request):
             department = Department.objects.get(id=department['id'])
             
         if not department:
-            return JsonResponse({'error': 'Usuário sem departamento vinculado'}, status=400)
+            department = Department.objects.filter(id=1).first() or Department.objects.first()
+            
+        if not department:
+            return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
         # Base queryset
         queryset = AuditoriaAtendimento.objects.filter(department=department)
@@ -589,7 +595,10 @@ def api_configuracao_get(request):
             department = Department.objects.get(id=department['id'])
         
         if not department:
-            return JsonResponse({'error': 'Usuário sem departamento vinculado'}, status=400)
+            department = Department.objects.filter(id=1).first() or Department.objects.first()
+            
+        if not department:
+            return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
         config, created = ConfiguracaoAuditoria.objects.get_or_create(
             department=department,
@@ -660,7 +669,10 @@ def api_analistas_list(request):
             department = Department.objects.get(id=department['id'])
             
         if not department:
-             return JsonResponse({'error': 'Usuário sem departamento vinculado'}, status=400)
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
+             
+        if not department:
+             return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
         analistas = User.objects.filter(
             department=department,
