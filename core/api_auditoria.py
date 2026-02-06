@@ -660,7 +660,8 @@ def api_analistas_list(request):
         
         analistas = User.objects.filter(
             department=department,
-            ativo=True
+            ativo=True,
+            role='analista'
         ).order_by('first_name', 'last_name', 'username')
         
         data = []
