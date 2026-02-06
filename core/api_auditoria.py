@@ -380,6 +380,9 @@ def api_ranking_analistas(request):
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
+            
+        if not department:
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
         
         # Período opcional
         data_inicio = request.GET.get('data_inicio')
@@ -442,6 +445,9 @@ def api_estatisticas_analista(request, analista_id):
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
+            
+        if not department:
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
         
         analista = User.objects.get(id=analista_id)
         
@@ -515,6 +521,9 @@ def api_dashboard_auditoria(request):
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
+            
+        if not department:
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
         
         # Período opcional (padrão: último mês)
         data_fim = timezone.now().date()
