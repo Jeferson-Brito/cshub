@@ -1775,7 +1775,8 @@ class AuditoriaAtendimento(models.Model):
                 ativo=True
             ).first()
             if config:
-                return nota < float(config.percentual_minimo_aceitavel)
+                # Converter nota (0-10) para percentual (0-100) para comparação
+                return (nota * 10) < float(config.percentual_minimo_aceitavel)
             return False
         except:
             return False

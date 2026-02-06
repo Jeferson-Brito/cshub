@@ -230,7 +230,7 @@
     background-color: #fff5f5;
 }
 
-.table tbody tr.row-alert td {
+.table tbody tr.row-alert td:first-child {
     border-left: 3px solid #dc3545;
 }
 
