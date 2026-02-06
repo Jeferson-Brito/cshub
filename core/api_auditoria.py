@@ -221,7 +221,7 @@ def api_auditoria_list(request):
                 'auditor': {
                     'id': aud.auditor.id,
                     'username': aud.auditor.username,
-                },
+                } if not request.user.is_analista() else None,
                 'pontuacao': aud.pontuacao,
                 'nota': float(aud.nota),
                 'classificacao': aud.classificacao,
@@ -271,6 +271,7 @@ def api_auditoria_detail(request, pk):
             'data_atendimento': auditoria.data_atendimento.isoformat(),
             'id_conversa': auditoria.id_conversa,
             'tipo_atendimento': auditoria.get_tipo_atendimento_display(),
+            'tipo_atendimento_key': auditoria.tipo_atendimento,
             'analista_auditado': {
                 'id': auditoria.analista_auditado.id,
                 'username': auditoria.analista_auditado.username,
@@ -280,7 +281,9 @@ def api_auditoria_detail(request, pk):
                 'id': auditoria.auditor.id,
                 'username': auditoria.auditor.username,
                 'nome_completo': auditoria.auditor.get_full_name() or auditoria.auditor.username,
-            },
+            } if not request.user.is_analista() else None,
+            'can_edit': request.user.is_gestor() or request.user.is_administrador(),
+            'can_delete': request.user.is_gestor() or request.user.is_administrador(),
             'criterios': {
                 'apresentou_corretamente': auditoria.apresentou_corretamente,
                 'erro_apresentacao': auditoria.erro_apresentacao,
@@ -318,10 +321,10 @@ def api_auditoria_detail(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@admin_required
+@gestor_or_admin_required
 @require_POST
 def api_auditoria_update(request, pk):
-    """Atualiza uma auditoria (apenas admin)"""
+    """Atualiza uma auditoria (gestor e admin)"""
     try:
         auditoria = AuditoriaAtendimento.objects.get(id=pk)
         data = json.loads(request.body)
@@ -375,10 +378,10 @@ def api_auditoria_update(request, pk):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@admin_required
+@gestor_or_admin_required
 @require_POST
 def api_auditoria_delete(request, pk):
-    """Exclui uma auditoria (apenas admin)"""
+    """Exclui uma auditoria (gestor e admin)"""
     try:
         auditoria = AuditoriaAtendimento.objects.get(id=pk)
         auditoria.delete()

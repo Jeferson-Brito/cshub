@@ -2,6 +2,16 @@
 // AUDITORIA DE ATENDIMENTOS - JAVASCRIPT
 // ========================================
 
+function formatDate(dateString) {
+    if (!dateString) return '';
+    // Assumes YYYY-MM-DD format
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateString;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Estado global
     const state = {
@@ -9,7 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage: 1,
         totalPages: 1,
         filters: {},
-        config: null
+        config: null,
+        editingId: null
     };
 
     // Inicialização
@@ -267,7 +278,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Enviar para API
-        fetch('/api/auditoria/create/', {
+        // Enviar para API
+        const url = state.editingId ? `/api/auditoria/${state.editingId}/update/` : '/api/auditoria/create/';
+
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -281,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.fire({
                         icon: 'success',
                         title: 'Sucesso!',
-                        text: `Auditoria salva com nota ${result.auditoria.nota.toFixed(1)} - ${result.auditoria.classificacao}`,
+                        text: state.editingId ? 'Auditoria atualizada com sucesso!' : `Auditoria salva com nota ${result.auditoria.nota.toFixed(1)} - ${result.auditoria.classificacao}`,
                         confirmButtonText: 'OK'
                     }).then(() => {
                         resetForm();
@@ -313,6 +327,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function resetForm() {
         const form = document.getElementById('formAuditoria');
         form.reset();
+
+        // Resetar estado de edição
+        state.editingId = null;
+        const btnSalvar = document.querySelector('#formAuditoria button[type="submit"]');
+        if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-circle me-2"></i>Salvar Auditoria';
+        const titulo = document.querySelector('#cadastrar h5');
+        if (titulo) titulo.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nova Auditoria de Atendimento';
 
         // Resetar switches para checked
         const switches = document.querySelectorAll('.criterio-switch');
@@ -381,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const badgeClass = `badge-${aud.classificacao}`;
-            const dataFormatada = new Date(aud.data_atendimento).toLocaleDateString('pt-BR');
+            const dataFormatada = formatDate(aud.data_atendimento);
 
             tr.innerHTML = `
                 <td>${dataFormatada}</td>
@@ -461,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function showDetailsModal(aud) {
         const content = document.getElementById('detalhes-content');
 
-        const dataFormatada = new Date(aud.data_atendimento).toLocaleDateString('pt-BR');
+        const dataFormatada = formatDate(aud.data_atendimento);
         const badgeClass = `badge-${aud.classificacao}`;
 
         let criteriosHTML = '';
@@ -503,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="col-md-6">
                     <p><strong>Analista:</strong> ${aud.analista_auditado.nome_completo}</p>
-                    <p><strong>Auditor:</strong> ${aud.auditor.nome_completo}</p>
+                    ${aud.auditor ? `<p><strong>Auditor:</strong> ${aud.auditor.nome_completo}</p>` : ''}
                     <p><strong>Data Auditoria:</strong> ${new Date(aud.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
             </div>
@@ -531,9 +552,119 @@ document.addEventListener('DOMContentLoaded', function () {
             ${aud.requer_acao ? '<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-triangle me-2"></i><strong>Alerta:</strong> Esta auditoria requer discussão com o analista.</div>' : ''}
         `;
 
+        // Adicionar botões de ação se permitido
+        let footerHtml = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
+
+        if (aud.can_edit) {
+            footerHtml += `<button type="button" class="btn btn-primary ms-2" onclick="editAudit(${aud.id})">Editar</button>`;
+        }
+        if (aud.can_delete) {
+            footerHtml += `<button type="button" class="btn btn-danger ms-2" onclick="deleteAudit(${aud.id})">Excluir</button>`;
+        }
+
+        const modalFooter = document.querySelector('#modalDetalhes .modal-footer');
+        if (modalFooter) modalFooter.innerHTML = footerHtml;
+
         const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
         modal.show();
+
+        // Salvar referência da auditoria atual para edição
+        state.currentAudit = aud;
     }
+
+    window.editAudit = function (id) {
+        const aud = state.currentAudit;
+        if (!aud || aud.id !== id) return;
+
+        // Fechar modal
+        const modalEl = document.getElementById('modalDetalhes');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        // Preencher formulário
+        document.getElementById('data_atendimento').value = aud.data_atendimento.split('T')[0];
+        document.getElementById('id_conversa').value = aud.id_conversa;
+        document.getElementById('tipo_atendimento').value = aud.tipo_atendimento_key || aud.tipo_atendimento;
+
+        document.getElementById('analista_auditado_id').value = aud.analista_auditado.id;
+
+        // Criterios
+        const criterios = aud.criterios;
+        for (const [key, value] of Object.entries(criterios)) {
+            if (key.startsWith('erro_')) continue;
+
+            const switchInput = document.getElementById(key);
+            if (switchInput) {
+                switchInput.checked = value;
+                // Disparar evento para mostrar/ocultar erro
+                switchInput.dispatchEvent(new Event('change'));
+
+                if (!value) {
+                    const erroField = switchInput.dataset.erro;
+                    document.getElementById(erroField).value = criterios[erroField] || '';
+                }
+            }
+        }
+
+        // Configurar estado de edição
+        state.editingId = aud.id;
+        const btnSalvar = document.querySelector('#formAuditoria button[type="submit"]');
+        if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-save me-2"></i>Atualizar Auditoria';
+        const titulo = document.querySelector('#cadastrar h5');
+        if (titulo) titulo.innerHTML = '<i class="bi bi-pencil me-2"></i>Editando Auditoria #' + aud.id;
+
+        // Ir para aba de cadastro
+        const cadastrarTab = document.querySelector('#cadastrar-tab');
+        if (cadastrarTab) {
+            const tab = new bootstrap.Tab(cadastrarTab);
+            tab.show();
+        }
+
+        updatePreview();
+    };
+
+    window.deleteAudit = function (id) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: "Você não poderá reverter isso!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/auditoria/${id}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Excluído!',
+                                'Auditoria foi excluída.',
+                                'success'
+                            ).then(() => {
+                                const modalEl = document.getElementById('modalDetalhes');
+                                const modal = bootstrap.Modal.getInstance(modalEl);
+                                modal.hide();
+                                loadAuditorias(state.currentPage);
+                            });
+                        } else {
+                            Swal.fire('Erro', data.error || 'Erro ao excluir', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        Swal.fire('Erro', 'Erro ao excluir auditoria', 'error');
+                    });
+            }
+        });
+    };
 
     // ========================================
     // RANKING DE ANALISTAS
@@ -656,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="col-12 col-md-4 mt-2 mt-md-0">
                                 ${stats.ultima_auditoria ? `
                                     <div class="stat-item">
-                                        <div class="stat-value" style="font-size: 1rem;">${new Date(stats.ultima_auditoria.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</div>
+                                        <div class="stat-value" style="font-size: 1rem;">${formatDate(stats.ultima_auditoria.data).substring(0, 5)}</div>
                                         <div class="stat-label">Última Auditoria</div>
                                     </div>
                                 ` : '<div class="stat-item"><div class="stat-label">Sem auditorias</div></div>'}
