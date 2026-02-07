@@ -197,6 +197,9 @@ def api_auditoria_list(request):
         if apenas_alertas == 'true':
             queryset = queryset.filter(requer_acao=True)
         
+        # Ordenar por data de criação da auditoria (mais recentes primeiro)
+        queryset = queryset.order_by('-created_at')
+        
         # Paginação
         page = int(request.GET.get('page', 1))
         per_page = int(request.GET.get('per_page', 20))
