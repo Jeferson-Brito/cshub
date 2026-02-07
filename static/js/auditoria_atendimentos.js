@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
 
     function init() {
+        console.log('Auditoria Atendimentos JS Loaded - v1.1 - ' + new Date().toISOString());
         loadAnalistas();
         loadConfig();
         setupEventListeners();
