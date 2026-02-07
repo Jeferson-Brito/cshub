@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
 
     function init() {
-        console.log('Auditoria Atendimentos JS Loaded - v1.2 - ' + new Date().toISOString());
+        console.log('Auditoria Atendimentos JS Loaded - v1.3 - ' + new Date().toISOString());
         loadAnalistas();
         loadConfig();
         setupEventListeners();
@@ -842,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="col-12 col-md-4 mt-2 mt-md-0">
                                 ${stats.ultima_auditoria ? `
                                     <div class="stat-item">
-                                        <div class="stat-value" style="font-size: 1rem;">${formatDate(stats.ultima_auditoria.data).substring(0, 5)}</div>
+                                        <div class="stat-value" style="font-size: 1rem;">${formatDate(stats.ultima_auditoria.data.split('T')[0]).substring(0, 5)}</div>
                                         <div class="stat-label">Última Auditoria</div>
                                     </div>
                                 ` : '<div class="stat-item"><div class="stat-label">Sem auditorias</div></div>'}
