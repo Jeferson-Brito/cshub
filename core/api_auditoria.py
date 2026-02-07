@@ -228,6 +228,8 @@ def api_auditoria_list(request):
                 'classificacao_display': aud.get_classificacao_display(),
                 'requer_acao': aud.requer_acao,
                 'created_at': aud.created_at.isoformat(),
+                'can_edit': request.user.is_gestor() or request.user.is_administrador(),
+                'can_delete': request.user.is_gestor() or request.user.is_administrador(),
             })
         
         return JsonResponse({

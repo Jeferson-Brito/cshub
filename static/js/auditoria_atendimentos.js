@@ -417,9 +417,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
+                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>` : ''}
+                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit(${aud.id})" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>` : ''}
                 </td>
             `;
 
@@ -1019,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const badgeClass = `badge-${aud.classificacao}`;
-            const dataFormatada = new Date(aud.data_atendimento).toLocaleDateString('pt-BR');
+            const dataFormatada = formatDate(aud.data_atendimento);
 
             tr.innerHTML = `
                 <td>${dataFormatada}</td>
@@ -1032,9 +1038,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
-                        <i class="bi bi-eye"></i> Detalhes
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
+                        <i class="bi bi-eye"></i>
                     </button>
+                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>` : ''}
+                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit(${aud.id})" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>` : ''}
                 </td>
             `;
 
