@@ -529,7 +529,7 @@ def api_estatisticas_analista(request, analista_id):
             'distribuicao': distribuicao,
             'ultima_auditoria': {
                 'id': ultima.id,
-                'data': ultima.created_at.isoformat(),
+                'data': timezone.localtime(ultima.created_at).date().isoformat(),
                 'nota': float(ultima.nota),
                 'classificacao': ultima.get_classificacao_display(),
             } if ultima else None,
