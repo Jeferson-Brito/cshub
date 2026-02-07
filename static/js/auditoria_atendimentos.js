@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
 
     function init() {
-        console.log('Auditoria Atendimentos JS Loaded - v1.1 - ' + new Date().toISOString());
+        console.log('Auditoria Atendimentos JS Loaded - v1.2 - ' + new Date().toISOString());
         loadAnalistas();
         loadConfig();
         setupEventListeners();
@@ -60,6 +60,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnFiltros = document.getElementById('btnFiltros');
         if (btnFiltros) {
             btnFiltros.addEventListener('click', toggleFiltros);
+        }
+
+        // Filtro Analista
+        const btnFiltrarAnalista = document.getElementById('btnFiltrarAnalista');
+        if (btnFiltrarAnalista) {
+            btnFiltrarAnalista.addEventListener('click', () => {
+                const activeCard = document.querySelector('.card-dashboard.active-filter'); // Precisa marcar qual card está ativo
+                // Se nenhum card estiver ativo, assume todos ou mantém o último
+                let classificacao = 'todos';
+                if (document.getElementById('current-filter-label')) {
+                    const label = document.getElementById('current-filter-label').innerText;
+                    // Mapear label de volta para classificação key se necessário, ou guardar no state
+                }
+                // Simplificação: apenas recarrega usando os inputs
+                loadAnalystAudits(state.currentAnalystFilter || '');
+            });
         }
 
         const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
@@ -580,8 +596,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.editAudit = function (id) {
-        const aud = state.currentAudit;
-        if (!aud || aud.id !== id) return;
+        // Se temos a auditoria em cache e é a mesma, usa ela
+        if (state.currentAudit && state.currentAudit.id === id) {
+            populateAndShowEditForm(state.currentAudit);
+        } else {
+            // Se não, busca do servidor
+            fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        state.currentAudit = data.auditoria;
+                        populateAndShowEditForm(data.auditoria);
+                    } else {
+                        Swal.fire('Erro', 'Não foi possível carregar os dados para edição.', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Erro', 'Erro de conexão ao buscar auditoria.', 'error');
+                });
+        }
+    };
+
+    function populateAndShowEditForm(aud) {
 
         // Fechar modal
         const modalEl = document.getElementById('modalDetalhes');
@@ -628,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         updatePreview();
-    };
+    }
 
     window.deleteAudit = function (id) {
         Swal.fire({
@@ -656,10 +693,21 @@ document.addEventListener('DOMContentLoaded', function () {
                                 'Auditoria foi excluída.',
                                 'success'
                             ).then(() => {
+                                // Remover linha visualmente se existir
+                                const row = document.querySelector(`button[onclick="deleteAudit(${id})"]`)?.closest('tr');
+                                if (row) row.remove();
+
                                 const modalEl = document.getElementById('modalDetalhes');
                                 const modal = bootstrap.Modal.getInstance(modalEl);
-                                modal.hide();
-                                loadAuditorias(state.currentPage);
+                                if (modal) modal.hide();
+
+                                // Recarregar lista apropriada
+                                if (document.getElementById('lista-auditorias-analista')) {
+                                    // Se estiver na visão de analista
+                                    loadAnalystAudits(state.currentAnalystFilter || '');
+                                } else {
+                                    loadAuditorias(state.currentPage);
+                                }
                             });
                         } else {
                             Swal.fire('Erro', data.error || 'Erro ao excluir', 'error');
@@ -969,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.filterAnalystList = function (classificacao) {
+        state.currentAnalystFilter = classificacao; // Guardar filtro atual
         // Atualizar label
         const map = {
             'excelente': 'Excelente',
@@ -994,8 +1043,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Usar API de lista com filtro
         const params = new URLSearchParams({
             classificacao: classificacao,
-            per_page: 50 // Mostrar mais itens por ser uma lista focada
+            per_page: 50
         });
+
+        // Adicionar filtros de data se existirem
+        const dataInicio = document.getElementById('filtro_analista_data_inicio')?.value;
+        const dataFim = document.getElementById('filtro_analista_data_fim')?.value;
+
+        if (dataInicio) params.append('data_inicio', dataInicio);
+        if (dataFim) params.append('data_fim', dataFim);
 
         fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
             .then(response => response.json())

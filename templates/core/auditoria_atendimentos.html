@@ -67,9 +67,38 @@
     <!-- Lista de Auditorias do Analista -->
     <div class="card shadow-sm" id="analyst-list-container" style="display: none;">
         <div class="card-header bg-white">
-            <h5 class="mb-0">
-                <i class="bi bi-list-ul me-2"></i>Minhas Auditorias - <span id="current-filter-label">Todos</span>
-            </h5>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>Minhas Auditorias - <span
+                            id="current-filter-label">Todos</span>
+                    </h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#filtrosAnalistaPanel">
+                        <i class="bi bi-filter me-1"></i>Filtros
+                    </button>
+                </div>
+            </div>
+
+            <div class="collapse mt-3" id="filtrosAnalistaPanel">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <input type="date" class="form-control form-control-sm" id="filtro_analista_data_inicio"
+                            placeholder="Data início">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control form-control-sm" id="filtro_analista_data_fim"
+                            placeholder="Data fim">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-sm btn-primary w-100" id="btnFiltrarAnalista">
+                            <i class="bi bi-search me-1"></i>Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
