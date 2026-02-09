@@ -607,33 +607,132 @@
                                     </div>
                                 </div>
 
-                                <!-- Resumo da Avaliação (Barra de Progresso Global) -->
-                                <div class="card mt-4 bg-light border-0">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-4">
-                                                <h6 class="mb-2 text-muted small">APROVAÇÃO: <span
-                                                        id="percentual-display" class="fw-bold">100</span>%
-                                                </h6>
-                                                <div class="progress" style="height: 25px;">
-                                                    <div id="progresso-bar" class="progress-bar bg-success"
-                                                        role="progressbar" style="width: 100%"></div>
+                                <!-- Resumo da Avaliação (Barra de Progresso Global) - Design Premium -->
+                                <div class="mt-4 position-relative"
+                                    style="border-radius: 20px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2px;">
+                                    <div class="card border-0"
+                                        style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 18px;">
+                                        <div class="card-body p-4">
+                                            <div class="row align-items-center g-4">
+                                                <!-- Barra de Aprovação -->
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="bi bi-graph-up-arrow me-2"
+                                                            style="font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                        <h6 class="mb-0 text-uppercase"
+                                                            style="font-size: 0.75rem; letter-spacing: 1px; font-weight: 600; color: #64748b;">
+                                                            Aprovação
+                                                        </h6>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <h3 class="mb-0 me-2 fw-bold" id="percentual-display"
+                                                            style="font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                                            100</h3>
+                                                        <span
+                                                            style="font-size: 1.5rem; font-weight: 600; color: #94a3b8;">%</span>
+                                                    </div>
+                                                    <div class="position-relative"
+                                                        style="height: 14px; background: #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                                                        <div id="progresso-bar" class="h-100 position-relative"
+                                                            role="progressbar"
+                                                            style="width: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%); border-radius: 20px; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);">
+                                                            <div class="position-absolute top-0 start-0 w-100 h-100"
+                                                                style="background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.3) 100%); animation: shimmer 2s infinite;">
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="col-md-4 text-center">
-                                                <h6 class="mb-1 text-muted">Nota Final</h6>
-                                                <h2 class="mb-0 fw-bold display-6" id="nota-display">10,0</h2>
-                                            </div>
-                                            <div class="col-md-4 text-center">
-                                                <h6 class="mb-1 text-muted">Classificação</h6>
-                                                <h4 class="mb-0">
-                                                    <span id="classificacao-badge"
-                                                        class="badge bg-success rounded-pill px-4">Excelente</span>
-                                                </h4>
+
+                                                <!-- Nota Final -->
+                                                <div class="col-md-4">
+                                                    <div class="text-center position-relative">
+                                                        <div class="d-inline-block position-relative">
+                                                            <div
+                                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); opacity: 0.1; border-radius: 50%; filter: blur(20px);">
+                                                            </div>
+                                                            <div class="position-relative"
+                                                                style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 50%; width: 110px; height: 110px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1), inset 0 1px 2px rgba(255,255,255,0.8);">
+                                                                <i class="bi bi-star-fill mb-1"
+                                                                    style="font-size: 1.2rem; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                                <h2 class="mb-0 fw-bold" id="nota-display"
+                                                                    style="font-size: 2.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;">
+                                                                    10,0</h2>
+                                                                <small class="text-uppercase"
+                                                                    style="font-size: 0.65rem; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600;">Nota
+                                                                    Final</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Classificação -->
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <div
+                                                            class="d-flex align-items-center justify-content-center mb-2">
+                                                            <i class="bi bi-award me-2"
+                                                                style="font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                            <h6 class="mb-0 text-uppercase"
+                                                                style="font-size: 0.75rem; letter-spacing: 1px; font-weight: 600; color: #64748b;">
+                                                                Classificação
+                                                            </h6>
+                                                        </div>
+                                                        <div class="d-inline-block position-relative">
+                                                            <span id="classificacao-badge"
+                                                                class="badge d-inline-flex align-items-center gap-2 px-4 py-3"
+                                                                style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); 
+                                                                         font-size: 1.1rem; 
+                                                                         font-weight: 700; 
+                                                                         border-radius: 12px; 
+                                                                         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3), 
+                                                                                     0 1px 3px rgba(0,0,0,0.1); 
+                                                                         letter-spacing: 0.5px;
+                                                                         text-transform: uppercase;
+                                                                         transition: all 0.3s ease;">
+                                                                <i class="bi bi-check-circle-fill"></i>
+                                                                <span>Excelente</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Adicionar animação shimmer no head ou em um elemento style -->
+                                <style>
+                                    @keyframes shimmer {
+                                        0% {
+                                            transform: translateX(-100%);
+                                        }
+
+                                        100% {
+                                            transform: translateX(100%);
+                                        }
+                                    }
+
+                                    #classificacao-badge:hover {
+                                        transform: translateY(-2px);
+                                        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4), 0 2px 5px rgba(0, 0, 0, 0.15);
+                                    }
+
+                                    /* Garantir que as cores adaptam dinamicamente baseado na nota */
+                                    #progresso-bar.success-gradient {
+                                        background: linear-gradient(90deg, #10b981 0%, #34d399 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4) !important;
+                                    }
+
+                                    #progresso-bar.warning-gradient {
+                                        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+                                    }
+
+                                    #progresso-bar.danger-gradient {
+                                        background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
+                                    }
+                                </style>
 
                                 <!-- Botões -->
                                 <div class="d-flex justify-content-end gap-2 mt-4">
