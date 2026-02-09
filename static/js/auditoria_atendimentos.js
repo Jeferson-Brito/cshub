@@ -608,13 +608,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Set higher z-index for detail modal and its backdrop after delay to allow backdrop creation
                         setTimeout(() => {
                             const detailModal = document.getElementById('modalDetalhes');
-                            if (detailModal) detailModal.style.zIndex = '1060';
+                            if (detailModal) detailModal.style.zIndex = '2060';
 
                             // Get all backdrops (should include the new one)
                             const backdrops = document.querySelectorAll('.modal-backdrop');
                             if (backdrops.length > 1) {
-                                // The last backdrop belongs to the detail modal -> z-index 1055 to sit above analyst modal (1055 default) but below detail modal (1060)
-                                backdrops[backdrops.length - 1].style.zIndex = '1055';
+                                // The last backdrop belongs to the detail modal -> z-index 2055 to sit above everything else
+                                backdrops[backdrops.length - 1].style.zIndex = '2055';
                             }
                         }, 200);
                     }
