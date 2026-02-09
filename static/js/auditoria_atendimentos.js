@@ -911,7 +911,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             html += `
                 <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="analista-card ${alertClass}">
+                    <div class="analista-card ${alertClass}" onclick="showAnalystAudits(${stats.analista.id}, '${stats.analista.nome_completo.replace(/'/g, "\\'")}')">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="mb-0">${stats.analista.nome_completo}</h5>
                             ${stats.tem_alertas ? '<span class="badge-alert"><i class="bi bi-exclamation-triangle"></i> Alerta</span>' : ''}
@@ -961,6 +961,82 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         container.innerHTML = html;
+    }
+
+    // ========================================
+    // MOSTRAR AUDITORIAS DO ANALISTA
+    // ========================================
+
+    window.showAnalystAudits = function (analistaId, analistaNome) {
+        // Atualizar título do modal
+        document.getElementById('analista-name').textContent = analistaNome;
+
+        // Mostrar loading
+        document.getElementById('loading-analista-audits').style.display = 'block';
+        document.getElementById('table-analista-audits').style.display = 'none';
+        document.getElementById('empty-state-analista').style.display = 'none';
+
+        // Abrir modal
+        const modal = new bootstrap.Modal(document.getElementById('modalAnalistaAudits'));
+        modal.show();
+
+        // Buscar auditorias do analista
+        const params = new URLSearchParams({
+            analista_id: analistaId,
+            per_page: 100
+        });
+
+        fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-analista-audits').style.display = 'none';
+
+                if (data.success && data.auditorias.length > 0) {
+                    renderAnalystAuditsList(data.auditorias);
+                    document.getElementById('table-analista-audits').style.display = 'block';
+                } else {
+                    document.getElementById('empty-state-analista').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar auditorias:', error);
+                document.getElementById('loading-analista-audits').style.display = 'none';
+                document.getElementById('empty-state-analista').style.display = 'block';
+            });
+    };
+
+    function renderAnalystAuditsList(auditorias) {
+        const tbody = document.getElementById('lista-auditorias-analista-modal');
+        tbody.innerHTML = '';
+
+        auditorias.forEach(aud => {
+            const tr = document.createElement('tr');
+            if (aud.requer_acao) {
+                tr.classList.add('row-alert');
+            }
+
+            const badgeClass = `badge-${aud.classificacao}`;
+            const dataFormatada = formatDate(aud.data_atendimento);
+
+            tr.innerHTML = `
+                <td>${dataFormatada}</td>
+                <td>${aud.id_conversa}</td>
+                <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
+                <td>${aud.pontuacao}/9</td>
+                <td class="fw-bold">${aud.nota.toFixed(1)}</td>
+                <td>
+                    <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
+                    ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
     }
 
     // ========================================

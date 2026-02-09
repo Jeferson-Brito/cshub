@@ -927,6 +927,51 @@
             </div>
         </div>
 
+        <!-- Modal de Auditorias do Analista -->
+        <div class="modal fade" id="modalAnalistaAudits" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-person-badge me-2"></i>Auditorias de <span id="analista-name"></span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="loading-analista-audits" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                        </div>
+                        <div id="table-analista-audits" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>ID Conversa</th>
+                                            <th>Tipo</th>
+                                            <th>Pontuação</th>
+                                            <th>Nota</th>
+                                            <th>Classificação</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-auditorias-analista-modal">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="empty-state-analista" class="text-center py-5" style="display: none;">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <p class="text-muted mt-3 mb-0">Nenhuma auditoria encontrada para este analista</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% endblock %}
 
         {% block scripts %}
