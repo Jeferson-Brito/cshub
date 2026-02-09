@@ -1074,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
                         <i class="bi bi-eye"></i>
                     </button>
                 </td>
