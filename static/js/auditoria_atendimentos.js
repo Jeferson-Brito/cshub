@@ -603,22 +603,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     showDetailsModal(data.auditoria);
 
                     // Fix z-index when opening modal on top of another modal
-                    const detailModal = document.getElementById('modalDetalhes');
                     const analystModal = document.getElementById('modalAnalistaAudits');
-
-                    // Check if analyst modal is open
                     if (analystModal && analystModal.classList.contains('show')) {
-                        // Get the backdrop from analyst modal
-                        const backdrops = document.querySelectorAll('.modal-backdrop');
-
-                        // Set higher z-index for detail modal and its backdrop
+                        // Set higher z-index for detail modal and its backdrop after delay to allow backdrop creation
                         setTimeout(() => {
-                            detailModal.style.zIndex = '1060';
-                            // Get the last backdrop (which belongs to detail modal)
+                            const detailModal = document.getElementById('modalDetalhes');
+                            if (detailModal) detailModal.style.zIndex = '1060';
+
+                            // Get all backdrops (should include the new one)
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
                             if (backdrops.length > 1) {
+                                // The last backdrop belongs to the detail modal -> z-index 1055 to sit above analyst modal (1055 default) but below detail modal (1060)
                                 backdrops[backdrops.length - 1].style.zIndex = '1055';
                             }
-                        }, 10);
+                        }, 200);
                     }
                 }
             })
