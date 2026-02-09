@@ -260,56 +260,69 @@ document.addEventListener('DOMContentLoaded', function () {
         // Calcular percentual
         const percentual = ((pontuacao / 9) * 100).toFixed(0);
 
-        // Determinar classificação
+        // Determinar classificação e cores
         let classificacao = '';
-        let badgeClass = '';
-        let progressClass = '';
+        let icon = '';
+        let gradientBg = '';
+        let progressGradient = '';
+        let boxShadow = '';
 
         if (pontuacao === 9) {
             classificacao = 'Excelente';
-            badgeClass = 'badge-excelente';
-            progressClass = 'bg-success';
+            icon = 'bi-check-circle-fill';
+            gradientBg = 'linear-gradient(135deg, #10b981 0%, #34d399 100%)';
+            progressGradient = 'linear-gradient(90deg, #10b981 0%, #34d399 100%)';
+            boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3), 0 1px 3px rgba(0,0,0,0.1)';
         } else if (pontuacao >= 7) {
             classificacao = 'Bom';
-            badgeClass = 'badge-bom';
-            progressClass = 'bg-info';
+            icon = 'bi-hand-thumbs-up-fill';
+            gradientBg = 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)';
+            progressGradient = 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)';
+            boxShadow = '0 4px 15px rgba(59, 130, 246, 0.3), 0 1px 3px rgba(0,0,0,0.1)';
         } else if (pontuacao >= 5) {
             classificacao = 'Regular';
-            badgeClass = 'badge-regular';
-            progressClass = 'bg-warning';
+            icon = 'bi-exclamation-circle-fill';
+            gradientBg = 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)';
+            progressGradient = 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)';
+            boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3), 0 1px 3px rgba(0,0,0,0.1)';
         } else {
             classificacao = 'Insatisfatório';
-            badgeClass = 'badge-insatisfatorio';
-            progressClass = 'bg-danger';
+            icon = 'bi-x-circle-fill';
+            gradientBg = 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)';
+            progressGradient = 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)';
+            boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3), 0 1px 3px rgba(0,0,0,0.1)';
         }
 
-        // Atualizar UI com animações
-        const pontuacaoEl = document.getElementById('pontuacao-display');
+        // Atualizar percentual
+        const percentualEl = document.getElementById('percentual-display');
+        if (percentualEl) {
+            percentualEl.textContent = percentual;
+            percentualEl.style.transform = 'scale(1.1)';
+            setTimeout(() => percentualEl.style.transform = 'scale(1)', 200);
+        }
+
+        // Atualizar nota
         const notaEl = document.getElementById('nota-display');
-
-        if (pontuacaoEl) {
-            pontuacaoEl.textContent = pontuacao;
-            pontuacaoEl.style.transform = 'scale(1.1)';
-            setTimeout(() => pontuacaoEl.style.transform = 'scale(1)', 200);
-        }
-
         if (notaEl) {
             notaEl.textContent = nota.replace('.', ',');
             notaEl.style.transform = 'scale(1.1)';
             setTimeout(() => notaEl.style.transform = 'scale(1)', 200);
         }
 
+        // Atualizar barra de progresso
         const progressBar = document.getElementById('progresso-bar');
         if (progressBar) {
             progressBar.style.width = percentual + '%';
-            progressBar.textContent = percentual + '%';
-            progressBar.className = 'progress-bar ' + progressClass;
+            progressBar.style.background = progressGradient;
+            progressBar.style.boxShadow = boxShadow.replace('0.3', '0.4');
         }
 
+        // Atualizar badge de classificação
         const badge = document.getElementById('classificacao-badge');
         if (badge) {
-            badge.textContent = classificacao;
-            badge.className = 'badge ' + badgeClass;
+            badge.innerHTML = `<i class="bi ${icon}"></i><span>${classificacao}</span>`;
+            badge.style.background = gradientBg;
+            badge.style.boxShadow = boxShadow;
             badge.style.transform = 'scale(1.1)';
             setTimeout(() => badge.style.transform = 'scale(1)', 200);
         }

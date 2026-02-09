@@ -33,12 +33,13 @@
 #auditoriaTabs .nav-link::before {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: -3px;
     left: 0;
     width: 0;
     height: 3px;
     background: var(--primary-gradient);
     transition: width 0.4s ease;
+    z-index: 1;
 }
 
 #auditoriaTabs .nav-link:hover::before {
