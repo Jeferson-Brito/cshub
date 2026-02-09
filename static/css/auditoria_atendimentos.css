@@ -39,7 +39,6 @@
     height: 3px;
     background: var(--primary-gradient);
     transition: width 0.4s ease;
-    z-index: 1;
 }
 
 #auditoriaTabs .nav-link:hover::before {
@@ -48,7 +47,6 @@
 
 #auditoriaTabs .nav-link:hover {
     color: #667eea;
-    transform: translateY(-2px);
 }
 
 #auditoriaTabs .nav-link.active {

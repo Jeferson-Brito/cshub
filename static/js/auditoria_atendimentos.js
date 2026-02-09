@@ -657,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prepare image display
             let imageHTML = '';
             if (!crit.value && crit.imagem) {
-                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded" style="max-width: 100%; max-height: 300px; border: 2px solid #dc3545;"></div>`;
+                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded evidence-image" style="max-width: 100%; max-height: 300px; border: 2px solid #dc3545; cursor: pointer;" onclick="window.open(this.src, '_blank')" title="Clique para ampliar"></div>`;
             }
 
             criteriosHTML += `
