@@ -601,6 +601,25 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success) {
                     showDetailsModal(data.auditoria);
+
+                    // Fix z-index when opening modal on top of another modal
+                    const detailModal = document.getElementById('modalDetalhes');
+                    const analystModal = document.getElementById('modalAnalistaAudits');
+
+                    // Check if analyst modal is open
+                    if (analystModal && analystModal.classList.contains('show')) {
+                        // Get the backdrop from analyst modal
+                        const backdrops = document.querySelectorAll('.modal-backdrop');
+
+                        // Set higher z-index for detail modal and its backdrop
+                        setTimeout(() => {
+                            detailModal.style.zIndex = '1060';
+                            // Get the last backdrop (which belongs to detail modal)
+                            if (backdrops.length > 1) {
+                                backdrops[backdrops.length - 1].style.zIndex = '1055';
+                            }
+                        }, 10);
+                    }
                 }
             })
             .catch(error => console.error('Erro:', error));
