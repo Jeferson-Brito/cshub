@@ -633,20 +633,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let criteriosHTML = '';
         const criterios = [
-            { nome: '1. Apresentou-se corretamente?', value: aud.criterios.apresentou_corretamente, erro: aud.criterios.erro_apresentacao },
-            { nome: '2. Analisou o histórico?', value: aud.criterios.analisou_historico, erro: aud.criterios.erro_historico },
-            { nome: '3. Entendeu a solicitação?', value: aud.criterios.entendeu_solicitacao, erro: aud.criterios.erro_entendimento },
-            { nome: '4. Informação clara?', value: aud.criterios.informacao_clara, erro: aud.criterios.erro_informacao },
-            { nome: '5. Acordo de espera correto?', value: aud.criterios.acordo_espera, erro: aud.criterios.erro_acordo_espera },
-            { nome: '6. Atendimento respeitoso?', value: aud.criterios.atendimento_respeitoso, erro: aud.criterios.erro_respeito },
-            { nome: '7. Português correto?', value: aud.criterios.portugues_correto, erro: aud.criterios.erro_portugues },
-            { nome: '8. Finalização correta?', value: aud.criterios.finalizacao_correta, erro: aud.criterios.erro_finalizacao },
-            { nome: '9. Procedimento correto?', value: aud.criterios.procedimento_correto, erro: aud.criterios.erro_procedimento },
+            { nome: '1. Apresentou-se corretamente?', value: aud.criterios.apresentou_corretamente, erro: aud.criterios.erro_apresentacao, imagem: aud.criterios.imagem_erro_apresentacao },
+            { nome: '2. Analisou o histórico?', value: aud.criterios.analisou_historico, erro: aud.criterios.erro_historico, imagem: aud.criterios.imagem_erro_historico },
+            { nome: '3. Entendeu a solicitação?', value: aud.criterios.entendeu_solicitacao, erro: aud.criterios.erro_entendimento, imagem: aud.criterios.imagem_erro_entendimento },
+            { nome: '4. Informação clara?', value: aud.criterios.informacao_clara, erro: aud.criterios.erro_informacao, imagem: aud.criterios.imagem_erro_informacao },
+            { nome: '5. Acordo de espera correto?', value: aud.criterios.acordo_espera, erro: aud.criterios.erro_acordo_espera, imagem: aud.criterios.imagem_erro_acordo_espera },
+            { nome: '6. Atendimento respeitoso?', value: aud.criterios.atendimento_respeitoso, erro: aud.criterios.erro_respeito, imagem: aud.criterios.imagem_erro_respeito },
+            { nome: '7. Português correto?', value: aud.criterios.portugues_correto, erro: aud.criterios.erro_portugues, imagem: aud.criterios.imagem_erro_portugues },
+            { nome: '8. Finalização correta?', value: aud.criterios.finalizacao_correta, erro: aud.criterios.erro_finalizacao, imagem: aud.criterios.imagem_erro_finalizacao },
+            { nome: '9. Procedimento correto?', value: aud.criterios.procedimento_correto, erro: aud.criterios.erro_procedimento, imagem: aud.criterios.imagem_erro_procedimento },
         ];
 
         criterios.forEach(crit => {
             const statusClass = crit.value ? 'success' : 'error';
             const statusIcon = crit.value ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-danger"></i>';
+
+            // Prepare error message
+            let errorHTML = '';
+            if (!crit.value && crit.erro) {
+                errorHTML = `<p class="mb-0 mt-1 text-danger"><small><strong>Erro:</strong> ${crit.erro}</small></p>`;
+            }
+
+            // Prepare image display
+            let imageHTML = '';
+            if (!crit.value && crit.imagem) {
+                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded" style="max-width: 100%; max-height: 300px; border: 2px solid #dc3545;"></div>`;
+            }
 
             criteriosHTML += `
                 <div class="criterio-detail ${statusClass}">
@@ -654,7 +666,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="me-2">${statusIcon}</div>
                         <div class="flex-grow-1">
                             <strong>${crit.nome}</strong>
-                            ${!crit.value && crit.erro ? `<p class="mb-0 mt-1 text-danger"><small><strong>Erro:</strong> ${crit.erro}</small></p>` : ''}
+                            ${errorHTML}
+                            ${imageHTML}
                         </div>
                     </div>
                 </div>
