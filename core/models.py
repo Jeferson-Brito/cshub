@@ -1707,13 +1707,51 @@ class AuditoriaAtendimento(models.Model):
     )
     erro_procedimento = models.TextField(blank=True, verbose_name="Descrição do erro")
     
-    # Evidência visual (opcional)
-    imagem_evidencia_url = models.URLField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name="URL da Imagem de Evidência",
-        help_text="Link da imagem armazenada no Supabase Storage"
+    # Evidências visuais por critério (opcional)
+    imagem_erro_apresentacao = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Apresentação",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_historico = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Histórico",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_entendimento = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Entendimento",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_informacao = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Informação",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_acordo_espera = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Acordo de Espera",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_respeito = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Respeito",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_portugues = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Português",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_finalizacao = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Finalização",
+        help_text="URL da imagem no Supabase Storage"
+    )
+    imagem_erro_procedimento = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name="Evidência - Procedimento",
+        help_text="URL da imagem no Supabase Storage"
     )
     
     # Campos calculados automaticamente

@@ -56,16 +56,19 @@ document.addEventListener('DOMContentLoaded', function () {
             btnLimpar.addEventListener('click', resetForm);
         }
 
-        // Upload de imagem de evidência
-        const inputImagem = document.getElementById('imagem_evidencia');
-        if (inputImagem) {
-            inputImagem.addEventListener('change', handleImageUpload);
-        }
+        // Upload de imagens individuais por critério
+        const criterios = [
+            'apresentacao', 'historico', 'entendimento',
+            'informacao', 'acordo_espera', 'respeito',
+            'portugues', 'finalizacao', 'procedimento'
+        ];
 
-        const btnRemoverEvidencia = document.getElementById('btn-remover-evidencia');
-        if (btnRemoverEvidencia) {
-            btnRemoverEvidencia.addEventListener('click', removeEvidencia);
-        }
+        criterios.forEach(criterio => {
+            const inputImagem = document.getElementById(`imagem_erro_${criterio}`);
+            if (inputImagem) {
+                inputImagem.addEventListener('change', (e) => handleImageUpload(e, criterio));
+            }
+        });
 
         // Filtros
         const btnFiltros = document.getElementById('btnFiltros');
@@ -1203,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // UPLOAD DE IMAGEM DE EVIDÊNCIA
     // ========================================
 
-    function handleImageUpload(event) {
+    function handleImageUpload(event, criterioNome) {
         const file = event.target.files[0];
         if (!file) return;
 
@@ -1221,8 +1224,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Mostrar preview
         const reader = new FileReader();
         reader.onload = function (e) {
-            const previewImg = document.getElementById('preview-img-evidencia');
-            const previewContainer = document.getElementById('preview-evidencia');
+            const previewContainer = document.getElementById(`preview-${criterioNome}`);
+            const previewImg = previewContainer ? previewContainer.querySelector('img') : null;
 
             if (previewImg && previewContainer) {
                 previewImg.src = e.target.result;
@@ -1230,27 +1233,26 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // TODO: Implementar upload para Supabase Storage
-            // Por enquanto, vamos usar base64 (temporário)
-            // Em produção, você deve fazer upload para Supabase e salvar apenas a URL
-            const hiddenInput = document.getElementById('imagem_evidencia_url');
+            //'Por enquanto, vamos usar base64 (temporário)
+            const hiddenInput = document.getElementById(`imagem_erro_${criterioNome}_url`);
             if (hiddenInput) {
                 // TEMPORÁRIO: usando base64 até configurar Supabase
-                // Em produção, substitua por: hiddenInput.value = supabasePublicUrl;
                 hiddenInput.value = e.target.result;
             }
         };
         reader.readAsDataURL(file);
     }
 
-    function removeEvidencia() {
-        const inputFile = document.getElementById('imagem_evidencia');
-        const previewContainer = document.getElementById('preview-evidencia');
-        const hiddenInput = document.getElementById('imagem_evidencia_url');
+    // Função global para remover imagem (chamada por onclick)
+    window.removeImage = function (criterioNome) {
+        const inputFile = document.getElementById(`imagem_erro_${criterioNome}`);
+        const previewContainer = document.getElementById(`preview-${criterioNome}`);
+        const hiddenInput = document.getElementById(`imagem_erro_${criterioNome}_url`);
 
         if (inputFile) inputFile.value = '';
         if (previewContainer) previewContainer.style.display = 'none';
         if (hiddenInput) hiddenInput.value = '';
-    }
+    };
 
     // Inicializar preview na carga
     updatePreview();

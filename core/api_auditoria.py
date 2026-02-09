@@ -126,8 +126,16 @@ def api_auditoria_create(request):
             erro_finalizacao=data.get('erro_finalizacao', ''),
             procedimento_correto=data.get('procedimento_correto', True),
             erro_procedimento=data.get('erro_procedimento', ''),
-            # Evidência opcional
-            imagem_evidencia_url=data.get('imagem_evidencia_url', '') or None,
+            # Evidências visuais por critério (opcional)
+            imagem_erro_apresentacao=data.get('imagem_erro_apresentacao', '') or None,
+            imagem_erro_historico=data.get('imagem_erro_historico', '') or None,
+            imagem_erro_entendimento=data.get('imagem_erro_entendimento', '') or None,
+            imagem_erro_informacao=data.get('imagem_erro_informacao', '') or None,
+            imagem_erro_acordo_espera=data.get('imagem_erro_acordo_espera', '') or None,
+            imagem_erro_respeito=data.get('imagem_erro_respeito', '') or None,
+            imagem_erro_portugues=data.get('imagem_erro_portugues', '') or None,
+            imagem_erro_finalizacao=data.get('imagem_erro_finalizacao', '') or None,
+            imagem_erro_procedimento=data.get('imagem_erro_procedimento', '') or None,
         )
         
         # Save já calcula automaticamente pontuação, nota e classificação

@@ -393,6 +393,7 @@ body {
     margin: 0 8px;
     border-radius: 8px;
     padding: 8px 16px !important;
+    position: relative;
 }
 
 .nav-link:hover {
@@ -3983,6 +3984,7 @@ body.dark-theme .chat-popup-input {
     justify-content: center;
     border: none;
 }
+
 /* Header Logo Fix */
 .header-logo-icon {
     background: transparent !important;
