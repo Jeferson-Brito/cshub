@@ -28,7 +28,6 @@
     padding: 1rem 1.5rem;
     font-weight: 500;
     position: relative;
-    overflow: hidden;
 }
 
 #auditoriaTabs .nav-link::before {

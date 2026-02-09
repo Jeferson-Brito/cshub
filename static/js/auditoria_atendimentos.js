@@ -56,6 +56,17 @@ document.addEventListener('DOMContentLoaded', function () {
             btnLimpar.addEventListener('click', resetForm);
         }
 
+        // Upload de imagem de evidência
+        const inputImagem = document.getElementById('imagem_evidencia');
+        if (inputImagem) {
+            inputImagem.addEventListener('change', handleImageUpload);
+        }
+
+        const btnRemoverEvidencia = document.getElementById('btn-remover-evidencia');
+        if (btnRemoverEvidencia) {
+            btnRemoverEvidencia.addEventListener('click', removeEvidencia);
+        }
+
         // Filtros
         const btnFiltros = document.getElementById('btnFiltros');
         if (btnFiltros) {
@@ -1187,6 +1198,59 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+
+    // ========================================
+    // UPLOAD DE IMAGEM DE EVIDÊNCIA
+    // ========================================
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validar tamanho (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Arquivo muito grande',
+                text: 'O tamanho máximo permitido é 5MB',
+            });
+            event.target.value = '';
+            return;
+        }
+
+        // Mostrar preview
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const previewImg = document.getElementById('preview-img-evidencia');
+            const previewContainer = document.getElementById('preview-evidencia');
+
+            if (previewImg && previewContainer) {
+                previewImg.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+
+            // TODO: Implementar upload para Supabase Storage
+            // Por enquanto, vamos usar base64 (temporário)
+            // Em produção, você deve fazer upload para Supabase e salvar apenas a URL
+            const hiddenInput = document.getElementById('imagem_evidencia_url');
+            if (hiddenInput) {
+                // TEMPORÁRIO: usando base64 até configurar Supabase
+                // Em produção, substitua por: hiddenInput.value = supabasePublicUrl;
+                hiddenInput.value = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeEvidencia() {
+        const inputFile = document.getElementById('imagem_evidencia');
+        const previewContainer = document.getElementById('preview-evidencia');
+        const hiddenInput = document.getElementById('imagem_evidencia_url');
+
+        if (inputFile) inputFile.value = '';
+        if (previewContainer) previewContainer.style.display = 'none';
+        if (hiddenInput) hiddenInput.value = '';
+    }
 
     // Inicializar preview na carga
     updatePreview();

@@ -1707,6 +1707,15 @@ class AuditoriaAtendimento(models.Model):
     )
     erro_procedimento = models.TextField(blank=True, verbose_name="Descrição do erro")
     
+    # Evidência visual (opcional)
+    imagem_evidencia_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="URL da Imagem de Evidência",
+        help_text="Link da imagem armazenada no Supabase Storage"
+    )
+    
     # Campos calculados automaticamente
     pontuacao = models.IntegerField(default=0, verbose_name="Pontuação (0-9)")
     nota = models.DecimalField(max_digits=4, decimal_places=2, default=0.0, verbose_name="Nota (0-10)")
