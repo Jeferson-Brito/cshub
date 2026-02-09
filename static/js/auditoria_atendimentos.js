@@ -1071,7 +1071,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="fw-bold">${aud.nota.toFixed(1)}</td>
                 <td>
                     <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
-                    ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
+                    <span class="d-inline-block" style="width: 24px; text-align: center;">
+                        ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert text-danger"></i>' : ''}
+                    </span>
                 </td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
