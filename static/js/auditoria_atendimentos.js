@@ -100,28 +100,59 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setupCriteriosHandlers() {
-        // Handlers para os switches de critérios
+        // Handlers para os switches de critérios com melhorias visuais
         const switches = document.querySelectorAll('.criterio-switch');
         switches.forEach(sw => {
             sw.addEventListener('change', function () {
                 const erroField = this.dataset.erro;
                 const erroContainer = document.getElementById(`${erroField}_container`);
+                const criterioItem = this.closest('.criterio-item');
 
                 if (!this.checked) {
-                    // Mostrar campo de erro
+                    // Mostrar campo de erro com animação
                     erroContainer.style.display = 'block';
                     document.getElementById(erroField).required = true;
+
+                    // Atualizar classes do card
+                    criterioItem.classList.remove('checked');
+                    criterioItem.classList.add('unchecked');
                 } else {
                     // Ocultar campo de erro
                     erroContainer.style.display = 'none';
                     document.getElementById(erroField).required = false;
                     document.getElementById(erroField).value = '';
+
+                    // Atualizar classes do card
+                    criterioItem.classList.remove('unchecked');
+                    criterioItem.classList.add('checked');
                 }
 
-                // Atualizar preview em tempo real
+                // Atualizar preview e contador em tempo real
                 updatePreview();
+                updateCriteriosCount();
             });
         });
+    }
+
+    // Função para atualizar contador de critérios
+    function updateCriteriosCount() {
+        const switches = document.querySelectorAll('.criterio-switch');
+        let aprovados = 0;
+
+        switches.forEach(sw => {
+            if (sw.checked) aprovados++;
+        });
+
+        const counter = document.getElementById('criterios-count');
+        if (counter) {
+            counter.textContent = aprovados;
+
+            // Animar mudança
+            counter.parentElement.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                counter.parentElement.style.transform = 'scale(1)';
+            }, 200);
+        }
     }
 
     // ========================================
@@ -238,18 +269,54 @@ document.addEventListener('DOMContentLoaded', function () {
             progressClass = 'bg-danger';
         }
 
-        // Atualizar UI
-        document.getElementById('pontuacao-display').textContent = pontuacao;
-        document.getElementById('nota-display').textContent = nota.replace('.', ',');
+        // Atualizar UI com animações
+        const pontuacaoEl = document.getElementById('pontuacao-display');
+        const notaEl = document.getElementById('nota-display');
+
+        if (pontuacaoEl) {
+            pontuacaoEl.textContent = pontuacao;
+            pontuacaoEl.style.transform = 'scale(1.1)';
+            setTimeout(() => pontuacaoEl.style.transform = 'scale(1)', 200);
+        }
+
+        if (notaEl) {
+            notaEl.textContent = nota.replace('.', ',');
+            notaEl.style.transform = 'scale(1.1)';
+            setTimeout(() => notaEl.style.transform = 'scale(1)', 200);
+        }
 
         const progressBar = document.getElementById('progresso-bar');
-        progressBar.style.width = percentual + '%';
-        progressBar.textContent = percentual + '%';
-        progressBar.className = 'progress-bar ' + progressClass;
+        if (progressBar) {
+            progressBar.style.width = percentual + '%';
+            progressBar.textContent = percentual + '%';
+            progressBar.className = 'progress-bar ' + progressClass;
+        }
 
         const badge = document.getElementById('classificacao-badge');
-        badge.textContent = classificacao;
-        badge.className = 'badge ' + badgeClass;
+        if (badge) {
+            badge.textContent = classificacao;
+            badge.className = 'badge ' + badgeClass;
+            badge.style.transform = 'scale(1.1)';
+            setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        }
+
+        // Efeito especial para nota máxima
+        if (pontuacao === 9 && window.lastPontuacao !== 9) {
+            showCelebration();
+        }
+
+        window.lastPontuacao = pontuacao;
+    }
+
+    // Função para celebração (nota máxima)
+    function showCelebration() {
+        const preview = document.getElementById('resultado-preview');
+        if (preview) {
+            preview.style.animation = 'none';
+            setTimeout(() => {
+                preview.style.animation = 'pulse 0.5s ease';
+            }, 10);
+        }
     }
 
     // ========================================
@@ -347,17 +414,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Resetar estado de edição
         state.editingId = null;
+        window.lastPontuacao = null;
         const btnSalvar = document.querySelector('#formAuditoria button[type="submit"]');
         if (btnSalvar) btnSalvar.innerHTML = '<i class="bi bi-check-circle me-2"></i>Salvar Auditoria';
-        const titulo = document.querySelector('#cadastrar h5');
+        const titulo = document.querySelector('#cadastrar .card-header h5');
         if (titulo) titulo.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nova Auditoria de Atendimento';
 
-        // Resetar switches para checked
+        // Resetar switches para checked e classes dos cards
         const switches = document.querySelectorAll('.criterio-switch');
         switches.forEach(sw => {
             sw.checked = true;
             const erroField = sw.dataset.erro;
             const erroContainer = document.getElementById(`${erroField}_container`);
+            const criterioItem = sw.closest('.criterio-item');
+
+            // Resetar classes visuais
+            if (criterioItem) {
+                criterioItem.classList.remove('unchecked');
+                criterioItem.classList.add('checked');
+            }
+
             erroContainer.style.display = 'none';
             document.getElementById(erroField).value = '';
             document.getElementById(erroField).required = false;
@@ -370,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         updatePreview();
+        updateCriteriosCount();
     }
 
     // ========================================

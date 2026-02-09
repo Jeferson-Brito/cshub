@@ -176,205 +176,128 @@
                             <form id="formAuditoria">
                                 {% csrf_token %}
 
-                                <!-- Informações Básicas -->
-                                <div class="row mb-4">
+                                <!-- Informações Básicas - Design Moderno -->
+                                <div class="row g-3 mb-4">
                                     <div class="col-md-3">
-                                        <label for="data_atendimento" class="form-label">Data do Atendimento <span
-                                                class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="data_atendimento"
+                                        <label for="data_atendimento" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-event text-primary me-2"></i>Data do Atendimento
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control form-control-lg" id="data_atendimento"
                                             name="data_atendimento" required>
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="id_conversa" class="form-label">ID da Conversa <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="id_conversa" name="id_conversa"
-                                            placeholder="Ex: #12345" required>
+                                        <label for="id_conversa" class="form-label fw-semibold">
+                                            <i class="bi bi-hash text-primary me-2"></i>ID da Conversa <span
+                                                class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" id="id_conversa"
+                                            name="id_conversa" placeholder="Ex: #12345" required>
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="tipo_atendimento" class="form-label">Tipo de Atendimento <span
-                                                class="text-danger">*</span></label>
-                                        <select class="form-select" id="tipo_atendimento" name="tipo_atendimento"
-                                            required>
+                                        <label for="tipo_atendimento" class="form-label fw-semibold">
+                                            <i class="bi bi-chat-left-text text-primary me-2"></i>Tipo de Atendimento
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select form-select-lg" id="tipo_atendimento"
+                                            name="tipo_atendimento" required>
                                             <option value="">Selecione...</option>
-                                            <option value="cliente">Cliente</option>
-                                            <option value="franqueado">Franqueado</option>
+                                            <option value="cliente">👥 Cliente</option>
+                                            <option value="franqueado">🏪 Franqueado</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="analista_auditado_id" class="form-label">Analista Responsável <span
-                                                class="text-danger">*</span></label>
-                                        <select class="form-select" id="analista_auditado_id"
+                                        <label for="analista_auditado_id" class="form-label fw-semibold">
+                                            <i class="bi bi-person-badge text-primary me-2"></i>Analista Responsável
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select form-select-lg" id="analista_auditado_id"
                                             name="analista_auditado_id" required>
                                             <option value="">Carregando...</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <!-- Critérios de Avaliação -->
-                                <h5 class="mb-3 border-bottom pb-2">Critérios de Avaliação (9 critérios)</h5>
+                                <!-- Critérios de Avaliação - Header Melhorado -->
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="mb-0">
+                                        <i class="bi bi-clipboard-check text-primary me-2"></i>
+                                        Critérios de Avaliação
+                                    </h4>
+                                    <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        <span id="criterios-count">9</span>/9 Aprovados
+                                    </span>
+                                </div>
 
                                 <div id="criterios-container">
                                     <!-- Critério 1 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
+                                    <div class="criterio-item mb-3 checked" data-criterio="1">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
                                                 id="apresentou_corretamente" name="apresentou_corretamente" checked
                                                 data-erro="erro_apresentacao">
-                                            <label class="form-check-label fw-semibold" for="apresentou_corretamente">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="apresentou_corretamente">
+                                                <i class="bi bi-person-badge text-primary me-2"
+                                                    style="font-size: 1.2rem;"></i>
                                                 1. Apresentou-se corretamente?
                                             </label>
                                         </div>
-                                        <div class="erro-descricao mt-2" id="erro_apresentacao_container"
+                                        <div class="erro-descricao mt-3" id="erro_apresentacao_container"
                                             style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
                                             <textarea class="form-control" id="erro_apresentacao"
                                                 name="erro_apresentacao" rows="2"
-                                                placeholder="Descreva o erro..."></textarea>
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
                                         </div>
                                     </div>
 
                                     <!-- Critério 2 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
+                                    <div class="criterio-item mb-3 checked" data-criterio="2">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
                                                 id="analisou_historico" name="analisou_historico" checked
                                                 data-erro="erro_historico">
-                                            <label class="form-check-label fw-semibold" for="analisou_historico">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="analisou_historico">
+                                                <i class="bi bi-clock-history text-info me-2"
+                                                    style="font-size: 1.2rem;"></i>
                                                 2. Analisou o histórico?
                                             </label>
                                         </div>
-                                        <div class="erro-descricao mt-2" id="erro_historico_container"
+                                        <div class="erro-descricao mt-3" id="erro_historico_container"
                                             style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
                                             <textarea class="form-control" id="erro_historico" name="erro_historico"
-                                                rows="2" placeholder="Descreva o erro..."></textarea>
+                                                rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
                                         </div>
                                     </div>
 
                                     <!-- Critério 3 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
+                                    <div class="criterio-item mb-3 checked" data-criterio="3">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
                                                 id="entendeu_solicitacao" name="entendeu_solicitacao" checked
                                                 data-erro="erro_entendimento">
-                                            <label class="form-check-label fw-semibold" for="entendeu_solicitacao">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="entendeu_solicitacao">
+                                                <i class="bi bi-bullseye text-success me-2"
+                                                    style="font-size: 1.2rem;"></i>
                                                 3. Entendeu a solicitação do cliente/franqueado?
                                             </label>
                                         </div>
-                                        <div class="erro-descricao mt-2" id="erro_entendimento_container"
+                                        <div class="erro-descricao mt-3" id="erro_entendimento_container"
                                             style="display: none;">
-                                            <textarea class="form-control" id="erro_entendimento"
-                                                name="erro_entendimento" rows="2"
-                                                placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 4 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="informacao_clara" name="informacao_clara" checked
-                                                data-erro="erro_informacao">
-                                            <label class="form-check-label fw-semibold" for="informacao_clara">
-                                                4. Passou a informação de forma clara?
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
                                             </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_informacao_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_informacao" name="erro_informacao"
-                                                rows="2" placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 5 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="acordo_espera" name="acordo_espera" checked
-                                                data-erro="erro_acordo_espera">
-                                            <label class="form-check-label fw-semibold" for="acordo_espera">
-                                                5. Realizou acordo de espera corretamente?
-                                            </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_acordo_espera_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_acordo_espera"
-                                                name="erro_acordo_espera" rows="2"
-                                                placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 6 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="atendimento_respeitoso" name="atendimento_respeitoso" checked
-                                                data-erro="erro_respeito">
-                                            <label class="form-check-label fw-semibold" for="atendimento_respeitoso">
-                                                6. Realizou atendimento de forma respeitosa?
-                                            </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_respeito_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_respeito" name="erro_respeito"
-                                                rows="2" placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 7 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="portugues_correto" name="portugues_correto" checked
-                                                data-erro="erro_portugues">
-                                            <label class="form-check-label fw-semibold" for="portugues_correto">
-                                                7. Usou a língua portuguesa de forma correta?
-                                            </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_portugues_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_portugues" name="erro_portugues"
-                                                rows="2" placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 8 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="finalizacao_correta" name="finalizacao_correta" checked
-                                                data-erro="erro_finalizacao">
-                                            <label class="form-check-label fw-semibold" for="finalizacao_correta">
-                                                8. Realizou finalização do atendimento corretamente?
-                                            </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_finalizacao_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_finalizacao" name="erro_finalizacao"
-                                                rows="2" placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Critério 9 -->
-                                    <div class="criterio-item mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input criterio-switch" type="checkbox"
-                                                id="procedimento_correto" name="procedimento_correto" checked
-                                                data-erro="erro_procedimento">
-                                            <label class="form-check-label fw-semibold" for="procedimento_correto">
-                                                9. Seguiu o procedimento correto?
-                                            </label>
-                                        </div>
-                                        <div class="erro-descricao mt-2" id="erro_procedimento_container"
-                                            style="display: none;">
-                                            <textarea class="form-control" id="erro_procedimento"
-                                                name="erro_procedimento" rows="2"
-                                                placeholder="Descreva o erro..."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Resultado em Tempo Real -->
-                                <div class="alert alert-info mt-4" id="resultado-preview">
-                                    <div class="row align-items-center">
+                                            <textarea class="form-control" id="erro_entendimento" <div
+                                                class="row align-items-center">
                                         <div class="col-md-4">
                                             <h6 class="mb-2">Pontuação: <span id="pontuacao-display"
                                                     class="fw-bold">9</span>/9
