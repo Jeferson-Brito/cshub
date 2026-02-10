@@ -1,59 +1,78 @@
 {% extends 'base.html' %}
 
-
-{% block title %}{% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %} - Nexus{% endblock %}
+{% block title %}
+{% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %} - Nexus
+{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="dashboard-title">
-            <i class="bi bi-person-{% if form_type == 'create' %}plus{% else %}pencil{% endif %}"></i>
-            {% if form_type == 'create' %}Novo Usuário{% else %}Editar Usuário{% endif %}
-        </h1>
-        <p class="dashboard-subtitle">
-            {% if form_type == 'create' %}Crie um novo usuário no sistema{% else %}Edite as informações do usuário{%
-            endif %}
-            endif %}
-        </p>
+<div class="page-header fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="page-title">
+                {% if form_type == 'create' %}
+                <i class="bi bi-person-plus"></i> Novo Usuário
+                {% else %}
+                <i class="bi bi-pencil-square"></i> Editar Usuário
+                {% endif %}
+            </h1>
+            <p class="page-subtitle">
+                {% if form_type == 'create' %}
+                Preencha os dados abaixo para criar um novo usuário no sistema
+                {% else %}
+                Atualize as informações do usuário
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar para Lista
+            </a>
+        </div>
     </div>
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card fade-in">
+<div class="row justify-content-center fade-in">
+    <div class="col-lg-8">
+        <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="bi bi-info-circle"></i> Informações do Usuário
+                    <i class="bi bi-info-circle"></i> Informações Pessoais
                 </h5>
             </div>
             <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    <!-- Foto de Perfil -->
-                    <div class="mb-4">
-                        <label class="form-label">
-                            <i class="bi bi-camera"></i> Foto de Perfil
-                        </label>
-                        <div class="row">
-                            <div class="col-md-4 text-center">
-                                <div class="profile-photo-preview mb-3">
-                                    {% if target_user and target_user.profile_photo %}
-                                    <img src="{{ target_user.profile_photo.url }}" alt="Foto atual" id="photoPreview"
-                                        class="user-photo-large">
-                                    {% else %}
-                                    <div class="user-photo-large-placeholder" id="photoPreview">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    {% endif %}
-                                </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12 text-center mb-4">
+                            <label class="form-label d-block fw-bold">Foto de Perfil</label>
+                            <div class="profile-photo-container mb-3">
+                                {% if target_user and target_user.profile_photo %}
+                                <img src="{{ target_user.profile_photo.url }}" id="photo-preview"
+                                    class="user-photo-large rounded-circle border shadow-sm" alt="Foto de perfil"
+                                    style="width: 150px; height: 150px; object-fit: cover;">
+                                {% else %}
+                                <img src="https://via.placeholder.com/150?text=Foto" id="photo-preview"
+                                    class="user-photo-large rounded-circle border shadow-sm" alt="Preview"
+                                    style="width: 150px; height: 150px; object-fit: cover; background-color: #f8f9fa;">
+                                {% endif %}
                             </div>
-                            <div class="col-md-8">
-                                <input type="file" class="form-control" name="profile_photo" id="profilePhotoInput"
-                                    accept="image/jpeg,image/png,image/jpg">
-                                <small class="text-muted d-block mt-2">
-                                    <i class="bi bi-info-circle"></i> Formatos aceitos: JPG, JPEG, PNG (máx. 5MB)
-                                </small>
+                            <div class="d-flex justify-content-center">
+                                <label for="profile_photo" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-camera"></i> Escolher Foto
+                                </label>
+                                <input type="file" id="profile_photo" name="profile_photo" class="d-none"
+                                    accept="image/png, image/jpeg, image/jpg" onchange="previewImage(this)">
+                            </div>
+                            <div class="form-text mt-2">
+                                Formatos aceitos: JPG e PNG. Tamanho máximo: 5MB.
                             </div>
                         </div>
                     </div>
@@ -61,13 +80,30 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">
-                                <i class="bi bi-person"></i> Nome de Usuário <span class="text-danger">*</span>
+                                <i class="bi bi-person"></i> Nome <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="first_name"
+                                value="{{ target_user.first_name|default:form_data.first_name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-person"></i> Sobrenome <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="last_name"
+                                value="{{ target_user.last_name|default:form_data.last_name|default:'' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-person-badge"></i> Usuário <span class="text-danger">*</span>
                             </label>
                             <input type="text" class="form-control" name="username"
-                                value="{% if target_user %}{{ target_user.username }}{% elif form_data %}{{ form_data.username|default:'' }}{% endif %}"
-                                {% if form_type=='edit' %}readonly{% endif %} required>
+                                value="{{ target_user.username|default:form_data.username|default:'' }}" {% if
+                                form_type=='edit' %}readonly{% endif %} required>
                             {% if form_type == 'edit' %}
-                            <small class="text-muted">O nome de usuário não pode ser alterado</small>
+                            <div class="form-text">O nome de usuário não pode ser alterado.</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -75,8 +111,7 @@
                                 <i class="bi bi-envelope"></i> E-mail <span class="text-danger">*</span>
                             </label>
                             <input type="email" class="form-control" name="email"
-                                value="{% if target_user %}{{ target_user.email }}{% elif form_data %}{{ form_data.email|default:'' }}{% endif %}"
-                                required>
+                                value="{{ target_user.email|default:form_data.email|default:'' }}" required>
                         </div>
                     </div>
 
@@ -118,7 +153,7 @@
                             {% if request.user.is_gestor %}
                             <input type="hidden" name="department" value="{{ request.user.department_id }}">
                             <small class="text-muted">Gestores só podem criar usuários no seu próprio
-                                departamento</small>
+                                departamento.</small>
                             {% endif %}
                         </div>
                     </div>
@@ -128,123 +163,127 @@
                             <label class="form-label">
                                 <i class="bi bi-toggle-on"></i> Status
                             </label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if
-                                    target_user and target_user.ativo %}checked{% elif form_data and form_data.ativo
-                                    %}checked{% endif %}>
-                                <label class="form-check-label" for="ativo">
-                                    Usuário Ativo
-                                </label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if
+                                    target_user.is_active or form_type=='create' %}checked{% endif %}>
+                                <label class="form-check-label" for="isActive">Usuário Ativo</label>
                             </div>
                         </div>
                     </div>
-                    {% if form_type == 'edit' and target_user %}
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            <i class="bi bi-calendar-event"></i> Data de Cadastro
-                        </label>
-                        <p class="form-control-plaintext ps-2">
-                            {{ target_user.date_joined|date:"d/m/Y H:i" }}
-                        </p>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">
+                        <i class="bi bi-lock"></i> Segurança
+                    </h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-key"></i> Senha
+                                {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="passwordInput" {% if
+                                    form_type=='create' %}required{% endif %} minlength="6">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if form_type == 'edit' %}
+                            <div class="form-text">Deixe em branco para manter a senha atual.</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-key-fill"></i> Confirmar Senha
+                                {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="confirm_password"
+                                    id="confirmPasswordInput" {% if form_type=='create' %}required{% endif %}>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
-            </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">
-                        <i class="bi bi-person"></i> Primeiro Nome
-                    </label>
-                    <input type="text" class="form-control" name="first_name"
-                        value="{% if target_user %}{{ target_user.first_name }}{% elif form_data %}{{ form_data.first_name|default:'' }}{% endif %}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">
-                        <i class="bi bi-person"></i> Sobrenome
-                    </label>
-                    <input type="text" class="form-control" name="last_name"
-                        value="{% if target_user %}{{ target_user.last_name }}{% elif form_data %}{{ form_data.last_name|default:'' }}{% endif %}">
-                </div>
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'user_list' %}" class="btn btn-light border">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            {% if form_type == 'create' %}
+                            <i class="bi bi-check-lg"></i> Criar Usuário
+                            {% else %}
+                            <i class="bi bi-save"></i> Salvar Alterações
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">
-                    <i class="bi bi-lock"></i> Senha {% if form_type == 'edit' %}(deixe em branco para não alterar){%
-                    else %}<span class="text-danger">*</span>{% endif %}
-                </label>
-                <div class="password-input-wrapper">
-                    <input type="password" class="form-control" name="password" id="user-password" {% if
-                        form_type=='create' %}required{% endif %} minlength="6">
-                    <button type="button" class="btn-toggle-password" onclick="togglePassword('user-password')">
-                        <i class="bi bi-eye" id="user-password-icon"></i>
-                    </button>
-                </div>
-                {% if form_type == 'edit' %}
-                <small class="text-muted">Deixe em branco se não quiser alterar a senha</small>
-                {% endif %}
-            </div>
-
-            <div class="d-flex justify-content-between mt-4">
-                <a href="{% url 'user_list' %}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> {% if form_type == 'create' %}Criar Usuário{% else %}Salvar
-                    Alterações{% endif %}
-                </button>
-            </div>
-            </form>
         </div>
     </div>
 </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-    function togglePassword(inputId) {
-        const input = document.getElementById(inputId);
-        const icon = document.getElementById(inputId + '-icon');
+    // Toggle Password Visibility
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const input = document.getElementById('passwordInput');
+        const icon = this.querySelector('i');
 
-        if (input && icon) {
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye');
-            }
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
         }
-    }
+    });
 
-    // Preview da foto de perfil
-    document.getElementById('profilePhotoInput').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        const preview = document.getElementById('photoPreview');
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function () {
+        const input = document.getElementById('confirmPasswordInput');
+        const icon = this.querySelector('i');
 
-        if (file) {
-            // Validar tamanho (5MB)
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+
+    // Preview de Imagem
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            // Validação de tamanho (5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('A imagem deve ter no máximo 5MB');
-                e.target.value = '';
+                alert('A imagem deve ter no máximo 5MB.');
+                input.value = '';
                 return;
             }
 
-            // Validar tipo
-            if (!file.type.match('image/(jpeg|jpg|png)')) {
-                alert('Apenas imagens JPG, JPEG ou PNG são aceitas');
-                e.target.value = '';
+            // Validação de tipo
+            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+                alert('Apenas arquivos JPG e PNG são permitidos.');
+                input.value = '';
                 return;
             }
 
             const reader = new FileReader();
-            reader.onload = function (event) {
-                preview.innerHTML = '<img src="' + event.target.result + '" alt="Preview" class="user-photo-large">';
-            };
+            reader.onload = function (e) {
+                document.getElementById('photo-preview').src = e.target.result;
+            }
             reader.readAsDataURL(file);
         }
-    });
+    }
 </script>
 {% endblock %}
