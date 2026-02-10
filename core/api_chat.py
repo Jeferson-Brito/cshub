@@ -63,6 +63,7 @@ def api_conversations_list(request):
                 'role': other_user.get_role_display(),
                 'department': other_user.department.name if other_user.department else None,
                 'initials': get_initials(other_user),
+                'profile_photo_url': other_user.profile_photo.url if other_user.profile_photo else None,
                 'is_online': is_online,
                 'last_seen': last_seen.strftime('%d/%m/%Y %H:%M') if last_seen else None
             },
@@ -122,6 +123,7 @@ def api_conversation_start(request):
                 'name': other_user.get_full_name() or other_user.username,
                 'role': other_user.get_role_display(),
                 'department': other_user.department.name if other_user.department else None,
+                'profile_photo_url': other_user.profile_photo.url if other_user.profile_photo else None,
             }
         })
         
@@ -159,6 +161,7 @@ def api_messages_list(request, conv_id):
                 'sender_id': msg.sender_id,
                 'sender_name': msg.sender.get_full_name() or msg.sender.username,
                 'sender_initials': get_initials(msg.sender),
+                'sender_profile_photo_url': msg.sender.profile_photo.url if msg.sender.profile_photo else None,
                 'is_mine': msg.sender_id == request.user.id,
                 'created_at': msg.created_at.strftime('%H:%M'),
                 'created_at_full': msg.created_at.strftime('%d/%m/%Y %H:%M'),
@@ -193,6 +196,7 @@ def api_messages_list(request, conv_id):
                 'role': other_user.get_role_display() if other_user else None,
                 'department': other_user.department.name if other_user and other_user.department else None,
                 'initials': get_initials(other_user) if other_user else "S",
+                'profile_photo_url': other_user.profile_photo.url if other_user and other_user.profile_photo else None,
                 'is_online': is_online
             }
         })
@@ -239,6 +243,7 @@ def api_message_send(request, conv_id):
             'sender_id': message.sender.id,
             'sender_name': message.sender.get_full_name() or message.sender.username,
             'sender_initials': get_initials(message.sender),
+            'sender_profile_photo_url': message.sender.profile_photo.url if message.sender.profile_photo else None,
             'created_at': message.created_at.strftime('%H:%M'),
             'is_read': message.is_read
         })
@@ -305,6 +310,7 @@ def api_chat_users(request):
             'role_slug': user.role,
             'email': user.email,
             'initials': get_initials(user),
+            'profile_photo_url': user.profile_photo.url if user.profile_photo else None,
             'department': user.department.name if user.department else None,
             'is_online': is_online
         })
@@ -354,6 +360,7 @@ def api_chat_upload(request):
             'sender_id': message.sender.id,
             'sender_name': message.sender.get_full_name() or message.sender.username,
             'sender_initials': get_initials(message.sender),
+            'sender_profile_photo_url': message.sender.profile_photo.url if message.sender.profile_photo else None,
             'created_at': message.created_at.strftime('%H:%M'),
             'file_url': message.attachment.url if message.attachment else None,
             'file_name': message.file_name,

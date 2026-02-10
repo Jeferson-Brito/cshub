@@ -396,7 +396,8 @@ def api_get_all_assignments(request):
             'store_code': assignment.store.code,
             'store_city': assignment.store.city,
             'weekly_target': assignment.weekly_target,
-            'progress': progress
+            'progress': progress,
+            'analyst_photo_url': assignment.analyst.profile_photo.url if assignment.analyst.profile_photo else None
         })
     
     return JsonResponse({'success': True, 'assignments': result})
@@ -946,7 +947,7 @@ def api_get_analysts_overview(request):
             overview_data.append({
                 'id': analyst.id,
                 'name': analyst.get_full_name() or analyst.username or f"Analista {analyst.id}",
-                'photo_url': analyst.profile_image.url if hasattr(analyst, 'profile_image') and analyst.profile_image else None,
+                'photo_url': analyst.profile_photo.url if analyst.profile_photo else None,
                 'stats': {
                     'total_stores': total_stores,
                     'weekly_audited': weekly_audited,

@@ -389,7 +389,14 @@
 
         <!-- Usuário Mobile (Visível apenas em telas menores) -->
         <div class="sidebar-user d-lg-none">
-            <div class="user-avatar">{{ user.username|first|upper }}</div>
+            <div class="user-avatar">
+                {% if user.profile_photo %}
+                <img src="{{ user.profile_photo.url }}" alt="{{ user.username }}"
+                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                {% else %}
+                {{ user.username|first|upper }}
+                {% endif %}
+            </div>
             <div class="user-details">
                 <p class="user-name">{{ user.get_full_name|default:user.username }}</p>
                 <p class="user-role">

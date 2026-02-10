@@ -2227,8 +2227,8 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-initials bg-light text-primary rounded-circle me-2" 
-                                         style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold;">
-                                        ${item.analyst_name.substring(0, 2).toUpperCase()}
+                                         style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; overflow: hidden;">
+                                        ${item.analyst_photo_url ? `<img src="${item.analyst_photo_url}" alt="${item.analyst_name}" style="width: 100%; height: 100%; object-fit: cover;">` : item.analyst_name.substring(0, 2).toUpperCase()}
                                     </div>
                                     <span class="fw-500">${item.analyst_name}</span>
                                 </div>
@@ -2366,8 +2366,8 @@
                                          style="cursor: pointer; transition: transform 0.2s;">
                                         <div class="card-body ${bgClass}">
                                             <div class="d-flex align-items-center mb-3">
-                                                <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 48px; height: 48px; font-size: 1.2rem;">
-                                                    ${analyst.name.charAt(0)}
+                                                <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 48px; height: 48px; font-size: 1.2rem; overflow: hidden;">
+                                                    ${analyst.photo_url ? `<img src="${analyst.photo_url}" alt="${analyst.name}" style="width: 100%; height: 100%; object-fit: cover;">` : analyst.name.charAt(0)}
                                                 </div>
                                                 <div>
                                                     <h6 class="fw-bold mb-0 text-truncate" style="max-width: 150px;" title="${analyst.name}">${analyst.name}</h6>

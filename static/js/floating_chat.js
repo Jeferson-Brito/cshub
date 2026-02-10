@@ -10,16 +10,16 @@ class SideChatMenu {
         this.list = document.getElementById('sideChatList');
         this.newBtn = document.getElementById('sideChatNew');
         this.popupsContainer = document.getElementById('chatPopupsContainer');
-        
+
         this.activePopups = new Map(); // conversationId -> ChatPopup instance
         this.notificationSocket = null;
-        
+
         this.init();
     }
 
     init() {
         if (!this.menu) return;
-        
+
         this.loadRecentChats();
         this.connectNotificationSocket();
         this.setupEventListeners();
@@ -51,9 +51,18 @@ class SideChatMenu {
 
         this.list.innerHTML = conversations.map(c => {
             const initials = c.other_user.initials || '??';
+            const photoUrl = c.other_user.profile_photo_url;
+
+            let avatarHtml;
+            if (photoUrl) {
+                avatarHtml = `<div class="side-chat-avatar"><img src="${photoUrl}" alt="${initials}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>`;
+            } else {
+                avatarHtml = `<div class="side-chat-avatar">${initials}</div>`;
+            }
+
             return `
-                <div class="side-chat-item" data-id="${c.id}" data-name="${c.other_user.name}" title="${c.other_user.name}">
-                    <div class="side-chat-avatar">${initials}</div>
+                <div class="side-chat-item" data-id="${c.id}" data-name="${c.other_user.name}" data-photo="${photoUrl || ''}" title="${c.other_user.name}">
+                    ${avatarHtml}
                     ${c.unread_count > 0 ? `<span class="side-chat-badge">${c.unread_count > 9 ? '9+' : c.unread_count}</span>` : ''}
                 </div>
             `;
@@ -61,12 +70,12 @@ class SideChatMenu {
 
         this.list.querySelectorAll('.side-chat-item').forEach(item => {
             item.addEventListener('click', () => {
-                this.openPopup(item.dataset.id, item.dataset.name);
+                this.openPopup(item.dataset.id, item.dataset.name, item.dataset.photo);
             });
         });
     }
 
-    openPopup(conversationId, name) {
+    openPopup(conversationId, name, photoUrl) {
         if (this.activePopups.has(conversationId)) {
             const popup = this.activePopups.get(conversationId);
             popup.maximize();
@@ -74,7 +83,7 @@ class SideChatMenu {
             return;
         }
 
-        const popup = new ChatPopup(conversationId, name, this);
+        const popup = new ChatPopup(conversationId, name, photoUrl, this);
         this.activePopups.set(conversationId, popup);
     }
 
@@ -86,7 +95,7 @@ class SideChatMenu {
             const data = JSON.parse(e.data);
             if (data.type === 'new_message' || data.type === 'unread_count') {
                 this.loadRecentChats();
-                
+
                 // If message is for an open popup, it will be handled by the popup's own socket
             }
         };
@@ -102,24 +111,33 @@ class SideChatMenu {
 }
 
 class ChatPopup {
-    constructor(conversationId, name, parentManager) {
+    constructor(conversationId, name, photoUrl, parentManager) {
         this.conversationId = conversationId;
         this.name = name;
+        this.photoUrl = photoUrl; // Store photo URL
         this.manager = parentManager;
         this.socket = null;
         this.element = null;
-        
+
         this.render();
         this.init();
     }
 
     render() {
         const initials = this.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+        let avatarHtml;
+        if (this.photoUrl && this.photoUrl !== 'null' && this.photoUrl !== 'undefined') {
+            avatarHtml = `<div class="chat-popup-avatar"><img src="${this.photoUrl}" alt="${initials}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div>`;
+        } else {
+            avatarHtml = `<div class="chat-popup-avatar">${initials}</div>`;
+        }
+
         const html = `
             <div class="chat-popup" id="popup-${this.conversationId}">
                 <div class="chat-popup-header">
                     <div class="chat-popup-info">
-                        <div class="chat-popup-avatar">${initials}</div>
+                        ${avatarHtml}
                         <span class="chat-popup-name">${this.name}</span>
                     </div>
                     <div class="chat-popup-actions">
