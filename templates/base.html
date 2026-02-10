@@ -734,7 +734,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default: 0 }};
+        const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>
