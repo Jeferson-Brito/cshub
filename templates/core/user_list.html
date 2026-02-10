@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Usuários - Nexus{% endblock %}
 
@@ -45,8 +45,8 @@
                 </label>
                 <select name="role" class="form-control">
                     <option value="">Todos os perfis</option>
-                    <option value="gestor" {% if request.GET.role=='gestor' %}selected{% endif %}>Gestor</option>
-                    <option value="analista" {% if request.GET.role=='analista' %}selected{% endif %}>Analista</option>
+                    <option value="gestor" {% if request.GET.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                    <option value="analista" {% if request.GET.role == 'analista' %}selected{% endif %}>Analista</option>
                 </select>
             </div>
             {% if request.user.is_administrador %}
@@ -57,7 +57,7 @@
                 <select name="department" class="form-control">
                     <option value="">Todos os departamentos</option>
                     {% for dept in departments %}
-                    <option value="{{ dept.id }}" {% if request.GET.department==dept.id|stringformat:"i" %}selected{%
+                    <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{%
                         endif %}>
                         {{ dept.name }}
                     </option>
@@ -71,8 +71,8 @@
                 </label>
                 <select name="status" class="form-control">
                     <option value="">Todos</option>
-                    <option value="ativo" {% if request.GET.status=='ativo' %}selected{% endif %}>Ativo</option>
-                    <option value="inativo" {% if request.GET.status=='inativo' %}selected{% endif %}>Inativo</option>
+                    <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+                    <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex align-items-end gap-2">
@@ -224,4 +224,3 @@
     </div>
 </div>
 {% endblock %}
-{# validation fix #}
