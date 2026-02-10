@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 {% load static %}
+{% load user_tags %}
 <html lang="pt-BR">
 
 <head>
@@ -482,7 +483,6 @@
 
                 <!-- User Profile -->
                 <div class="header-user dropdown">
-                    {% load user_tags %}
                     <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle no-arrow"
                         id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.profile_photo %}
