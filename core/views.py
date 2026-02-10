@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from collections import defaultdict
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -1206,7 +1207,7 @@ def user_create(request):
     return render(request, 'core/user_form.html', {
         'form_type': 'create',
         'departments': departments,
-        'form_data': {}
+        'form_data': defaultdict(str)
     })
 
 
@@ -1292,7 +1293,7 @@ def user_edit(request, pk):
         'form_type': 'edit',
         'target_user': user_to_edit,
         'departments': departments,
-        'form_data': {}
+        'form_data': defaultdict(str)
     })
 
 
