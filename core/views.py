@@ -1206,7 +1206,7 @@ def user_create(request):
     return render(request, 'core/user_form.html', {
         'form_type': 'create',
         'departments': departments,
-        'form_data': None
+        'form_data': {}
     })
 
 
@@ -1292,7 +1292,7 @@ def user_edit(request, pk):
         'form_type': 'edit',
         'target_user': user_to_edit,
         'departments': departments,
-        'form_data': None
+        'form_data': {}
     })
 
 
