@@ -1116,7 +1116,7 @@ def user_create(request):
         password = request.POST.get('password')
         role = request.POST.get('role', 'analista')
         department_id = request.POST.get('department')
-        ativo = request.POST.get('ativo') == 'on'
+        ativo = request.POST.get('is_active') == 'on'
         first_name = request.POST.get('first_name', '')
         last_name = request.POST.get('last_name', '')
         profile_photo = request.FILES.get('profile_photo')
@@ -1246,7 +1246,7 @@ def user_edit(request, pk):
             else:
                 user_to_edit.department = None
         
-        user_to_edit.ativo = request.POST.get('ativo') == 'on'
+        user_to_edit.ativo = request.POST.get('is_active') == 'on'
         user_to_edit.first_name = request.POST.get('first_name', '')
         user_to_edit.last_name = request.POST.get('last_name', '')
         
