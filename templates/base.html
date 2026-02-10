@@ -482,12 +482,17 @@
 
                 <!-- User Profile -->
                 <div class="header-user dropdown">
+                    {% load user_tags %}
                     <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle no-arrow"
                         id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="user-avatar-small rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                            style="width: 36px; height: 36px; font-weight: 600;">
-                            {{ user.username|first|upper }}
+                        {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}" alt="{{ user.get_full_name|default:user.username }}"
+                            class="user-photo me-2">
+                        {% else %}
+                        <div class="user-photo-placeholder me-2">
+                            {{ user|get_user_initials }}
                         </div>
+                        {% endif %}
                         <div class="user-info d-none d-lg-block text-end me-2">
                             <div class="fw-semibold text-dark">{{ user.username }}</div>
                         </div>
@@ -729,7 +734,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {{ user.id|default:0 }};
+        const currentUserId = {{ user.id|default: 0 }};
         const currentUserName = "{{ user.username }}";
     </script>
     <script src="{% static 'js/floating_chat.js' %}"></script>

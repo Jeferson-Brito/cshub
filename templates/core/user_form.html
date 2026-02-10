@@ -27,8 +27,36 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+
+                    <!-- Foto de Perfil -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-camera"></i> Foto de Perfil
+                        </label>
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-photo-preview mb-3">
+                                    {% if target_user and target_user.profile_photo %}
+                                    <img src="{{ target_user.profile_photo.url }}" alt="Foto atual" id="photoPreview"
+                                        class="user-photo-large">
+                                    {% else %}
+                                    <div class="user-photo-large-placeholder" id="photoPreview">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <input type="file" class="form-control" name="profile_photo" id="profilePhotoInput"
+                                    accept="image/jpeg,image/png,image/jpg">
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> Formatos aceitos: JPG, JPEG, PNG (máx. 5MB)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -190,5 +218,33 @@
             }
         }
     }
+
+    // Preview da foto de perfil
+    document.getElementById('profilePhotoInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('photoPreview');
+
+        if (file) {
+            // Validar tamanho (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('A imagem deve ter no máximo 5MB');
+                e.target.value = '';
+                return;
+            }
+
+            // Validar tipo
+            if (!file.type.match('image/(jpeg|jpg|png)')) {
+                alert('Apenas imagens JPG, JPEG ou PNG são aceitas');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                preview.innerHTML = '<img src="' + event.target.result + '" alt="Preview" class="user-photo-large">';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 </script>
 {% endblock %}

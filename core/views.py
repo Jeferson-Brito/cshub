@@ -1118,6 +1118,7 @@ def user_create(request):
         ativo = request.POST.get('ativo') == 'on'
         first_name = request.POST.get('first_name', '')
         last_name = request.POST.get('last_name', '')
+        profile_photo = request.FILES.get('profile_photo')
         
         # Restrições de Gestor
         if (request.user.is_gestor() or request.user.is_administrador()):
@@ -1171,6 +1172,11 @@ def user_create(request):
             first_name=first_name,
             last_name=last_name
         )
+        
+        # Adicionar foto de perfil se fornecida
+        if profile_photo:
+            user.profile_photo = profile_photo
+            user.save()
 
         # Integração Escala NRS Suporte
         if role == 'analista' and department and department.name == 'NRS Suporte':
@@ -1225,6 +1231,7 @@ def user_edit(request, pk):
         user_to_edit.email = request.POST.get('email')
         role = request.POST.get('role')
         department_id = request.POST.get('department')
+        profile_photo = request.FILES.get('profile_photo')
         
         # Administrador pode mudar tudo, Gestor não muda role nem depto
         if request.user.is_administrador():
@@ -1240,6 +1247,10 @@ def user_edit(request, pk):
         user_to_edit.ativo = request.POST.get('ativo') == 'on'
         user_to_edit.first_name = request.POST.get('first_name', '')
         user_to_edit.last_name = request.POST.get('last_name', '')
+        
+        # Atualizar foto de perfil se fornecida
+        if profile_photo:
+            user_to_edit.profile_photo = profile_photo
         
         password = request.POST.get('password')
         if password:

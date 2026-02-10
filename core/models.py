@@ -23,6 +23,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='analista')
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     ativo = models.BooleanField(default=True)
+    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True, verbose_name='Foto de Perfil')
     
     def is_gestor(self):
         return self.role == 'gestor'
@@ -32,6 +33,16 @@ class User(AbstractUser):
     
     def is_administrador(self):
         return self.role == 'administrador'
+    
+    def get_initials(self):
+        """Retorna as iniciais do usuário para usar como fallback do avatar"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name[0]}{self.last_name[0]}".upper()
+        elif self.first_name:
+            return self.first_name[0].upper()
+        elif self.username:
+            return self.username[0].upper()
+        return "?"
 
 
 class Store(models.Model):

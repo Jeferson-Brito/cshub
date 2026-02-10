@@ -4005,3 +4005,105 @@ body.dark-theme .chat-popup-input {
 .badge.bg-primary {
     color: white !important;
 }
+
+/* ============================================
+   ESTILOS PARA FOTOS DE PERFIL DE USUÁRIOS
+   ============================================ */
+
+/* Foto de perfil circular padrão (pequena) */
+.user-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--light-gray);
+    background: var(--light-color);
+}
+
+/* Foto de perfil circular média */
+.user-photo-md {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--light-gray);
+    background: var(--light-color);
+}
+
+/* Foto de perfil grande (para formulários e perfis) */
+.user-photo-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--light-gray);
+    box-shadow: var(--shadow-md);
+    background: var(--light-color);
+}
+
+/* Placeholder quando não há foto */
+.user-photo-placeholder,
+.user-photo-md-placeholder,
+.user-photo-large-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 700;
+    border: 2px solid var(--light-gray);
+}
+
+.user-photo-placeholder {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.user-photo-md-placeholder {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+}
+
+.user-photo-large-placeholder {
+    width: 150px;
+    height: 150px;
+    font-size: 60px;
+}
+
+.user-photo-large-placeholder i {
+    font-size: 100px;
+    opacity: 0.9;
+}
+
+/* Container de preview de foto */
+.profile-photo-preview {
+    width: 150px;
+    margin: 0 auto;
+}
+
+/* Wrapper do avatar circular (para usar com iniciais ou foto) */
+.avatar-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+/* Quando o avatar tem foto */
+.avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Quando é só texto (iniciais) */
+.avatar-circle.text-initials {
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 700;
+}

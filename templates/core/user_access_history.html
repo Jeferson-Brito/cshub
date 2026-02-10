@@ -39,15 +39,20 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% load user_tags %}
                     {% for stat in user_stats %}
                     {% if stat.total_logins > 0 %}
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="avatar-circle me-2 bg-light text-primary fw-bold"
-                                    style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    {{ stat.username|first|upper }}
+                                {% if stat.profile_photo %}
+                                <img src="{{ stat.profile_photo.url }}"
+                                    alt="{{ stat.get_full_name|default:stat.username }}" class="user-photo me-2">
+                                {% else %}
+                                <div class="user-photo-placeholder me-2">
+                                    {{ stat|get_user_initials }}
                                 </div>
+                                {% endif %}
                                 <div>
                                     <div class="fw-bold">{{ stat.get_full_name|default:stat.username }}</div>
                                     <small class="text-muted">{{ stat.email }}</small>
