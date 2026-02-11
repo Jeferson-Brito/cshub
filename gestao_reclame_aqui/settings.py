@@ -183,8 +183,10 @@ if AWS_ACCESS_KEY_ID:
                 "bucket_name": AWS_STORAGE_BUCKET_NAME,
                 "endpoint_url": AWS_S3_ENDPOINT_URL,
                 "region_name": AWS_S3_REGION_NAME,
-                "default_acl": "public-read",
                 "querystring_auth": False,
+                "file_overwrite": False,
+                "addressing_style": "path",
+                "custom_domain": f"{AWS_S3_ENDPOINT_URL.replace('https://', '').split('.')[0]}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}",
                 "object_parameters": {
                     "CacheControl": "max-age=86400",
                 },
