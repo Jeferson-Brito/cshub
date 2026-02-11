@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",
 
     # terceiros
     "channels",
@@ -163,6 +164,46 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # ==============================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Supabase Storage (S3 Compatible)
+AWS_ACCESS_KEY_ID = get_env("AWS_ACCESS_KEY_ID")
+
+if AWS_ACCESS_KEY_ID:
+    AWS_SECRET_ACCESS_KEY = get_env("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = get_env("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = get_env("AWS_S3_ENDPOINT_URL")
+    AWS_S3_REGION_NAME = get_env("AWS_S3_REGION_NAME", "sa-east-1")
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "endpoint_url": AWS_S3_ENDPOINT_URL,
+                "region_name": AWS_S3_REGION_NAME,
+                "default_acl": "public-read",
+                "querystring_auth": False,
+                "object_parameters": {
+                    "CacheControl": "max-age=86400",
+                },
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    # Local Storage
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # ==============================
 # DEFAULT PK
