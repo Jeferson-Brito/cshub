@@ -2389,10 +2389,15 @@ def verificacao_lojas(request):
     
     # 1. Base QuerySet
     # Tab handling
+    search_query = request.GET.get('q')
     tab = request.GET.get('tab', 'all')  # DEFAULT: 'all' (Lojas Ativas)
     
-    # If tab is 'suspended', include inactive stores. Otherwise, only active.
-    if tab == 'suspended':
+    # If searching, search EVERYTHING (Active + Inactive) and force List View
+    if search_query:
+        stores_queryset = Store.objects.all().order_by('code')
+        tab = 'all' # Force 'all' tab to ensure list view is rendered
+    # If NOT searching, respect tab filters (Active vs Suspended)
+    elif tab == 'suspended':
         stores_queryset = Store.objects.filter(active=False).order_by('code')
     else:
         stores_queryset = Store.objects.filter(active=True).order_by('code')
