@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prepare image display
             let imageHTML = '';
             if (!crit.value && crit.imagem) {
-                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded evidence-image shadow-sm" style="max-width: 200px; max-height: 150px; border: 2px solid #dc3545; cursor: pointer;" onclick="openImageLightbox('${crit.imagem}')" title="Clique para ampliar"></div>`;
+                imageHTML = `<div class="mt-2"><a href="${crit.imagem}" target="_blank" title="Abrir imagem em nova guia"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded evidence-image shadow-sm" style="max-width: 200px; max-height: 150px; border: 2px solid #dc3545; cursor: pointer;"></a></div>`;
             }
 
             criteriosHTML += `
@@ -1465,14 +1465,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Inicializar preview na carga
     updatePreview();
-
-    // Função para abrir imagem em lightbox
-    window.openImageLightbox = function (imageSrc) {
-        const lightboxImg = document.getElementById('lightboxImage');
-        lightboxImg.src = imageSrc;
-        const modal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
-        modal.show();
-    };
 
     // Definir data de hoje como padrão
     const dataInput = document.getElementById('data_atendimento');
