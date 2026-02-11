@@ -593,6 +593,8 @@
                                 <th class="ps-4 py-3">Cód. Loja</th>
                                 <th>Status Operacional</th>
 
+                                <th class="text-center">Auditorias (Mês)</th>
+
                                 <th>Última Auditoria</th>
 
                                 <th>Situação</th>
@@ -659,6 +661,10 @@
                                         </span>
                                     </div>
                                     {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary rounded-pill px-3">{{ store.audits_this_month_count
+                                        }}</span>
                                 </td>
                                 <td>
                                     {% if not store.active and store.suspension_reason %}

@@ -2451,6 +2451,20 @@ def verificacao_lojas(request):
             Q(city__icontains=search_query)
         )
 
+    # 3.1 Annotate with Monthly Audit Count
+    from django.db.models import Count, Q
+    from django.utils import timezone
+    
+    now = timezone.now()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    stores_queryset = stores_queryset.annotate(
+        audits_this_month_count=Count(
+            'audits', 
+            filter=Q(audits__created_at__gte=start_of_month)
+        )
+    )
+
     # 4. Pagination
     paginator = Paginator(stores_queryset, 25)  # 25 items per page
     page_number = request.GET.get('page')
