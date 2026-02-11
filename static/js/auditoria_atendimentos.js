@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id}, this)" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
@@ -550,6 +550,20 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
 
             tbody.appendChild(tr);
+
+            // Hidden Details Row (Colspan 8 because of the extra 'Analista' column in main list)
+            const trDetails = document.createElement('tr');
+            trDetails.id = `details-${aud.id}`;
+            trDetails.style.display = 'none';
+            trDetails.className = 'details-row';
+            trDetails.innerHTML = `
+                <td colspan="8" class="p-0 border-0">
+                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                        <!-- Content loaded via JS -->
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(trDetails);
         });
     }
 
