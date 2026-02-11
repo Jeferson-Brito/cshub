@@ -827,9 +827,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateAndShowEditForm(aud) {
 
         // Fechar modal
-        const modalEl = document.getElementById('modalDetalhes');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        modal.hide();
+
 
         // Preencher formulário
         document.getElementById('data_atendimento').value = aud.data_atendimento.split('T')[0];
