@@ -518,6 +518,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         auditorias.forEach(aud => {
             const tr = document.createElement('tr');
+            // Make row clickable
+            tr.style.cursor = 'pointer';
+            tr.onclick = (e) => viewDetails(aud.id, e);
+
             if (aud.requer_acao) {
                 tr.classList.add('row-alert');
             }
@@ -537,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id}, this)" title="Ver detalhes">
+                    <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
@@ -609,12 +613,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // DETALHES DA AUDITORIA (ACCORDION)
     // ========================================
 
-    window.viewDetails = function (id, btn) {
+    window.viewDetails = function (id, event) {
+        // Ignorar cliques em botões de ação (editar/excluir) exceto o próprio botão de ver detalhes
+        if (event && event.target) {
+            const target = event.target.closest('button');
+            if (target && target.getAttribute('onclick') && !target.getAttribute('onclick').includes('viewDetails')) {
+                return;
+            }
+        }
+
         const detailsRow = document.getElementById(`details-${id}`);
         if (!detailsRow) return;
 
-        // Toggle icon
-        const icon = btn.querySelector('i');
+        // Find the toggle button in the main row to update its icon
+        // The main row is the previous sibling of the details row
+        const mainRow = detailsRow.previousElementSibling;
+        const btn = mainRow ? mainRow.querySelector('button[onclick*="viewDetails"]') : null;
+        const icon = btn ? btn.querySelector('i') : null;
+
         const isHidden = detailsRow.style.display === 'none';
 
         if (isHidden) {
@@ -625,8 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Highlight active row
-            const parentRow = btn.closest('tr');
-            if (parentRow) parentRow.classList.add('table-active');
+            if (mainRow) mainRow.classList.add('table-active');
 
             const container = detailsRow.querySelector('.details-container');
             // Only fetch if empty (first time opening)
@@ -637,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            renderDetailsContent(data.auditoria, container);
+                            renderDetailsContent(data.auditoria, container, id);
                         } else {
                             container.innerHTML = '<div class="alert alert-danger m-3">Erro ao carregar detalhes.</div>';
                         }
@@ -655,12 +670,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Remove highlight
-            const parentRow = btn.closest('tr');
-            if (parentRow) parentRow.classList.remove('table-active');
+            if (mainRow) mainRow.classList.remove('table-active');
         }
     };
 
-    function renderDetailsContent(aud, container) {
+    function renderDetailsContent(aud, container, id) {
         const dataFormatada = formatDate(aud.data_atendimento);
         const badgeClass = `badge-${aud.classificacao}`;
 
@@ -778,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             
             <div class="d-flex justify-content-end pt-3 border-top">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="viewDetails(${aud.id}, document.querySelector('#details-${aud.id}').previousElementSibling.querySelector('button'))">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="viewDetails(${aud.id}, event)">
                     <i class="bi bi-eye-slash me-1"></i>Fechar Detalhes
                 </button>
                 ${aud.can_edit ? `<button type="button" class="btn btn-sm btn-primary" onclick="editAudit(${aud.id})"><i class="bi bi-pencil me-1"></i>Editar Auditoria</button>` : ''}
@@ -1348,6 +1362,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         auditorias.forEach(aud => {
             const tr = document.createElement('tr');
+            // Make row clickable
+            tr.style.cursor = 'pointer';
+            tr.onclick = (e) => viewDetails(aud.id, e);
+
             if (aud.requer_acao) {
                 tr.classList.add('row-alert');
             }
@@ -1366,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id}, this)" title="Ver detalhes">
+                    <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
