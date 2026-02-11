@@ -1118,6 +1118,9 @@ class DailyAuditQuota(models.Model):
     
     # Auditorias realizadas neste dia
     audits_completed = models.IntegerField(default=0, verbose_name="Auditorias Realizadas")
+
+    # Quota extra manual (adicionada pelo gestor apenas para este dia)
+    extra_quota = models.IntegerField(default=0, verbose_name="Quota Extra")
     
     # Metadados
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1291,10 +1294,13 @@ class DailyAuditQuota(models.Model):
             divisor = max(1, working_days_remaining)
             
             import math
-            # Meta diária = teto(auditorias pendentes / dias úteis restantes)
+            # Meta diária = teto(auditorias pendentes / dias úteis restantes) + extra_quota
             # Isso garante que se faltam 5 auditorias e tem 2 dias, faz 3 hoje e 2 amanhã
             daily_target = math.ceil(total_pending_audits / divisor)
             
+            # Adicionar a quota extra manual
+            daily_target += self.extra_quota
+
             return int(daily_target)
             
         except Exception as e:

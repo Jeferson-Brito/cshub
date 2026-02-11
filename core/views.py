@@ -2555,7 +2555,7 @@ def api_store_detail(request, store_id):
                 'city': store.city or 'Não informada',
                 'active': store.active,
                 'needs_reverification': store.needs_reverification,
-                'last_audit_date': last_audit.created_at.strftime('%d/%m/%Y %H:%M') if last_audit else None,
+                'last_audit_date': timezone.localtime(last_audit.created_at).strftime('%d/%m/%Y %H:%M') if last_audit else None,
                 'last_audit_result': store.last_audit_result,
                 'analyst_name': last_audit.analyst.get_full_name() or last_audit.analyst.username if last_audit else None,
             }

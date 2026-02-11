@@ -917,6 +917,7 @@ def api_get_analysts_overview(request):
                 
                 # Status da loja para o detalhe
                 assigned_stores_list.append({
+                    'id': ass.store.id,
                     'assignment_id': ass.id,
                     'code': ass.store.code,
                     'city': ass.store.city,
@@ -1420,3 +1421,52 @@ def api_get_all_analysts_monthly_kpi(request):
         'success': True,
         'analysts': all_analysts_data
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_override_daily_quota(request):
+    """
+    API para permitir que um gestor aumente o limite diário de um analista.
+    Isso é feito adicionando lojas à 'extra_quota' do dia.
+    """
+    if request.user.role not in ['gestor', 'administrador']:
+        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+        
+    try:
+        import json
+        from .models import DailyAuditQuota
+        
+        data = json.loads(request.body)
+        analyst_id = data.get('analyst_id')
+        store_ids = data.get('store_ids', [])
+        
+        if not analyst_id:
+            return JsonResponse({'success': False, 'error': 'Analista obrigatório'}, status=400)
+            
+        analyst = get_object_or_404(User, id=analyst_id)
+        
+        # Obter quota de hoje
+        quota = DailyAuditQuota.get_or_create_today(analyst)
+        
+        # Adicionar quantidade de lojas selecionadas à quota extra
+        extra_count = len(store_ids)
+        quota.extra_quota += extra_count
+        quota.save()
+        
+        # Forçar recálculo da meta diária
+        # O método calculate_daily_target já inclui self.extra_quota
+        quota.daily_quota = quota.calculate_daily_target()
+        quota.save()
+        
+        # Enviar mensagem no chat (simulado ou real se houver sistema de chat)
+        # Aqui apenas retornamos sucesso
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Limite de {analyst.get_full_name()} aumentado em {extra_count} lojas para hoje.',
+            'new_target': quota.daily_quota
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
