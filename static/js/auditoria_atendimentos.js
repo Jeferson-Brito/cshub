@@ -562,9 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
             trDetails.className = 'details-row';
             trDetails.innerHTML = `
                 <td colspan="8" class="p-0 border-0">
-                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
-                        <!-- Content loaded via JS -->
-                    </div>
+                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);"></div>
                 </td>
             `;
             tbody.appendChild(trDetails);
