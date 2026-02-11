@@ -31,3 +31,11 @@ def has_profile_photo(user):
     Verifica se o usuário tem uma foto de perfil válida.
     """
     return hasattr(user, 'profile_photo') and user.profile_photo and bool(user.profile_photo.name)
+
+
+@register.simple_tag
+def monthly_audit_count(store):
+    """
+    Retorna a contagem de auditorias do mês para a loja.
+    """
+    return getattr(store, 'audits_this_month_count', 0)
