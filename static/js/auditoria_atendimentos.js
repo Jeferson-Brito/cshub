@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const container = detailsRow.querySelector('.details-container');
             // Only fetch if empty (first time opening)
-            if (!container.innerHTML.trim()) {
+            if (container.children.length === 0) {
                 container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
 
                 fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
@@ -1403,9 +1403,7 @@ document.addEventListener('DOMContentLoaded', function () {
             trDetails.className = 'details-row';
             trDetails.innerHTML = `
                 <td colspan="7" class="p-0 border-0">
-                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
-                        <!-- Content loaded via JS -->
-                    </div>
+                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);"></div>
                 </td>
             `;
             tbody.appendChild(trDetails);
