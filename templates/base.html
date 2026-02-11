@@ -506,6 +506,10 @@
                         <i class="bi bi-chevron-down text-secondary" style="font-size: 0.8rem;"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
+                        {% if user.role == 'gestor' or user.role == 'administrador' %}
+                        <li><a class="dropdown-item" href="{% url 'user_list' %}"><i
+                                    class="bi bi-people me-2"></i>Usuários</a></li>
+                        {% endif %}
                         <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i>
                                 Configurações</a></li>
                         <li>
