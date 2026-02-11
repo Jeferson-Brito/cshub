@@ -2451,19 +2451,7 @@ def verificacao_lojas(request):
             Q(city__icontains=search_query)
         )
 
-    # 3.1 Annotate with Monthly Audit Count
-    from django.db.models import Count, Q
-    from django.utils import timezone
-    
-    now = timezone.now()
-    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    stores_queryset = stores_queryset.annotate(
-        audits_this_month_count=Count(
-            'audits', 
-            filter=Q(audits__created_at__gte=start_of_month)
-        )
-    )
+    # Annonation removed - calculated in loop below for safety
 
     # 4. Pagination
     paginator = Paginator(stores_queryset, 25)  # 25 items per page
@@ -2472,6 +2460,19 @@ def verificacao_lojas(request):
     
     # 5. Eager Load Latest Audits for CURRENT PAGE only (Performance Fix)
     page_store_ids = [store.id for store in page_obj]
+    
+    # Calculate Monthly Counts (Explicitly)
+    from django.utils import timezone
+    from django.db.models import Count
+    now = timezone.now()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    monthly_counts = StoreAudit.objects.filter(
+        store_id__in=page_store_ids,
+        created_at__gte=start_of_month
+    ).values('store_id').annotate(count=Count('id'))
+    
+    monthly_counts_map = {item['store_id']: item['count'] for item in monthly_counts}
     
     # Fetch latest audits (optimized)
     # Using window function or grouping in Python is needed for 'top N per group'
@@ -2494,6 +2495,8 @@ def verificacao_lojas(request):
     # Attach stats manually to avoid template queries
     for store in page_obj:
         store.latest_audit = latest_audits.get(store.id)
+        store.audits_this_month_count = monthly_counts_map.get(store.id, 0)
+        
         
         # Determine status for UI badge
         if not store.active:
