@@ -372,13 +372,12 @@
     </div>
 
     <!-- Top Header -->
-    <header class="header d-flex align-items-center px-3 border-bottom bg-white" id="header"
+    <header class="header d-flex align-items-center px-4 border-bottom bg-white" id="header"
         style="position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 1030;">
 
         <!-- Logo -->
         <a href="{% url 'dashboard' %}" class="d-flex align-items-center text-decoration-none me-4">
-            <div class="brand-logo me-2">N</div>
-            <div class="brand-text">Nexus</div>
+            <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" style="height: 45px;">
         </a>
 
         <button class="btn btn-link text-secondary d-lg-none" id="headerSidebarToggle" title="Alternar Menu">
