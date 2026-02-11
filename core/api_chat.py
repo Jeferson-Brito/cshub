@@ -155,17 +155,32 @@ def api_messages_list(request, conv_id):
         
         data = []
         for msg in messages_list:
+            # Safe URL generation
+            sender_photo_url = None
+            if msg.sender.profile_photo:
+                try:
+                    sender_photo_url = msg.sender.profile_photo.url
+                except Exception:
+                    pass
+
+            file_url = None
+            if msg.attachment:
+                try:
+                    file_url = msg.attachment.url
+                except Exception:
+                    pass
+
             data.append({
                 'id': msg.id,
                 'content': msg.content,
                 'sender_id': msg.sender_id,
                 'sender_name': msg.sender.get_full_name() or msg.sender.username,
                 'sender_initials': get_initials(msg.sender),
-                'sender_profile_photo_url': msg.sender.profile_photo.url if msg.sender.profile_photo else None,
+                'sender_profile_photo_url': sender_photo_url,
                 'is_mine': msg.sender_id == request.user.id,
                 'created_at': msg.created_at.strftime('%H:%M'),
                 'created_at_full': msg.created_at.strftime('%d/%m/%Y %H:%M'),
-                'file_url': msg.attachment.url if msg.attachment else None,
+                'file_url': file_url,
                 'file_name': msg.file_name,
                 'is_read': msg.is_read,
                 'edited_at': msg.edited_at.strftime('%H:%M') if msg.edited_at else None,
