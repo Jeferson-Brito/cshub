@@ -195,7 +195,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'content': message.content,
             'sender_id': message.sender.id,
             'sender_name': message.sender.get_full_name() or message.sender.username,
-            'sender_initials': self.get_initials(message.sender),
+            'sender_photo_url': message.sender.profile_photo.url if message.sender.profile_photo else None,
             'created_at': message.created_at.strftime('%H:%M'),
             'is_read': message.is_read
         }

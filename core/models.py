@@ -1160,7 +1160,10 @@ class DailyAuditQuota(models.Model):
         Recalcula a meta diária automaticamente.
         """
         from django.utils import timezone
-        today = timezone.now().date()
+        
+        # FIX: Use local time instead of UTC to determine "today"
+        # This prevents audits done late in the evening (after 21:00 BRT) from counting as tomorrow
+        today = timezone.localtime(timezone.now()).date()
         
         quota, created = cls.objects.get_or_create(
             analyst=analyst,
@@ -1169,6 +1172,8 @@ class DailyAuditQuota(models.Model):
         )
         
         # Recalcular quota diária (pode mudar se lojas forem atribuídas/removidas durante o dia)
+        # Recalculate if created OR if audits_completed is 0 (to catch up) OR purely to ensure up-to-date
+        # Always recalculating is safer to catch assignment changes
         quota.daily_quota = quota.calculate_daily_target()
         quota.save()
         
@@ -1218,10 +1223,14 @@ class DailyAuditQuota(models.Model):
     def calculate_daily_target(self):
         """Calcula meta diária do analista baseado em lojas pendentes e dias DE TRABALHO restantes"""
         from django.utils import timezone
+        from django.db.models import Count
         from datetime import timedelta, datetime
         
         try:
-            today = timezone.now().date()
+            # Determine today in Local Time
+            today = self.date 
+            # If self.date is just a date, it is timezone naive usually, but semantically it represents the local date
+            # We need to make sure we are comparing apples to apples.
             
             # Se HOJE for folga, meta é 0
             if not self.is_working_day(today):
@@ -1234,67 +1243,64 @@ class DailyAuditQuota(models.Model):
             
             # Calcular início da semana (segunda-feira)
             start_of_week = today - timedelta(days=today.weekday())
-            start_datetime = timezone.make_aware(
-                datetime.combine(start_of_week, datetime.min.time())
-            )
             
-            # Definir início de HOJE para excluir auditorias de hoje do cálculo de "pendentes antes de hoje"
-            today_start = timezone.make_aware(
-                datetime.combine(today, datetime.min.time())
-            )
+            # Create timezone-aware datetime for start of the week (Midnight Monday)
+            current_tz = timezone.get_current_timezone()
+            start_datetime = datetime.combine(start_of_week, datetime.min.time())
+            start_datetime = timezone.make_aware(start_datetime, current_tz)
             
-            # Buscar lojas verificadas esta semana (ANTES de hoje)
-            # A meta deve ser baseada no que faltava no INÍCIO do dia
-            stores_verified_before_today = set()
+            # Calculate total pending audits across all assignments
+            total_pending_audits = 0
+            
+            # Optimize: Get all audits for this analyst for this week in one query
+            # Group by store_id
+            weekly_audits_qs = StoreAudit.objects.filter(
+                analyst=self.analyst,
+                created_at__gte=start_datetime
+            ).values('store_id').annotate(count=Count('id'))
+            
+            # Map store_id -> audit_count
+            audits_map = {item['store_id']: item['count'] for item in weekly_audits_qs}
+            
             for assignment in assignments:
-                week_audits = StoreAudit.objects.filter(
-                    analyst=self.analyst,
-                    store=assignment.store,
-                    created_at__gte=start_datetime,
-                    created_at__lt=today_start  # Apenas até o inicio de hoje
-                ).exists()
+                # How many audits done for this specific store this week?
+                store_audits_done = audits_map.get(assignment.store.id, 0)
                 
-                if week_audits:
-                    stores_verified_before_today.add(assignment.store.id)
+                # How many are remaining based on weekly target?
+                remaining = max(0, assignment.weekly_target - store_audits_done)
+                
+                total_pending_audits += remaining
             
-            total_stores = assignments.count()
-            # Pendentes são: Total - Verificadas ANTES de hoje
-            # As verificadas HOJE contam como "parte da meta", não reduzem a meta em si
-            pending_stores = total_stores - len(stores_verified_before_today)
-            
-            if pending_stores <= 0:
+            if total_pending_audits == 0:
                 return 0
 
             # Calcular dias ÚTEIS restantes na semana (Hoje até Domingo)
-            # Iterar de hoje até domingo e contar quantos são work_days
-            days_until_sunday = (6 - today.weekday()) % 7 # Dias restantes EXCLUINDO hoje? Não, incluindo hoje se não trabalhou?
-            # A lógica original era: stores / days_remaining.
-            # Se hoje é segunda e faltam 10 lojas e trabalho seg, ter, qua, qui, sex. (5 dias) -> 2 lojas/dia.
+            # 0=Seg, 1=Ter, ..., 4=Sex, 5=Sab, 6=Dom
             
-            # Vamos iterar de HOJE até DOMINGO
-            working_days_count = 0
-            current_iter_date = today
-            
-            # Loop até domingo
-            days_to_check = (6 - current_iter_date.weekday()) + 1 # +1 para incluir hoje
+            working_days_remaining = 0
+            # Check today and future days up to Sunday
+            # +1 because range is exclusive
+            days_to_check = (6 - today.weekday()) + 1 
             
             for i in range(days_to_check):
                 date_check = today + timedelta(days=i)
                 if self.is_working_day(date_check):
-                    working_days_count += 1
+                    working_days_remaining += 1
             
-            # Garantir divisor mínimo de 1 para não dividir por zero
-            divisor = max(1, working_days_count)
+            # Garantir divisor mínimo de 1
+            divisor = max(1, working_days_remaining)
             
-            # Meta diária = lojas pendentes / dias úteis restantes
-            daily_target = max(1, round(pending_stores / divisor))
+            import math
+            # Meta diária = teto(auditorias pendentes / dias úteis restantes)
+            # Isso garante que se faltam 5 auditorias e tem 2 dias, faz 3 hoje e 2 amanhã
+            daily_target = math.ceil(total_pending_audits / divisor)
             
-            return daily_target
+            return int(daily_target)
             
         except Exception as e:
             # Fallback seguro para evitar crash do dashboard
             print(f"Erro ao calcular meta diária: {e}")
-            return 0
+            return 5 # Default safe value
     
     def increment_audits(self):
         """Incrementa contador de auditorias realizadas hoje"""
