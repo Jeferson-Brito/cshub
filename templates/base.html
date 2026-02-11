@@ -372,8 +372,15 @@
     </div>
 
     <!-- Top Header -->
-    <header class="header d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white"
-        id="header">
+    <header class="header d-flex align-items-center px-3 border-bottom bg-white" id="header"
+        style="position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 1030;">
+
+        <!-- Logo -->
+        <a href="{% url 'dashboard' %}" class="d-flex align-items-center text-decoration-none me-4">
+            <div class="brand-logo me-2">N</div>
+            <div class="brand-text">Nexus</div>
+        </a>
+
         <button class="btn btn-link text-secondary" id="headerSidebarToggle" title="Alternar Menu">
             <i class="bi bi-list fs-4"></i>
         </button>
@@ -449,7 +456,7 @@
     {% endif %}
 
     <!-- Conteúdo Principal -->
-    <div class="{% if user.is_authenticated %}main-content{% endif %}">
+    <div class="{% if user.is_authenticated %}main-content{% endif %}" style="padding-top: 80px;">
         {% if user.is_authenticated %}
         <!-- Header antigo removido -->
         {% endif %}
