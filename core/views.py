@@ -17,7 +17,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification
 from .forms import ComplaintForm, StoreForm
 
 
@@ -2966,3 +2966,26 @@ def auditoria_atendimentos_view(request):
         'is_analista': request.user.is_analista(),
     }
     return render(request, 'core/auditoria_atendimentos.html', context)
+
+@login_required
+def api_get_system_notifications(request):
+    """
+    API para retornar as últimas notificações do sistema.
+    Retorna JSON com lista de notificações ativas.
+    """
+    notifications = SystemNotification.objects.filter(is_active=True).order_by('-created_at')[:5]
+    
+    data = []
+    for notification in notifications:
+        data.append({
+            'id': notification.id,
+            'title': notification.title,
+            'message': notification.message,
+            'details': notification.details,
+            'category': notification.get_category_display(),
+            'category_code': notification.category,
+            'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
+            'timestamp': notification.created_at.timestamp()
+        })
+        
+    return JsonResponse({'notifications': data})
