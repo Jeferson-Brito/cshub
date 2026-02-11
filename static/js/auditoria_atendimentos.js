@@ -601,23 +601,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success) {
                     showDetailsModal(data.auditoria);
-
-                    // Fix z-index when opening modal on top of another modal
-                    const analystModal = document.getElementById('modalAnalistaAudits');
-                    if (analystModal && analystModal.classList.contains('show')) {
-                        // Set higher z-index for detail modal and its backdrop after delay to allow backdrop creation
-                        setTimeout(() => {
-                            const detailModal = document.getElementById('modalDetalhes');
-                            if (detailModal) detailModal.style.zIndex = '2060';
-
-                            // Get all backdrops (should include the new one)
-                            const backdrops = document.querySelectorAll('.modal-backdrop');
-                            if (backdrops.length > 1) {
-                                // The last backdrop belongs to the detail modal -> z-index 2055 to sit above everything else
-                                backdrops[backdrops.length - 1].style.zIndex = '2055';
-                            }
-                        }, 200);
-                    }
                 }
             })
             .catch(error => console.error('Erro:', error));
@@ -722,7 +705,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const modalFooter = document.querySelector('#modalDetalhes .modal-footer');
         if (modalFooter) modalFooter.innerHTML = footerHtml;
 
-        const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
+        const modalElement = document.getElementById('modalDetalhes');
+        // Ensure it's above everything else, especially if opened from another modal
+        modalElement.style.zIndex = '10600';
+
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
 
         // Salvar referência da auditoria atual para edição

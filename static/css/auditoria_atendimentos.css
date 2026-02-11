@@ -438,6 +438,21 @@
     background-color: #fff;
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
+    /* Ensure pseudo-element is positioned relative to card */
+}
+
+/* Pseudo-element to prevent flickering on hover */
+.analista-card::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    /* Cover the gap created by translateY + buffer */
+    height: 10px;
+    opacity: 0;
+    pointer-events: auto;
 }
 
 .analista-card:hover {
