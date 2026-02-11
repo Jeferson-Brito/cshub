@@ -592,23 +592,61 @@ document.addEventListener('DOMContentLoaded', function () {
     window.loadAuditorias = loadAuditorias;
 
     // ========================================
-    // DETALHES DA AUDITORIA
+    // DETALHES DA AUDITORIA (ACCORDION)
     // ========================================
 
-    window.viewDetails = function (id) {
-        fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showDetailsModal(data.auditoria);
-                }
-            })
-            .catch(error => console.error('Erro:', error));
+    window.viewDetails = function (id, btn) {
+        const detailsRow = document.getElementById(`details-${id}`);
+        if (!detailsRow) return;
+
+        // Toggle icon
+        const icon = btn.querySelector('i');
+        const isHidden = detailsRow.style.display === 'none';
+
+        if (isHidden) {
+            detailsRow.style.display = 'table-row';
+            if (icon) {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+
+            // Highlight active row
+            const parentRow = btn.closest('tr');
+            if (parentRow) parentRow.classList.add('table-active');
+
+            const container = detailsRow.querySelector('.details-container');
+            // Only fetch if empty (first time opening)
+            if (!container.innerHTML.trim()) {
+                container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+
+                fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            renderDetailsContent(data.auditoria, container);
+                        } else {
+                            container.innerHTML = '<div class="alert alert-danger m-3">Erro ao carregar detalhes.</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        container.innerHTML = '<div class="alert alert-danger m-3">Erro de conexão.</div>';
+                    });
+            }
+        } else {
+            detailsRow.style.display = 'none';
+            if (icon) {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+
+            // Remove highlight
+            const parentRow = btn.closest('tr');
+            if (parentRow) parentRow.classList.remove('table-active');
+        }
     };
 
-    function showDetailsModal(aud) {
-        const content = document.getElementById('detalhes-content');
-
+    function renderDetailsContent(aud, container) {
         const dataFormatada = formatDate(aud.data_atendimento);
         const badgeClass = `badge-${aud.classificacao}`;
 
@@ -628,25 +666,27 @@ document.addEventListener('DOMContentLoaded', function () {
         criterios.forEach(crit => {
             const statusClass = crit.value ? 'success' : 'error';
             const statusIcon = crit.value ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-danger"></i>';
+            const bgClass = crit.value ? 'bg-success-subtle' : 'bg-danger-subtle';
+            const borderClass = crit.value ? 'border-success' : 'border-danger';
 
             // Prepare error message
             let errorHTML = '';
             if (!crit.value && crit.erro) {
-                errorHTML = `<p class="mb-0 mt-1 text-danger"><small><strong>Erro:</strong> ${crit.erro}</small></p>`;
+                errorHTML = `<p class="mb-0 mt-2 text-danger p-2 bg-white rounded shadow-sm border border-danger-subtle"><i class="bi bi-exclamation-circle me-1"></i><small><strong>Erro:</strong> ${crit.erro}</small></p>`;
             }
 
             // Prepare image display
             let imageHTML = '';
             if (!crit.value && crit.imagem) {
-                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded evidence-image" style="max-width: 100%; max-height: 300px; border: 2px solid #dc3545; cursor: pointer;" onclick="openImageLightbox('${crit.imagem}')" title="Clique para ampliar"></div>`;
+                imageHTML = `<div class="mt-2"><img src="${crit.imagem}" alt="Evidência" class="img-fluid rounded evidence-image shadow-sm" style="max-width: 200px; max-height: 150px; border: 2px solid #dc3545; cursor: pointer;" onclick="openImageLightbox('${crit.imagem}')" title="Clique para ampliar"></div>`;
             }
 
             criteriosHTML += `
-                <div class="criterio-detail ${statusClass}">
+                <div class="criterio-detail mb-2 p-3 rounded ${bgClass} border ${borderClass} border-opacity-25">
                     <div class="d-flex align-items-start">
-                        <div class="me-2">${statusIcon}</div>
+                        <div class="me-3 fs-5">${statusIcon}</div>
                         <div class="flex-grow-1">
-                            <strong>${crit.nome}</strong>
+                            <strong class="text-dark">${crit.nome}</strong>
                             ${errorHTML}
                             ${imageHTML}
                         </div>
@@ -655,62 +695,81 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         });
 
-        content.innerHTML = `
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <p><strong>Data:</strong> ${dataFormatada}</p>
-                    <p><strong>ID Conversa:</strong> ${aud.id_conversa}</p>
-                    <p><strong>Tipo:</strong> ${aud.tipo_atendimento}</p>
+        container.innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-5">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Resumo da Auditoria</h6>
+                    <div class="card border-0 bg-white shadow-sm mb-3">
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Data do Atendimento</small>
+                                    <span class="fw-semibold">${dataFormatada}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">ID Conversa</small>
+                                    <span class="fw-semibold text-primary">#${aud.id_conversa}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Tipo</small>
+                                    <span class="badge bg-light text-dark border">${aud.tipo_atendimento}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Data Auditoria</small>
+                                    <span>${new Date(aud.created_at).toLocaleDateString('pt-BR')}</span>
+                                </div>
+                                <div class="col-12 mt-2 pt-2 border-top">
+                                    <small class="text-muted d-block">Analista</small>
+                                    <span class="fw-semibold">${aud.analista_auditado.nome_completo}</span>
+                                </div>
+                                ${aud.auditor ? `
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Auditado por</small>
+                                    <span>${aud.auditor.nome_completo}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <div class="p-2 bg-white rounded shadow-sm border">
+                                <small class="text-muted d-block text-uppercase" style="font-size:0.65rem">Pontuação</small>
+                                <span class="h5 mb-0 fw-bold">${aud.pontuacao}/9</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-white rounded shadow-sm border">
+                                <small class="text-muted d-block text-uppercase" style="font-size:0.65rem">Nota</small>
+                                <span class="h5 mb-0 fw-bold text-primary">${aud.nota.toFixed(1)}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-white rounded shadow-sm border">
+                                <small class="text-muted d-block text-uppercase" style="font-size:0.65rem">Classificação</small>
+                                <span class="badge ${badgeClass} mt-1">${aud.classificacao_display}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${aud.requer_acao ? '<div class="alert alert-danger mt-3 shadow-sm border-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Atenção:</strong> Esta auditoria requer discussão.</div>' : ''}
                 </div>
-                <div class="col-md-6">
-                    <p><strong>Analista:</strong> ${aud.analista_auditado.nome_completo}</p>
-                    ${aud.auditor ? `<p><strong>Auditor:</strong> ${aud.auditor.nome_completo}</p>` : ''}
-                    <p><strong>Data Auditoria:</strong> ${new Date(aud.created_at).toLocaleDateString('pt-BR')}</p>
+                
+                <div class="col-md-7">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3">Critérios Avaliados</h6>
+                    <div class="criterios-list" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                        ${criteriosHTML}
+                    </div>
                 </div>
             </div>
             
-            <div class="alert alert-info mb-3">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <h6>Pontuação</h6>
-                        <h4>${aud.pontuacao}/9</h4>
-                    </div>
-                    <div class="col-4">
-                        <h6>Nota</h6>
-                        <h4>${aud.nota.toFixed(1)}</h4>
-                    </div>
-                    <div class="col-4">
-                        <h6>Classificação</h6>
-                        <h4><span class="badge ${badgeClass}">${aud.classificacao_display}</span></h4>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-end pt-3 border-top">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="viewDetails(${aud.id}, document.querySelector('#details-${aud.id}').previousElementSibling.querySelector('button'))">
+                    <i class="bi bi-eye-slash me-1"></i>Fechar Detalhes
+                </button>
+                ${aud.can_edit ? `<button type="button" class="btn btn-sm btn-primary" onclick="editAudit(${aud.id})"><i class="bi bi-pencil me-1"></i>Editar Auditoria</button>` : ''}
             </div>
-            
-            <h6 class="mb-3">Critérios Avaliados:</h6>
-            ${criteriosHTML}
-            
-            ${aud.requer_acao ? '<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-triangle me-2"></i><strong>Alerta:</strong> Esta auditoria requer discussão com o analista.</div>' : ''}
         `;
-
-        // Adicionar botões de ação se permitido
-        let footerHtml = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
-
-        if (aud.can_edit) {
-            footerHtml += `<button type="button" class="btn btn-primary ms-2" onclick="editAudit(${aud.id})">Editar</button>`;
-        }
-        if (aud.can_delete) {
-            footerHtml += `<button type="button" class="btn btn-danger ms-2" onclick="deleteAudit(${aud.id})">Excluir</button>`;
-        }
-
-        const modalFooter = document.querySelector('#modalDetalhes .modal-footer');
-        if (modalFooter) modalFooter.innerHTML = footerHtml;
-
-        const modalElement = document.getElementById('modalDetalhes');
-        // Ensure it's above everything else, especially if opened from another modal
-        modalElement.style.zIndex = '10600';
-
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
 
         // Salvar referência da auditoria atual para edição
         state.currentAudit = aud;
@@ -1293,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})" title="Ver detalhes">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id}, this)" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
@@ -1306,6 +1365,20 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
 
             tbody.appendChild(tr);
+
+            // Hidden Details Row
+            const trDetails = document.createElement('tr');
+            trDetails.id = `details-${aud.id}`;
+            trDetails.style.display = 'none';
+            trDetails.className = 'details-row';
+            trDetails.innerHTML = `
+                <td colspan="7" class="p-0 border-0">
+                    <div class="details-container p-4 bg-light border-bottom shadow-inner" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                        <!-- Content loaded via JS -->
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(trDetails);
         });
     }
 
