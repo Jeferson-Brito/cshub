@@ -44,7 +44,6 @@ CSRF_TRUSTED_ORIGINS = [
 # APPLICATIONS
 # ==============================
 INSTALLED_APPS = [
-    "daphne",  # WebSocket server (deve vir primeiro)
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -53,8 +52,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "storages",
 
-    # terceiros
-    "channels",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
@@ -266,24 +263,4 @@ LOGGING = {
     },
 }
 
-# ==============================
-# CHANNELS (WEBSOCKETS)
-# ==============================
-ASGI_APPLICATION = "gestao_reclame_aqui.asgi.application"
 
-# Para desenvolvimento local, usamos InMemoryChannelLayer
-# Em produção, usar Redis:
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("127.0.0.1", 6379)],
-#         },
-#     },
-# }
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
