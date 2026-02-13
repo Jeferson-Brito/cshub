@@ -9,7 +9,7 @@ from . import api_tasks
 from . import api_desempenho
 from . import api_refunds
 from . import api_stores
-from . import api_chat
+# from . import api_chat  # Removed
 from . import api_kanban
 from . import api_store_verification
 from . import api_auditoria
@@ -193,19 +193,7 @@ urlpatterns = [
     path('api/store-verification/manager/all-analysts-kpi/', api_store_verification.api_get_all_analysts_monthly_kpi, name='api_get_all_analysts_monthly_kpi'),
     path('api/store-verification/analyst/override-quota/', api_store_verification.api_override_daily_quota, name='api_override_daily_quota'),
     
-    # Chat
-    path('chat/', views.chat_view, name='chat'),
-    path('api/chat/conversations/', api_chat.api_conversations_list, name='api_conversations_list'),
-    path('api/chat/conversations/start/', api_chat.api_conversation_start, name='api_conversation_start'),
-    path('api/chat/conversations/<int:conv_id>/messages/', api_chat.api_messages_list, name='api_messages_list'),
-    path('api/chat/conversations/<int:conv_id>/send/', api_chat.api_message_send, name='api_message_send'),
-    path('api/chat/conversations/<int:conv_id>/read/', api_chat.api_messages_read, name='api_messages_read'),
-    path('api/chat/users/', api_chat.api_chat_users, name='api_chat_users'),
-    path('api/chat/upload/', api_chat.api_chat_upload, name='api_chat_upload'),
-    path('api/chat/messages/<int:msg_id>/edit/', api_chat.api_message_edit, name='api_message_edit'),
-    path('api/chat/messages/<int:msg_id>/delete/', api_chat.api_message_delete, name='api_message_delete'),
-    path('api/chat/unread-count/', api_chat.api_unread_count, name='api_unread_count'),
-    path('api/chat/heartbeat/', api_chat.api_heartbeat, name='api_heartbeat'),
+    # Chat - REMOVED
     
     # Kanban API
     path('api/kanban/boards/', api_kanban.api_boards, name='api_kanban_boards'),

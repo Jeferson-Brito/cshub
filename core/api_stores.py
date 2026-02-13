@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @require_http_methods(["POST"])
 def api_store_presence_heartbeat(request, store_id):
     """Register or update heartbeat for user viewing a store"""
+    logger.info(f"[HEARTBEAT_START] Processing heartbeat for store {store_id} by user {request.user.username}")
     try:
         store = Store.objects.get(id=store_id)
         

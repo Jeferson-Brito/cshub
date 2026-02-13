@@ -702,6 +702,7 @@ def get_daily_quota_info(analyst):
 @require_http_methods(["GET"])
 def api_get_analyst_dashboard(request):
     """Retorna métricas para o dashboard do analista"""
+    logger.info(f"[DASHBOARD_START] generating dashboard for user {request.user.username}")
     start_time = time.time()
     analyst_id = request.GET.get('analyst_id')
     

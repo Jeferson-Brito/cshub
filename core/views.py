@@ -2955,10 +2955,7 @@ def import_stores_xlsx(request):
 # CHAT
 # ========================================
 
-@login_required
-def chat_view(request):
-    """Página principal do sistema de chat"""
-    return render(request, 'core/chat.html')
+
 
 
 # ========================================
