@@ -175,7 +175,7 @@ def api_auditoria_list(request):
             return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
         # Base queryset
-        queryset = AuditoriaAtendimento.objects.filter(department=department)
+        queryset = AuditoriaAtendimento.objects.filter(department=department).select_related('analista_auditado', 'auditor')
 
         # Se for analista, filtrar apenas as suas próprias auditorias
         if request.user.is_analista():
@@ -597,12 +597,17 @@ def api_dashboard_auditoria(request):
         nota_media_geral = auditorias.aggregate(Avg('nota'))['nota__avg'] or 0
         
         # Distribuição por classificação
+        # Distribuição por classificação - Otimizado (1 query em vez de 4)
+        dist_data = auditorias.values('classificacao').annotate(total=Count('id'))
         distribuicao = {
-            'excelente': auditorias.filter(classificacao='excelente').count(),
-            'bom': auditorias.filter(classificacao='bom').count(),
-            'regular': auditorias.filter(classificacao='regular').count(),
-            'insatisfatorio': auditorias.filter(classificacao='insatisfatorio').count(),
+            'excelente': 0,
+            'bom': 0,
+            'regular': 0,
+            'insatisfatorio': 0
         }
+        for item in dist_data:
+            if item['classificacao'] in distribuicao:
+                distribuicao[item['classificacao']] = item['total']
         
         # Analistas com alertas
         analistas_com_alertas = auditorias.filter(requer_acao=True).values(
