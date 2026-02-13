@@ -15,6 +15,10 @@ from .models import (
     Store, StoreAudit, StoreAuditIssue, StoreAuditItem,
     AnalystAssignment, User
 )
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -698,6 +702,7 @@ def get_daily_quota_info(analyst):
 @require_http_methods(["GET"])
 def api_get_analyst_dashboard(request):
     """Retorna métricas para o dashboard do analista"""
+    start_time = time.time()
     analyst_id = request.GET.get('analyst_id')
     
     # Se não foi especificado analista, usa o usuário logado
@@ -817,6 +822,10 @@ def api_get_analyst_dashboard(request):
     # Buscar data da última auditoria realizada
     last_audit = StoreAudit.objects.filter(analyst=analyst).order_by('-created_at').first()
     last_audit_date = last_audit.created_at.strftime('%d/%m/%Y %H:%M') if last_audit else None
+
+    total_time = time.time() - start_time
+    if total_time > 1.0:
+        logger.warning(f"[DASHBOARD_PERF] Dashboard generation for analyst {analyst_id} took {total_time:.2f}s. Total stores: {total_stores}")
 
     return JsonResponse({
         'success': True,

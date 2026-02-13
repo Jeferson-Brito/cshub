@@ -8,6 +8,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
 from .models import Store, StoreViewerSession, StoreAudit
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -23,7 +26,8 @@ def api_store_presence_heartbeat(request, store_id):
             try:
                 data = json.loads(request.body)
                 is_auditing = data.get('is_auditing', False)
-            except:
+            except Exception as e:
+                logger.warning(f"[HEARTBEAT_WARN] Failed to parse JSON body: {e}")
                 pass
         
         # Create or update session
@@ -48,6 +52,7 @@ def api_store_presence_heartbeat(request, store_id):
     except Store.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Loja não encontrada'}, status=404)
     except Exception as e:
+        logger.error(f"[HEARTBEAT_ERROR] Unexpected error for store {store_id}: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
