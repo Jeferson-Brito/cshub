@@ -117,7 +117,7 @@ DATABASES = {
         "PASSWORD": get_env("DB_PASSWORD", ""),
         "HOST": get_env("DB_HOST", "aws-1-us-east-2.pooler.supabase.com"),
         "PORT": get_env("DB_PORT", "5432"),
-        "CONN_MAX_AGE": 600,  # Manter conexões por 10 min para evitar overhead de SSL
+        "CONN_MAX_AGE": 60,  # Reduzido para 60s para evitar conexões presas em caso de restart
     }
 }
 

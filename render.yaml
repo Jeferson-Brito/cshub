@@ -3,7 +3,7 @@ services:
     name: cshub
     runtime: python
     buildCommand: "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput --no-post-process"
-    startCommand: "python manage.py migrate && gunicorn gestao_reclame_aqui.wsgi:application --timeout 120"
+    startCommand: "python manage.py migrate && gunicorn gestao_reclame_aqui.wsgi:application --worker-class gthread --workers 4 --threads 4 --timeout 90"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.6"
