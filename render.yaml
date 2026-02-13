@@ -2,7 +2,7 @@ services:
   - type: web
     name: cshub
     runtime: python
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    buildCommand: "python -m pip install --upgrade pip && python -m pip install -r requirements.txt && python manage.py collectstatic --noinput"
     startCommand: "python manage.py migrate && gunicorn gestao_reclame_aqui.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
