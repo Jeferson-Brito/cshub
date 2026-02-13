@@ -118,9 +118,6 @@ DATABASES = {
         "HOST": get_env("DB_HOST", "aws-1-us-east-2.pooler.supabase.com"),
         "PORT": get_env("DB_PORT", "5432"),
         "CONN_MAX_AGE": 0,  # No persistent connections - Supabase pooler manages this
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
     }
 }
 
