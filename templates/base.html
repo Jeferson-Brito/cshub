@@ -627,25 +627,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Check notifications/chat every 60 seconds (optimized)
-            // only if the page is visible to save server resources
-            const pollAll = () => {
-                if (document.visibilityState === 'visible') {
-                    checkNotifications();
-                }
-            };
-
-            setInterval(pollAll, 60000);
-
-            // Check when tab becomes visible
-            document.addEventListener("visibilitychange", () => {
-                if (document.visibilityState === "visible") {
-                    pollAll();
-                }
-            });
-
-            // Initial calls
-            pollAll();
+            // Removed chat polling
         });
 
 

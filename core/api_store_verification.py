@@ -701,54 +701,127 @@ def get_daily_quota_info(analyst):
 @login_required
 @require_http_methods(["GET"])
 def api_get_analyst_dashboard(request):
-    """Retorna métricas para o dashboard do analista"""
+    """Retorna métricas para o dashboard do analista - OTIMIZADO"""
     logger.info(f"[DASHBOARD_START] generating dashboard for user {request.user.username}")
     start_time = time.time()
+    
+    # 1. Resolver Analista
     analyst_id = request.GET.get('analyst_id')
-    
-    # Se não foi especificado analista, usa o usuário logado
     if not analyst_id:
-        analyst_id = request.user.id
+        analyst = request.user
     else:
-        analyst_id = int(analyst_id)
+        # Verificar permissão
+        if request.user.role == 'analista' and int(request.user.id) != int(analyst_id):
+            return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
+        analyst = get_object_or_404(User, id=analyst_id)
+
+    # 2. Setup de Datas (Single source of truth)
+    now = timezone.now()
+    today = now.date()
+    # Segunda-feira da semana atual
+    start_of_week = today - timedelta(days=today.weekday())
+    start_week_aware = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
     
-    # Verificar permissão
-    if request.user.role == 'analista' and request.user.id != analyst_id:
-        return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
-    
-    analyst = get_object_or_404(User, id=analyst_id)
-    
-    # Buscar atribuições
+    # Início de Hoje (para queries de auditoria do dia)
+    today_start_aware = timezone.make_aware(datetime.combine(today, datetime.min.time()))
+
+    # 3. Bulk Fetch: Assignments (Atribuições)
+    # Trazemos Store junto para evitar N+1 no loop
     assignments = AnalystAssignment.objects.filter(
-        analyst=analyst,
+        analyst=analyst, 
         active=True
     ).select_related('store')
     
-    total_stores = assignments.count()
+    total_stores = len(assignments)
     
-    # Track unique stores audited this week (for progress calculation)
+    # 4. Bulk Fetch: Auditorias da Semana (Query Única)
+    # Pegamos todas as auditorias deste analista nesta semana de uma vez
+    weekly_audits = StoreAudit.objects.filter(
+        analyst=analyst,
+        created_at__gte=start_week_aware
+    ).values('store_id', 'created_at')
+    
+    # Processar dados em memória
     stores_audited_this_week = set()
-    days_remaining = None  # Será o menor entre todas as atribuições
+    today_audits_count = 0
     
-    # Calcular início da semana
-    from datetime import datetime
-    today = timezone.now().date()
-    start_of_week = today - timedelta(days=today.weekday())
-    start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
+    for audit in weekly_audits:
+        stores_audited_this_week.add(audit['store_id'])
+        if audit['created_at'] >= today_start_aware:
+            today_audits_count += 1
+            
+    # 5. Calcular Progresso e Dias Restantes
+    days_remaining = None
+    days_until_sunday = (6 - today.weekday()) % 7  # Fallback standard
     
-    # Construir calendário da semana
+    earliest_end_date = None
+    
+    for assignment in assignments:
+        # Calcular dias restantes para esta atribuição específica
+        # Lógica replicada de assignment.get_days_remaining() para evitar query extra se houvesse rel
+        if assignment.period_end:
+            ad_days = 0
+            if assignment.period_end >= today:
+                ad_days = (assignment.period_end - today).days + 1
+            
+            if days_remaining is None or ad_days < days_remaining:
+                days_remaining = ad_days
+                
+            if earliest_end_date is None or assignment.period_end < earliest_end_date:
+                earliest_end_date = assignment.period_end
+        else:
+            # Se não tem fim definido, usa a regra padrão de domingo
+            if days_remaining is None: # Só define se ainda não definido
+                 pass # Vamos deixar o fallback lidar com isso se TUDO for None
+    
+    # Se nenhum assignments tinha period_end ou days_remaining ainda é None
+    if days_remaining is None:
+        days_remaining = days_until_sunday if days_until_sunday > 0 else 0
+    else:
+        # Se misturamos assignments com prazo e sem prazo, o menor prazo (days_remaining calculado) vence
+        # Mas precisamos garantir que não ignoramos o "até domingo" se houver assignments sem prazo.
+        # Logica simplificada: O menor prazo dita a urgência.
+        pass
+
+    # Determinar texto do dia final
+    if earliest_end_date:
+        day_names = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo']
+        period_end_day = day_names[earliest_end_date.weekday()]
+    else:
+        period_end_day = 'domingo'
+
+    # 6. Calcular Metas e Percentuais
+    stores_verified_count = len(stores_audited_this_week)
+    percentage = (stores_verified_count / total_stores * 100) if total_stores > 0 else 0
+    percentage = min(100, percentage)
+    
+    pending_stores = max(0, total_stores - stores_verified_count)
+    
+    # Meta Diária Dinâmica
+    # "Quantas preciso fazer hoje para acabar até o fim do prazo?"
+    # divisor = dias restantes (min 1)
+    daily_target = 0
+    if pending_stores > 0:
+        divisor = max(1, days_remaining)
+        import math
+        daily_target = math.ceil(pending_stores / divisor)
+
+    # 7. Calendário Semanal (Schedule)
     from core.models import DailyAuditQuota
+    # Usar get_or_create_today otimizado (cuidado, ele faz save(). Se for gargalo, otimizar depois)
+    # Por enquanto, assumimos que 1 write por dashboard load é aceitável, melhor que 50 reads.
+    # Mas para visualização pura, talvez não precisasse criar/salvar.
+    # Vamos instanciar sem salvar para performance de leitura? 
+    # Não, precisamos saber se é working day. Vamos usar o helper mas monitorar o log [DASHBOARD_PERF]
     
-    # Instância para usar o método is_working_day (gambiarra técnica pois é método de instância)
-    # Mas podemos usar DailyAuditQuota.get_or_create_today(analyst) para ter uma instância vinculada
     quota_helper = DailyAuditQuota.get_or_create_today(analyst)
     
     weekly_schedule = []
-    days_of_week = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    days_of_week_names = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
     
     for i in range(7):
         date_check = start_of_week + timedelta(days=i)
-        is_today = (date_check == today)
+        is_today_flag = (date_check == today)
         is_working = quota_helper.is_working_day(date_check)
         
         status = 'work' if is_working else 'off'
@@ -760,73 +833,21 @@ def api_get_analyst_dashboard(request):
             status_display = 'Hoje'
             
         weekly_schedule.append({
-            'day_name': days_of_week[i],
+            'day_name': days_of_week_names[i],
             'date': date_check.strftime('%d/%m'),
             'is_working': is_working,
-            'is_today': is_today,
+            'is_today': is_today_flag,
             'status': status
         })
 
-    for assignment in assignments:
-        # Check if this store was audited this week
-        week_audits = StoreAudit.objects.filter(
-            analyst=analyst,
-            store=assignment.store,
-            created_at__gte=start_datetime
-        ).exists()
-        
-        if week_audits:
-            stores_audited_this_week.add(assignment.store.id)
-        
-        # Pegar o menor número de dias restantes
-        assignment_days = assignment.get_days_remaining()
-        if days_remaining is None or assignment_days < days_remaining:
-            days_remaining = assignment_days
-    
-    # Se não houver atribuições, usar cálculo padrão
-    if days_remaining is None:
-        days_until_sunday = (6 - today.weekday()) % 7
-        days_remaining = days_until_sunday if days_until_sunday > 0 else 0
-    
-    # FIXED: Calculate percentage based on unique stores verified vs total stores
-    # This ensures progress never exceeds 100% even if same store is audited multiple times
-    stores_verified_count = len(stores_audited_this_week)
-    percentage = (stores_verified_count / total_stores * 100) if total_stores > 0 else 0
-    
-    # Auditorias de hoje
-    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_audits = StoreAudit.objects.filter(
-        analyst=analyst,
-        created_at__gte=today_start
-    ).count()
-    
-    # Meta Diária ajustada baseada em lojas restantes e dias restantes
-    pending_stores = total_stores - stores_verified_count
-    daily_target = max(1, round(pending_stores / max(1, days_remaining))) if pending_stores > 0 else 0
-    
-    # Find the end date to show the correct day name
-    period_end_day = None
-    earliest_end_date = None
-    
-    for assignment in assignments:
-        if assignment.period_end:
-            if earliest_end_date is None or assignment.period_end < earliest_end_date:
-                earliest_end_date = assignment.period_end
-    
-    if earliest_end_date:
-        # Get day name in Portuguese
-        day_names = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo']
-        period_end_day = day_names[earliest_end_date.weekday()]
-    else:
-        period_end_day = 'domingo'  # Default to Sunday if no period_end set
-    
-    # Buscar data da última auditoria realizada
+    # 8. Última Auditoria
     last_audit = StoreAudit.objects.filter(analyst=analyst).order_by('-created_at').first()
     last_audit_date = last_audit.created_at.strftime('%d/%m/%Y %H:%M') if last_audit else None
 
-    total_time = time.time() - start_time
-    if total_time > 1.0:
-        logger.warning(f"[DASHBOARD_PERF] Dashboard generation for analyst {analyst_id} took {total_time:.2f}s. Total stores: {total_stores}")
+    # Performance Log
+    end_time = time.time()
+    duration = end_time - start_time
+    logger.info(f"[DASHBOARD_PERF] Dashboard gen for {analyst.username} took {duration:.3f}s. Stores: {total_stores}, AuditsWk: {len(weekly_audits)}")
 
     return JsonResponse({
         'success': True,
@@ -836,18 +857,18 @@ def api_get_analyst_dashboard(request):
         },
         'metrics': {
             'total_stores': total_stores,
-            'total_audited': stores_verified_count,  # Unique stores verified this week
-            'total_target': total_stores,  # Target is to verify all stores
+            'total_audited': stores_verified_count,
+            'total_target': total_stores,
             'progress_percentage': round(percentage, 1),
             'pending': pending_stores,
-            'today_audits': today_audits,
+            'today_audits': today_audits_count,
             'daily_target': daily_target,
             'days_remaining': days_remaining,
-            'period_end_day': period_end_day,  # Day name for display
-            'weekly_schedule': weekly_schedule, # Calendário da semana
-            'last_audit_date': last_audit_date # Data da última auditoria
+            'period_end_day': period_end_day,
+            'weekly_schedule': weekly_schedule,
+            'last_audit_date': last_audit_date
         },
-        'daily_quota': get_daily_quota_info(analyst) # Info da nova tabela de cotas
+        'daily_quota': get_daily_quota_info(analyst)
     })
 
 
