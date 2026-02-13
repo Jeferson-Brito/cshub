@@ -369,7 +369,7 @@ def api_notifications_check(request):
     notifications = []
     
     # 1. Novas Tarefas
-    new_tasks = Task.objects.filter(assigned_to=user, notified=False)
+    new_tasks = Task.objects.filter(assigned_to=user, notified=False)[:50]
     for t in new_tasks:
         notifications.append({
             'type': 'new_task',
@@ -381,7 +381,7 @@ def api_notifications_check(request):
         t.save()
         
     # 2. Novas Rotinas
-    new_routines = Routine.objects.filter(assigned_to=user, notified=False)
+    new_routines = Routine.objects.filter(assigned_to=user, notified=False)[:50]
     for r in new_routines:
         notifications.append({
             'type': 'new_routine',
@@ -448,7 +448,7 @@ def api_notifications_check(request):
                 
     # 5. Irregularidades em Auditorias de Loja (Apenas Gestores/Admins)
     if user.role in ['gestor', 'administrador']:
-        new_issues = StoreAuditIssue.objects.filter(status='aberta', notified=False)
+        new_issues = StoreAuditIssue.objects.filter(status='aberta', notified=False)[:50]
         for issue in new_issues:
             store_code = issue.store.code if issue.store else 'Loja Desconhecida'
             notifications.append({
