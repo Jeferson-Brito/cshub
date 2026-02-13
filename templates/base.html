@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v=15.4">
     <link rel="stylesheet" href="{% static 'css/custom_timepicker.css' %}">
-    <link rel="stylesheet" href="{% static 'css/floating_chat.css' %}">
+
 
     <!-- EasyMDE -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
@@ -40,38 +40,12 @@
             border-color: #e5e7eb !important;
             min-height: 150px !important;
         }
-
-        /* Chat Badge */
-        .chat-unread-badge {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-            margin-left: auto;
-        }
     </style>
 </head>
 
 <body>
     {% if user.is_authenticated %}
-    <!-- Side Chat Menu (Bitrix Style) -->
-    <div class="side-chat-menu" id="sideChatMenu">
-        <button class="side-chat-new" id="sideChatNew" title="Nova Conversa">
-            <i class="bi bi-plus-lg"></i>
-        </button>
-        <div id="sideChatList" class="d-flex flex-column align-items-center w-100">
-            <!-- Recent chats will be loaded here -->
-        </div>
-    </div>
 
-    <!-- Chat Popups Container -->
-    <div class="chat-popups-container" id="chatPopupsContainer">
-        <!-- Multiple chat windows will appear here -->
-    </div>
 
     <!-- Mobile Toggle Navbar -->
     <nav class="mobile-navbar d-lg-none">
@@ -642,7 +616,7 @@
         const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
         const currentUserName = "{{ user.username }}";
     </script>
-    <script src="{% static 'js/floating_chat.js' %}"></script>
+
     {% endif %}
     {% block scripts %}{% endblock %}
 
@@ -658,11 +632,6 @@
             const pollAll = () => {
                 if (document.visibilityState === 'visible') {
                     checkNotifications();
-                    if (window.chatWidget && typeof window.chatWidget.updateTotalUnread === 'function') {
-                        window.chatWidget.updateTotalUnread();
-                    } else {
-                        checkChatUnread();
-                    }
                 }
             };
 
@@ -679,35 +648,9 @@
             pollAll();
         });
 
-        // Verifica mensagens nÃ£o lidas do chat e exibe notificaÃ§Ãµes
-        // Usar localStorage para persistir IDs jÃ¡ notificados entre recarregamentos
-        function getNotifiedMessageIds() {
-            try {
-                const stored = localStorage.getItem('notifiedChatMsgIds');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    // Limpar IDs com mais de 24 horas
-                    const now = Date.now();
-                    const filtered = parsed.filter(item => now - item.time < 86400000);
-                    return new Set(filtered.map(item => item.id));
-                }
-            } catch (e) { }
-            return new Set();
-        }
 
-        function saveNotifiedMessageId(msgId) {
-            try {
-                const stored = localStorage.getItem('notifiedChatMsgIds');
-                let items = stored ? JSON.parse(stored) : [];
-                // Limpar IDs antigos (mais de 24 horas)
-                const now = Date.now();
-                items = items.filter(item => now - item.time < 86400000);
-                items.push({ id: msgId, time: now });
-                localStorage.setItem('notifiedChatMsgIds', JSON.stringify(items));
-            } catch (e) { }
-        }
 
-        let notifiedMessageIds = getNotifiedMessageIds();
+
 
         // --------------------------------------------------
         // Sistema de Toast Notifications (Premium SweetAlert2)
@@ -743,51 +686,7 @@
         window.showToast = showGlobalToast;
 
 
-        async function checkChatUnread() {
-            try {
-                const res = await fetch('/api/chat/unread-count/?include_messages=true');
-                if (res.ok) {
-                    const data = await res.json();
-                    const badge = document.getElementById('chatUnreadBadge');
-                    if (badge) {
-                        if (data.count > 0) {
-                            badge.textContent = data.count > 99 ? '99+' : data.count;
-                            badge.style.display = 'inline-block';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    }
 
-                    // Exibe notificaÃ§Ãµes para novas mensagens (nÃ£o lidas e nÃ£o notificadas)
-                    if (data.messages && data.messages.length > 0) {
-                        let playedSound = false;
-                        let delay = 0;
-
-                        data.messages.forEach(msg => {
-                            // Evita notificar a mesma mensagem duas vezes (persiste entre recarregamentos)
-                            if (!notifiedMessageIds.has(msg.id)) {
-                                notifiedMessageIds.add(msg.id);
-                                saveNotifiedMessageId(msg.id);
-
-                                // Exibe toasts com delay para nÃ£o sobrepor
-                                setTimeout(() => {
-                                    showGlobalToast(`<strong>${msg.sender_name}</strong>: ${msg.preview}`, 'info');
-                                }, delay);
-                                delay += 500; // 500ms entre cada toast
-
-                                // Toca som apenas uma vez
-                                if (!playedSound) {
-                                    playNotificationSound();
-                                    playedSound = true;
-                                }
-                            }
-                        });
-                    }
-                }
-            } catch (e) {
-                // Silently fail - chat might not be available
-            }
-        }
 
         async function checkNotifications() {
             try {
