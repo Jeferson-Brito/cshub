@@ -44,6 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
 # APPLICATIONS
 # ==============================
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "storages",
 
+    "channels",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
@@ -261,4 +263,14 @@ LOGGING = {
         "handlers": ["console"],
         "level": "INFO",
     },
+}
+# ==============================
+# CHANNELS (WEBSOCKETS)
+# ==============================
+ASGI_APPLICATION = "gestao_reclame_aqui.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
