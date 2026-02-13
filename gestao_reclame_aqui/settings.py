@@ -118,12 +118,15 @@ DATABASES = {
         "HOST": get_env("DB_HOST", "aws-1-us-east-2.pooler.supabase.com"),
         "PORT": get_env("DB_PORT", "6543"),
         "CONN_MAX_AGE": 0,  # No persistent connections - Supabase pooler best practice
-        "OPTIONS": {
-            "sslmode": "require",
-            "connect_timeout": 15,
-        },
     }
 }
+
+# Force SSL for Supabase Transaction Pooler (prevent build failures on collectstatic)
+if "collectstatic" not in sys.argv:
+    DATABASES["default"]["OPTIONS"] = {
+        "sslmode": "require",
+        "connect_timeout": 15,
+    }
 
 
 print("✓ Banco PostgreSQL configurado", file=sys.stderr)
