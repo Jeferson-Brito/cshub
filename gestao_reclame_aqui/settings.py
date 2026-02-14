@@ -115,7 +115,7 @@ DATABASES = {
         "NAME": get_env("DB_NAME", "postgres"),
         "USER": get_env("DB_USER", "postgres.sepcgocgjbxqqyyyvnpw"),
         "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "aws-1-us-east-2.pooler.supabase.com"),
+        "HOST": get_env("DB_HOST", "db.sepcgocgjbxqqyyyvnpw.supabase.co"),  # Direct Connection
         "PORT": get_env("DB_PORT", "5432"),  # Session Pooler - IPv4 compatible
         "CONN_MAX_AGE": 0,  # No persistent connections - Supabase pooler best practice
         "OPTIONS": {
