@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Acessos - Nexus{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="page-title">
+                <i class="bi bi-clock-history"></i> Histórico de Acessos
+            </h1>
+            <p class="page-subtitle">Monitore os acessos e logins dos usuários no sistema</p>
+        </div>
+        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar para Usuários
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo por Usuário -->
+<div class="card mb-4 fade-in">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-people-fill"></i> Frequência de Acesso por Usuário
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Departamento</th>
+                        <th class="text-center">Total de Logins</th>
+                        <th class="text-end">Último Acesso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% load user_tags %}
+                    {% for stat in user_stats %}
+                    {% if stat.total_logins > 0 %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if stat.profile_photo %}
+                                <img src="{{ stat.profile_photo.url }}"
+                                    alt="{{ stat.get_full_name|default:stat.username }}" class="user-photo me-2">
+                                {% else %}
+                                <div class="user-photo-placeholder me-2">
+                                    {{ stat|get_user_initials }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold">{{ stat.get_full_name|default:stat.username }}</div>
+                                    <small class="text-muted">{{ stat.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if stat.role == 'administrador' %}
+                            <span class="badge bg-danger rounded-pill">Administrador</span>
+                            {% elif stat.role == 'gestor' %}
+                            <span class="badge bg-warning text-dark rounded-pill">Gestor</span>
+                            {% else %}
+                            <span class="badge bg-info text-white rounded-pill">Analista</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ stat.department.name|default:"-" }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ stat.total_logins }}</span>
+                        </td>
+                        <td class="text-end">
+                            {% if stat.last_login_audit %}
+                            {{ stat.last_login_audit|date:"d/m/Y H:i" }}
+                            <br>
+                            <small class="text-muted">{{ stat.last_login_audit|timesince }} atrás</small>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Detalhados -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul"></i> Registro Detalhado de Logins
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Data e Hora</th>
+                        <th>Usuário</th>
+                        <th>Ação</th>
+                        <th>Detalhes (IP / Agente)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in page_obj %}
+                    <tr>
+                        <td style="width: 180px;">{{ log.created_at|date:"d/m/Y H:i:s" }}</td>
+                        <td>
+                            <strong>{{ log.usuario.get_full_name|default:log.usuario.username }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Login</span>
+                        </td>
+                        <td class="text-muted small">
+                            {% if log.detalhes_json %}
+                            <i class="bi bi-laptop"></i> {{ log.detalhes_json.ip|default:"-" }}
+                            <span class="d-none d-lg-inline"> | {{ log.detalhes_json.user_agent|truncatechars:50 }}
+                                <!-- fix --></span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">Ainda não há registros de login.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Navegação" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+                {% endif %}
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

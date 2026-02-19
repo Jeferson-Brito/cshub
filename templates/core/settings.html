@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configurações - Nexus{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="page-title">
+                <i class="bi bi-gear-fill"></i> Configurações
+            </h1>
+            <p class="page-subtitle">Personalize sua experiência no sistema</p>
+        </div>
+        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <!-- Tema -->
+        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.1s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-palette-fill"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Aparência</h5>
+                    <p class="settings-card-subtitle">Personalize o visual do sistema</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <div class="setting-item-modern">
+                    <div class="setting-content">
+                        <div class="setting-icon-modern">
+                            <i class="bi bi-moon-stars-fill"></i>
+                        </div>
+                        <div class="setting-text">
+                            <h6 class="setting-title-modern">Tema Escuro</h6>
+                            <p class="setting-description-modern">Alterne entre tema claro e escuro para melhorar sua
+                                experiência visual e reduzir o cansaço visual</p>
+                        </div>
+                    </div>
+                    <div class="setting-action">
+                        <label class="theme-toggle-modern">
+                            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                            <span class="theme-slider-modern">
+                                <span class="theme-slider-icon">
+                                    <i class="bi bi-sun-fill theme-icon-light"></i>
+                                    <i class="bi bi-moon-fill theme-icon-dark"></i>
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segurança - Alterar Senha -->
+        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.15s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Segurança</h5>
+                    <p class="settings-card-subtitle">Gerencie suas credenciais de acesso</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <form method="post" action="{% url 'settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="change_password" value="true">
+
+                    {% for field in password_form %}
+                    <div class="form-group mb-3">
+                        <label class="form-label small fw-bold text-muted">{{ field.label }}</label>
+                        <div class="input-group">
+                            {{ field }}
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(this)"
+                                tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% if field.help_text %}
+                        <div class="form-text small">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <script>
+                        document.querySelectorAll('input[type="password"]').forEach(input => {
+                            input.classList.add('form-control');
+                        });
+
+                        function togglePassword(btn) {
+                            const input = btn.previousElementSibling;
+                            const icon = btn.querySelector('i');
+                            if (input.type === 'password') {
+                                input.type = 'text';
+                                icon.classList.remove('bi-eye');
+                                icon.classList.add('bi-eye-slash');
+                            } else {
+                                input.type = 'password';
+                                icon.classList.remove('bi-eye-slash');
+                                icon.classList.add('bi-eye');
+                            }
+                        }
+                    </script>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Alterar Senha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notificações -->
+        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.2s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Notificações</h5>
+                    <p class="settings-card-subtitle">Gerencie suas preferências de notificação</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <div class="setting-item-modern">
+                    <div class="setting-content">
+                        <div class="setting-icon-modern">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <div class="setting-text">
+                            <h6 class="setting-title-modern">Notificações do Sistema</h6>
+                            <p class="setting-description-modern">Receba notificações sobre ações importantes,
+                                atualizações e alertas do sistema</p>
+                        </div>
+                    </div>
+                    <div class="setting-action">
+                        <div class="form-check form-switch form-switch-modern">
+                            <input class="form-check-input" type="checkbox" id="notifications-toggle" checked>
+                            <label class="form-check-label" for="notifications-toggle"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exportação -->
+        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.3s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-download"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Exportação de Dados</h5>
+                    <p class="settings-card-subtitle">Exporte os dados do sistema para análise externa</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="export-card-modern">
+                            <div class="export-icon-modern">
+                                <i class="bi bi-list-ul"></i>
+                            </div>
+                            <h6 class="export-title-modern">Reclamações</h6>
+                            <p class="export-description">Exporte todas as reclamações registradas</p>
+                            <div class="export-buttons-modern">
+                                <a href="{% url 'export_complaints_csv' %}" class="btn-export btn-export-csv">
+                                    <i class="bi bi-filetype-csv"></i>
+                                    <span>CSV</span>
+                                </a>
+                                <a href="{% url 'export_complaints_xlsx' %}" class="btn-export btn-export-xlsx">
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                    <span>XLSX</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="export-card-modern">
+                            <div class="export-icon-modern">
+                                <i class="bi bi-shop"></i>
+                            </div>
+                            <h6 class="export-title-modern">Lojas</h6>
+                            <p class="export-description">Exporte dados das lojas</p>
+                            <div class="export-buttons-modern">
+                                <a href="{% url 'export_stores_csv' %}" class="btn-export btn-export-csv">
+                                    <i class="bi bi-filetype-csv"></i>
+                                    <span>CSV</span>
+                                </a>
+                                <a href="{% url 'export_stores_xlsx' %}" class="btn-export btn-export-xlsx">
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                    <span>XLSX</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% if user.is_gestor or user.is_administrador %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="export-card-modern">
+                            <div class="export-icon-modern">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <h6 class="export-title-modern">Usuários</h6>
+                            <p class="export-description">Exporte dados dos usuários</p>
+                            <div class="export-buttons-modern">
+                                <a href="{% url 'export_users_csv' %}" class="btn-export btn-export-csv">
+                                    <i class="bi bi-filetype-csv"></i>
+                                    <span>CSV</span>
+                                </a>
+                                <a href="{% url 'export_users_xlsx' %}" class="btn-export btn-export-xlsx">
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                    <span>XLSX</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações do Sistema -->
+        <div class="settings-card fade-in" style="animation-delay: 0.4s">
+            <div class="settings-card-header">
+                <div class="settings-icon-wrapper">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <div class="settings-header-content">
+                    <h5 class="settings-card-title">Informações do Sistema</h5>
+                    <p class="settings-card-subtitle">Detalhes sobre sua conta e o sistema</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <div class="info-grid-modern">
+                    <div class="info-item-modern">
+                        <div class="info-icon-modern">
+                            <i class="bi bi-tag-fill"></i>
+                        </div>
+                        <div class="info-content-modern">
+                            <div class="info-label-modern">Versão</div>
+                            <div class="info-value-modern">1.0.0</div>
+                        </div>
+                    </div>
+                    <div class="info-item-modern">
+                        <div class="info-icon-modern">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div class="info-content-modern">
+                            <div class="info-label-modern">Usuário</div>
+                            <div class="info-value-modern">{{ user.get_full_name|default:user.username }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item-modern">
+                        <div class="info-icon-modern">
+                            <i class="bi bi-person-badge-fill"></i>
+                        </div>
+                        <div class="info-content-modern">
+                            <div class="info-label-modern">Perfil</div>
+                            <div class="info-value-modern">{{ user.get_role_display }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item-modern">
+                        <div class="info-icon-modern">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                        <div class="info-content-modern">
+                            <div class="info-label-modern">E-mail</div>
+                            <div class="info-value-modern">{{ user.email }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Carregar tema salvo
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.getElementById('theme-toggle').checked = true;
+        }
+
+        // Carregar preferência de notificações
+        const savedNotifications = localStorage.getItem('notifications');
+        if (savedNotifications !== null) {
+            document.getElementById('notifications-toggle').checked = savedNotifications === 'true';
+        }
+
+        // Animações de entrada
+        const cards = document.querySelectorAll('.settings-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+
+    // Toggle de tema com animação
+    function toggleTheme() {
+        const body = document.body;
+        const toggle = document.getElementById('theme-toggle');
+
+        // Animação suave
+        body.style.transition = 'background 0.3s ease, color 0.3s ease';
+
+        if (toggle.checked) {
+            body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+            showToast('Tema escuro ativado!', 'success');
+        } else {
+            body.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+            showToast('Tema claro ativado!', 'success');
+        }
+
+        setTimeout(() => {
+            body.style.transition = '';
+        }, 300);
+    }
+
+    // Salvar preferência de notificações
+    document.addEventListener('DOMContentLoaded', function () {
+        const notificationsToggle = document.getElementById('notifications-toggle');
+        if (notificationsToggle) {
+            notificationsToggle.addEventListener('change', function () {
+                localStorage.setItem('notifications', this.checked);
+                showToast(
+                    this.checked ? 'Notificações ativadas!' : 'Notificações desativadas!',
+                    'info'
+                );
+            });
+        }
+    });
+</script>
+{% endblock %}

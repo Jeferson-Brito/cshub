@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: cshub
+    runtime: python
+    buildCommand: "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput --no-post-process"
+    startCommand: "gunicorn gestao_reclame_aqui.wsgi:application --workers 4 --threads 4 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120 --graceful-timeout 30"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.6"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: CONN_MAX_AGE
+        value: "60"
+      - key: ALLOWED_HOSTS
+        value: "cshub-deploy.onrender.com,cshub-l8jg.onrender.com,.onrender.com"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false

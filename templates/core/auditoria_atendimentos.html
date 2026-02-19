@@ -1,0 +1,972 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auditoria_atendimentos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0"><i class="bi bi-clipboard-check me-2"></i>{{ title }}</h1>
+            <p class="text-muted">Sistema de avaliação de qualidade de atendimentos</p>
+        </div>
+    </div>
+
+    <!-- Visão Exclusiva do Analista -->
+    {% if is_analista and not is_gestor and not is_admin %}
+    <div class="row mb-4">
+        <!-- Dashboard Cards -->
+        <h4 class="mb-3 text-muted">Meu Desempenho</h4>
+
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-left-excelente h-100 card-dashboard cursor-pointer"
+                onclick="filterAnalystList('excelente')">
+                <div class="card-body text-center">
+                    <h5 class="text-success mb-0 fw-bold">Excelente</h5>
+                    <h2 class="display-4 fw-bold my-2" id="count-excelente">0</h2>
+                    <small class="text-muted">Auditorias</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-left-bom h-100 card-dashboard cursor-pointer"
+                onclick="filterAnalystList('bom')">
+                <div class="card-body text-center">
+                    <h5 class="text-primary mb-0 fw-bold">Bom</h5>
+                    <h2 class="display-4 fw-bold my-2" id="count-bom">0</h2>
+                    <small class="text-muted">Auditorias</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-left-regular h-100 card-dashboard cursor-pointer"
+                onclick="filterAnalystList('regular')">
+                <div class="card-body text-center">
+                    <h5 class="text-warning mb-0 fw-bold">Regular</h5>
+                    <h2 class="display-4 fw-bold my-2" id="count-regular">0</h2>
+                    <small class="text-muted">Auditorias</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm border-left-insatisfatorio h-100 card-dashboard cursor-pointer"
+                onclick="filterAnalystList('insatisfatorio')">
+                <div class="card-body text-center">
+                    <h5 class="text-danger mb-0 fw-bold">Insatisfatório</h5>
+                    <h2 class="display-4 fw-bold my-2" id="count-insatisfatorio">0</h2>
+                    <small class="text-muted">Auditorias</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Auditorias do Analista -->
+    <div class="card shadow-sm" id="analyst-list-container" style="display: none;">
+        <div class="card-header bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="card-header bg-primary text-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-list-ul me-2"></i>Minhas Auditorias - <span
+                                        id="current-filter-label">Todos</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#filtrosAnalistaPanel">
+                                <i class="bi bi-filter me-1"></i>Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="collapse mt-3" id="filtrosAnalistaPanel">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <input type="date" class="form-control form-control-sm" id="filtro_analista_data_inicio"
+                                    placeholder="Data início">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control form-control-sm" id="filtro_analista_data_fim"
+                                    placeholder="Data fim">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-sm btn-primary w-100" id="btnFiltrarAnalista">
+                                    <i class="bi bi-search me-1"></i>Filtrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>ID Conversa</th>
+                                    <th>Tipo</th>
+                                    <th>Pontuação</th>
+                                    <th>Nota</th>
+                                    <th>Classificação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-auditorias-analista">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Tabs de Navegação (Visão Gestor/Admin) -->
+            <ul class="nav nav-tabs mb-4" id="auditoriaTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="cadastrar-tab" data-bs-toggle="tab" data-bs-target="#cadastrar"
+                        type="button" role="tab">
+                        <i class="bi bi-plus-circle me-2"></i>Cadastrar Auditoria
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="lista-tab" data-bs-toggle="tab" data-bs-target="#lista" type="button"
+                        role="tab">
+                        <i class="bi bi-list-ul me-2"></i>Auditorias Realizadas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#ranking"
+                        type="button" role="tab">
+                        <i class="bi bi-trophy me-2"></i>Ranking de Analistas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analistas-tab" data-bs-toggle="tab" data-bs-target="#analistas"
+                        type="button" role="tab">
+                        <i class="bi bi-people me-2"></i>Visão por Analista
+                    </button>
+                </li>
+                {% if is_admin %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button"
+                        role="tab">
+                        <i class="bi bi-gear me-2"></i>Configurações
+                    </button>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Conteúdo das Tabs -->
+            <div class="tab-content" id="auditoriaTabsContent">
+
+                <!-- ABA 1: CADASTRAR AUDITORIA -->
+                <div class="tab-pane fade show active" id="cadastrar" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Nova Auditoria de Atendimento</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="formAuditoria">
+                                {% csrf_token %}
+
+                                <!-- Informações Básicas - Design Moderno -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-3">
+                                        <label for="data_atendimento" class="form-label fw-semibold">
+                                            <i class="bi bi-calendar-event text-primary me-2"></i>Data do Atendimento
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control form-control-lg" id="data_atendimento"
+                                            name="data_atendimento" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="id_conversa" class="form-label fw-semibold">
+                                            <i class="bi bi-hash text-primary me-2"></i>ID da Conversa <span
+                                                class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" id="id_conversa"
+                                            name="id_conversa" placeholder="Ex: #12345" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="tipo_atendimento" class="form-label fw-semibold">
+                                            <i class="bi bi-chat-left-text text-primary me-2"></i>Tipo de Atendimento
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select form-select-lg" id="tipo_atendimento"
+                                            name="tipo_atendimento" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="cliente">👥 Cliente</option>
+                                            <option value="franqueado">🏪 Franqueado</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="analista_auditado_id" class="form-label fw-semibold">
+                                            <i class="bi bi-person-badge text-primary me-2"></i>Analista Responsável
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select form-select-lg" id="analista_auditado_id"
+                                            name="analista_auditado_id" required>
+                                            <option value="">Carregando...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Critérios de Avaliação - Header Melhorado -->
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="mb-0">
+                                        <i class="bi bi-clipboard-check text-primary me-2"></i>
+                                        Critérios de Avaliação
+                                    </h4>
+                                    <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                        <span id="criterios-count">9</span>/9 Aprovados
+                                    </span>
+                                </div>
+
+                                <div id="criterios-container">
+                                    <!-- Critério 1 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="1">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="apresentou_corretamente" name="apresentou_corretamente" checked
+                                                data-erro="erro_apresentacao">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="apresentou_corretamente">
+                                                <i class="bi bi-person-badge text-primary me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                1. Apresentou-se corretamente?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_apresentacao_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_apresentacao"
+                                                name="erro_apresentacao" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_apresentacao" accept="image/*">
+                                            <div id="preview-apresentacao" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('apresentacao')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_apresentacao_url"
+                                                name="imagem_erro_apresentacao">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 2 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="2">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="analisou_historico" name="analisou_historico" checked
+                                                data-erro="erro_historico">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="analisou_historico">
+                                                <i class="bi bi-clock-history text-info me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                2. Analisou o histórico?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_historico_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_historico"
+                                                name="erro_historico" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_historico" accept="image/*">
+                                            <div id="preview-historico" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('historico')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_historico_url"
+                                                name="imagem_erro_historico">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 3 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="3">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="entendeu_solicitacao" name="entendeu_solicitacao" checked
+                                                data-erro="erro_entendimento">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="entendeu_solicitacao">
+                                                <i class="bi bi-bullseye text-success me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                3. Entendeu a solicitação do cliente/franqueado?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_entendimento_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_entendimento"
+                                                name="erro_entendimento" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_entendimento" accept="image/*">
+                                            <div id="preview-entendimento" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('entendimento')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_entendimento_url"
+                                                name="imagem_erro_entendimento">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 4 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="4">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="informacao_clara" name="informacao_clara" checked
+                                                data-erro="erro_informacao">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="informacao_clara">
+                                                <i class="bi bi-lightbulb text-warning me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                4. Passou a informação de forma clara?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_informacao_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_informacao"
+                                                name="erro_informacao" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_informacao" accept="image/*">
+                                            <div id="preview-informacao" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('informacao')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_informacao_url"
+                                                name="imagem_erro_informacao">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 5 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="5">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="acordo_espera" name="acordo_espera" checked
+                                                data-erro="erro_acordo_espera">
+                                            <label class="form-check-label fw-semibold flex-grow-1" for="acordo_espera">
+                                                <i class="bi bi-hourglass-split text-info me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                5. Realizou acordo de espera corretamente?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_acordo_espera_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_acordo_espera"
+                                                name="erro_acordo_espera" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_acordo_espera" accept="image/*">
+                                            <div id="preview-acordo_espera" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('acordo_espera')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_acordo_espera_url"
+                                                name="imagem_erro_acordo_espera">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 6 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="6">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="atendimento_respeitoso" name="atendimento_respeitoso" checked
+                                                data-erro="erro_respeito">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="atendimento_respeitoso">
+                                                <i class="bi bi-heart text-danger me-2" style="font-size: 1.2rem;"></i>
+                                                6. Realizou atendimento de forma respeitosa?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_respeito_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_respeito" name="erro_respeito"
+                                                rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_respeito" accept="image/*">
+                                            <div id="preview-respeito" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('respeito')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_respeito_url"
+                                                name="imagem_erro_respeito">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 7 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="7">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="portugues_correto" name="portugues_correto" checked
+                                                data-erro="erro_portugues">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="portugues_correto">
+                                                <i class="bi bi-spellcheck text-success me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                7. Usou a língua portuguesa de forma correta?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_portugues_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_portugues"
+                                                name="erro_portugues" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_portugues" accept="image/*">
+                                            <div id="preview-portugues" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('portugues')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_portugues_url"
+                                                name="imagem_erro_portugues">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 8 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="8">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="finalizacao_correta" name="finalizacao_correta" checked
+                                                data-erro="erro_finalizacao">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="finalizacao_correta">
+                                                <i class="bi bi-check2-circle text-success me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                8. Realizou finalização do atendimento corretamente?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_finalizacao_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_finalizacao"
+                                                name="erro_finalizacao" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_finalizacao" accept="image/*">
+                                            <div id="preview-finalizacao" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('finalizacao')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_finalizacao_url"
+                                                name="imagem_erro_finalizacao">
+                                        </div>
+                                    </div>
+
+                                    <!-- Critério 9 -->
+                                    <div class="criterio-item mb-3 checked" data-criterio="9">
+                                        <div class="form-check form-switch d-flex align-items-center">
+                                            <input class="form-check-input criterio-switch me-3" type="checkbox"
+                                                id="procedimento_correto" name="procedimento_correto" checked
+                                                data-erro="erro_procedimento">
+                                            <label class="form-check-label fw-semibold flex-grow-1"
+                                                for="procedimento_correto">
+                                                <i class="bi bi-journal-check text-primary me-2"
+                                                    style="font-size: 1.2rem;"></i>
+                                                9. Seguiu o procedimento correto?
+                                            </label>
+                                        </div>
+                                        <div class="erro-descricao mt-3" id="erro_procedimento_container"
+                                            style="display: none;">
+                                            <label class="form-label fw-semibold text-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>Descreva o erro:
+                                            </label>
+                                            <textarea class="form-control mb-2" id="erro_procedimento"
+                                                name="erro_procedimento" rows="2"
+                                                placeholder="Explique detalhadamente o que foi identificado..."></textarea>
+
+                                            <label class="form-label text-muted small">
+                                                <i class="bi bi-image me-1"></i>Evidência (opcional):
+                                            </label>
+                                            <input type="file" class="form-control form-control-sm"
+                                                id="imagem_erro_procedimento" accept="image/*">
+                                            <div id="preview-procedimento" class="mt-2" style="display:none;">
+                                                <div class="position-relative d-inline-block">
+                                                    <img class="img-thumbnail" style="max-height: 120px;">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        onclick="removeImage('procedimento')">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="imagem_erro_procedimento_url"
+                                                name="imagem_erro_procedimento">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Resumo da Avaliação (Barra de Progresso Global) - Design Premium -->
+                                <div class="mt-4 position-relative"
+                                    style="border-radius: 20px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2px;">
+                                    <div class="card border-0"
+                                        style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 18px;">
+                                        <div class="card-body p-4">
+                                            <div class="row align-items-center g-4">
+                                                <!-- Barra de Aprovação -->
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="bi bi-graph-up-arrow me-2"
+                                                            style="font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                        <h6 class="mb-0 text-uppercase"
+                                                            style="font-size: 0.75rem; letter-spacing: 1px; font-weight: 600; color: #64748b;">
+                                                            Aprovação
+                                                        </h6>
+                                                    </div>
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <h3 class="mb-0 me-2 fw-bold" id="percentual-display"
+                                                            style="font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                                            100</h3>
+                                                        <span
+                                                            style="font-size: 1.5rem; font-weight: 600; color: #94a3b8;">%</span>
+                                                    </div>
+                                                    <div class="position-relative"
+                                                        style="height: 14px; background: #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                                                        <div id="progresso-bar" class="h-100 position-relative"
+                                                            role="progressbar"
+                                                            style="width: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%); border-radius: 20px; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);">
+                                                            <div class="position-absolute top-0 start-0 w-100 h-100"
+                                                                style="background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.3) 100%); animation: shimmer 2s infinite;">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Nota Final -->
+                                                <div class="col-md-4">
+                                                    <div class="text-center position-relative">
+                                                        <div class="d-inline-block position-relative">
+                                                            <div
+                                                                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); opacity: 0.1; border-radius: 50%; filter: blur(20px);">
+                                                            </div>
+                                                            <div class="position-relative"
+                                                                style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 50%; width: 110px; height: 110px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1), inset 0 1px 2px rgba(255,255,255,0.8);">
+                                                                <i class="bi bi-star-fill mb-1"
+                                                                    style="font-size: 1.2rem; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                                <h2 class="mb-0 fw-bold" id="nota-display"
+                                                                    style="font-size: 2.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;">
+                                                                    10,0</h2>
+                                                                <small class="text-uppercase"
+                                                                    style="font-size: 0.65rem; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600;">Nota
+                                                                    Final</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Classificação -->
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <div
+                                                            class="d-flex align-items-center justify-content-center mb-2">
+                                                            <i class="bi bi-award me-2"
+                                                                style="font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                                            <h6 class="mb-0 text-uppercase"
+                                                                style="font-size: 0.75rem; letter-spacing: 1px; font-weight: 600; color: #64748b;">
+                                                                Classificação
+                                                            </h6>
+                                                        </div>
+                                                        <div class="d-inline-block position-relative">
+                                                            <span id="classificacao-badge"
+                                                                class="badge d-inline-flex align-items-center gap-2 px-4 py-3"
+                                                                style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); 
+                                                                         font-size: 1.1rem; 
+                                                                         font-weight: 700; 
+                                                                         border-radius: 12px; 
+                                                                         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3), 
+                                                                                     0 1px 3px rgba(0,0,0,0.1); 
+                                                                         letter-spacing: 0.5px;
+                                                                         text-transform: uppercase;
+                                                                         transition: all 0.3s ease;">
+                                                                <i class="bi bi-check-circle-fill"></i>
+                                                                <span>Excelente</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Adicionar animação shimmer no head ou em um elemento style -->
+                                <style>
+                                    @keyframes shimmer {
+                                        0% {
+                                            transform: translateX(-100%);
+                                        }
+
+                                        100% {
+                                            transform: translateX(100%);
+                                        }
+                                    }
+
+                                    #classificacao-badge:hover {
+                                        transform: translateY(-2px);
+                                        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4), 0 2px 5px rgba(0, 0, 0, 0.15);
+                                    }
+
+                                    /* Garantir que as cores adaptam dinamicamente baseado na nota */
+                                    #progresso-bar.success-gradient {
+                                        background: linear-gradient(90deg, #10b981 0%, #34d399 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4) !important;
+                                    }
+
+                                    #progresso-bar.warning-gradient {
+                                        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+                                    }
+
+                                    #progresso-bar.danger-gradient {
+                                        background: linear-gradient(90deg, #ef4444 0%, #f87171 100%) !important;
+                                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
+                                    }
+                                </style>
+
+                                <!-- Botões -->
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-secondary" id="btnLimpar">
+                                        <i class="bi bi-x-circle me-1"></i>Limpar
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-1"></i>Salvar Auditoria
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: AUDITORIAS REALIZADAS -->
+                <div class="tab-pane fade" id="lista" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Auditorias Realizadas</h5>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-sm btn-outline-light" id="btnFiltros">
+                                        <i class="bi bi-filter me-1"></i>Filtros
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Painel de Filtros (recolhível) -->
+                            <div class="collapse mt-3" id="filtrosPanel">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="filtro_analista">
+                                            <option value="">Todos os analistas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="date" class="form-control form-control-sm" id="filtro_data_inicio"
+                                            placeholder="Data início">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="date" class="form-control form-control-sm" id="filtro_data_fim"
+                                            placeholder="Data fim">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select form-select-sm" id="filtro_tipo">
+                                            <option value="">Todos os tipos</option>
+                                            <option value="cliente">Cliente</option>
+                                            <option value="franqueado">Franqueado</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select form-select-sm" id="filtro_classificacao">
+                                            <option value="">Todas classificações</option>
+                                            <option value="excelente">Excelente</option>
+                                            <option value="bom">Bom</option>
+                                            <option value="regular">Regular</option>
+                                            <option value="insatisfatorio">Insatisfatório</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button class="btn btn-sm btn-primary w-100" id="btnAplicarFiltros">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="filtro_apenas_alertas">
+                                    <label class="form-check-label" for="filtro_apenas_alertas">
+                                        <i class="bi bi-exclamation-triangle text-danger"></i> Apenas auditorias com
+                                        alerta
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>ID Conversa</th>
+                                            <th>Tipo</th>
+                                            <th>Analista</th>
+                                            <th>Pontuação</th>
+                                            <th>Nota</th>
+                                            <th>Classificação</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-auditorias">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Carregando...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div id="paginacao" class="d-flex justify-content-between align-items-center">
+                                <!-- Paginação será inserida aqui via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: RANKING DE ANALISTAS -->
+                <div class="tab-pane fade" id="ranking" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Ranking de Analistas</h5>
+                        </div>
+                        <div class="card-body" id="ranking-container">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando ranking...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 4: VISÃO POR ANALISTA -->
+                <div class="tab-pane fade" id="analistas" role="tabpanel">
+                    <div class="row" id="analistas-container">
+                        <div class=" col-12 text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando analistas...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 5: CONFIGURAÇÕES (Admin Only) -->
+                {% if is_admin %}
+                <div class="tab-pane fade" id="config" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Configurações do Sistema</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="formConfig">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="percentual_minimo" class="form-label">
+                                            Percentual Mínimo Aceitável <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="percentual_minimo"
+                                                name="percentual_minimo" min="0" max="100" step="0.01" value="77.78"
+                                                required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Auditorias com nota abaixo deste percentual serão marcadas com alerta.
+                                            <br><strong>Padrão:</strong> 77.78% (equivalente a 7/9 critérios)
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save me-1"></i>Salvar Configurações
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Modal de Detalhes da Auditoria -->
+        <!-- Modal de Detalhes da Auditoria (REMOVIDO - Substituído por Accordion) -->
+        <!-- <div class="modal fade" id="modalDetalhes" ... /> -->
+
+        <!-- Modal de Auditorias do Analista -->
+        <div class="modal fade" id="modalAnalistaAudits" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-person-badge me-2"></i>Auditorias de <span id="analista-name"></span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="loading-analista-audits" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                        </div>
+                        <div id="table-analista-audits" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>ID Conversa</th>
+                                            <th>Tipo</th>
+                                            <th>Pontuação</th>
+                                            <th>Nota</th>
+                                            <th>Classificação</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-auditorias-analista-modal">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="empty-state-analista" class="text-center py-5" style="display: none;">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <p class="text-muted mt-3 mb-0">Nenhuma auditoria encontrada para este analista</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Lightbox Modal -->
+        <!-- Image Lightbox Modal (REMOVIDO - Imagens abrem em nova guia) -->
+        <!-- <div class="modal fade" id="imageLightboxModal" ... /> -->
+
+        {% endblock %}
+
+        {% block scripts %}
+        <script src="{% static 'js/auditoria_atendimentos.js' %}"></script>
+        {% endblock %}
