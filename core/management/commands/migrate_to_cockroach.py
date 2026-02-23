@@ -103,81 +103,72 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.MIGRATE_HEADING("Connecting to Supabase source..."))
         try:
-            src_conn = psycopg2.connect(source_url, sslmode="require")
+            # Connect to Supabase. sslmode=require is usually needed for Supabase.
+            # If the URL already has it, this will just append or override.
+            src_conn = psycopg2.connect(source_url)
         except Exception as e:
-            self.stderr.write(self.style.ERROR(f"Failed to connect to source DB: {e}"))
-            return
+            self.stdout.write(self.style.WARNING(f"Direct connection failed, trying with sslmode='require'..."))
+            try:
+                src_conn = psycopg2.connect(source_url, sslmode="require")
+            except Exception as e2:
+                self.stderr.write(self.style.ERROR(f"Failed to connect to source DB: {e2}"))
+                return
 
         src_conn.autocommit = True
         src_cur = src_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         tables = [t for t in TABLES_IN_ORDER if t]  # filter None
-
         total_copied = 0
 
-        with connection.cursor() as dest_cur:
-            for table in tables:
-                # Check if table exists in source
-                src_cur.execute(
-                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
-                    "WHERE table_schema = 'public' AND table_name = %s)",
-                    [table]
-                )
-                if not src_cur.fetchone()[0]:
-                    self.stdout.write(f"  ⚠️  Skipping {table} (not in source)")
-                    continue
+        self.stdout.write(self.style.MIGRATE_HEADING("\nStarting table copy..."))
 
-                # Check if table exists in dest
+        for table in tables:
+            # Check if table exists in source
+            src_cur.execute(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema = 'public' AND table_name = %s)",
+                [table]
+            )
+            if not src_cur.fetchone()[0]:
+                self.stdout.write(f"  ⚠️  Skipping {table} (not in source public schema)")
+                continue
+
+            # Check source rows
+            src_cur.execute(f'SELECT COUNT(*) FROM public."{table}"')
+            count = src_cur.fetchone()[0]
+            if count == 0:
+                self.stdout.write(f"  — {table}: empty in source, skipping")
+                continue
+
+            self.stdout.write(f"  → Processing {table} ({count} rows source)...")
+
+            # Fetch rows
+            src_cur.execute(f'SELECT * FROM public."{table}"')
+            rows = src_cur.fetchall()
+            columns = [desc[0] for desc in src_cur.description]
+            col_list = ", ".join(f'"{c}"' for c in columns)
+            placeholders = ", ".join(["%s"] * len(columns))
+
+            with connection.cursor() as dest_cur:
                 try:
-                    dest_cur.execute(f'SELECT 1 FROM "{table}" LIMIT 1')
-                except Exception:
-                    self.stdout.write(f"  ⚠️  Skipping {table} (not in destination)")
-                    connection.rollback()
-                    continue
-
-                # Count source rows
-                src_cur.execute(f'SELECT COUNT(*) FROM "{table}"')
-                count = src_cur.fetchone()[0]
-
-                if count == 0:
-                    self.stdout.write(f"  — {table}: empty, skipping")
-                    continue
-
-                self.stdout.write(f"  → Copying {table} ({count} rows)...")
-
-                # Fetch all rows from source
-                src_cur.execute(f'SELECT * FROM "{table}"')
-                rows = src_cur.fetchall()
-
-                if not rows:
-                    continue
-
-                # Get column names
-                columns = [desc[0] for desc in src_cur.description]
-                col_list = ", ".join(f'"{c}"' for c in columns)
-                placeholders = ", ".join(["%s"] * len(columns))
-
-                # Clear destination table before inserting
-                try:
-                    dest_cur.execute(f'DELETE FROM "{table}"')
-                except Exception as e:
-                    self.stdout.write(self.style.WARNING(
-                        f"    Could not clear {table}: {e}"
-                    ))
-                    connection.rollback()
-                    continue
-
-                # Batch insert
-                insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders}) ON CONFLICT DO NOTHING'
-                try:
+                    # Clear destination table - using TRUNCATE CASCADE to handle FKs
+                    # NOTE: CockroachDB TRUNCATE is a heavy operation, but here we need it.
+                    # If TRUNCATE is too slow, we fall back to DELETE.
+                    try:
+                        dest_cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
+                    except Exception:
+                        dest_cur.execute(f'DELETE FROM "{table}"')
+                    
+                    # Insert in batches
+                    insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders})'
                     for row in rows:
                         dest_cur.execute(insert_sql, list(row))
-                    connection.commit()
-                    self.stdout.write(self.style.SUCCESS(f"    ✓ {count} rows copied"))
-                    total_copied += count
+                    
+                    self.stdout.write(self.style.SUCCESS(f"    ✓ {len(rows)} rows copied to {table}"))
+                    total_copied += len(rows)
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"    ✗ Error copying {table}: {e}"))
-                    connection.rollback()
+                    self.stdout.write(self.style.ERROR(f"    ✗ Error in {table}: {e}"))
+                    # Don't return, try next table
 
         src_cur.close()
         src_conn.close()
