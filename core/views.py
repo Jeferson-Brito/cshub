@@ -27,8 +27,11 @@ def login_view_custom(request):
         return redirect('dashboard')
     
     if request.method == 'POST':
-        email = request.POST.get('email')
+        email_raw = request.POST.get('email', '')
+        email = email_raw.strip()
         password = request.POST.get('password')
+        
+        print(f"[LOGIN DEBUG] Attempt: raw_email='{email_raw}', stripped='{email}'")
         
         if email and password:
             try:
