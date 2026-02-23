@@ -35,7 +35,11 @@ def login_view_custom(request):
         
         if email and password:
             try:
-                # EXTREME DEBUG: Check total users and table name
+                # EXTREME DEBUG: Check total users, table name and DB info
+                from django.db import connection
+                db_info = connection.settings_dict
+                print(f"[LOGIN DEBUG] DB Info: host={db_info.get('HOST')}, database={db_info.get('NAME')}, engine={db_info.get('ENGINE')}")
+                
                 all_u = User.objects.all()
                 u_count = all_u.count()
                 table_name = User._meta.db_table
