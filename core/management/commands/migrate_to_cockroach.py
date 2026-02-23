@@ -22,16 +22,15 @@ TABLES_IN_ORDER = [
     "auth_permission",
     "auth_group",
     "auth_group_permissions",
-    "django_session",
-    "django_admin_log",
-    # Core: users first (no FK deps)
-    "core_user",
-    "core_user_groups",
-    "core_user_user_permissions",
-    # Core: simple models
+    # Core: basic data
     "core_department",
     "core_turno",
     "core_store",
+    # Core: users (depends on department)
+    "core_user",
+    "core_user_groups",
+    "core_user_user_permissions",
+    # Core: operational data
     "core_auditlog",
     "core_activity",
     "core_complaint",
