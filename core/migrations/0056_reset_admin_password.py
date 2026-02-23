@@ -1,53 +1,45 @@
 from django.db import migrations
+from django.contrib.auth.hashers import make_password
 
 
 def reset_all_passwords(apps, schema_editor):
     """
-    Emergency recovery: reset password for primary admin user.
-    All users lost login access after a Render redeploy.
-    Sets password for jeffersonbrito2455@gmail.com to Nexus@2025.
+    Emergency recovery: use apps.get_model() properly with make_password
+    so this works correctly within the migration historical state.
+    Resets:
+      - jeffersonbrito2455@gmail.com -> Nexus@2025
+      - All admin/gestor users -> Nexus@2025
     """
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
+    User = apps.get_model('core', 'User')
+    new_hash = make_password('Nexus@2025')
 
-    # First, try to recover the main admin account
     reset_count = 0
-    errors = []
 
-    # Target: the main admin user by email
-    targets = [
-        'jeffersonbrito2455@gmail.com',
-    ]
+    # Reset the main admin account
+    updated = User.objects.filter(email='jeffersonbrito2455@gmail.com').update(
+        password=new_hash,
+        is_active=True,
+        ativo=True,
+    )
+    if updated:
+        print(f'[0056] ✅ Password reset for jeffersonbrito2455@gmail.com')
+        reset_count += updated
+    else:
+        print('[0056] ⚠️  jeffersonbrito2455@gmail.com not found')
 
-    for email in targets:
-        try:
-            user = User.objects.get(email=email)
-            user.set_password('Nexus@2025')
-            user.is_active = True
-            user.ativo = True
-            user.save(update_fields=['password', 'is_active', 'ativo'])
-            print(f'[0056] ✅ Password reset for {user.email} (id={user.id})')
-            reset_count += 1
-        except User.DoesNotExist:
-            print(f'[0056] ⚠️  User {email} not found.')
-        except Exception as e:
-            errors.append(str(e))
-            print(f'[0056] ❌ Error resetting {email}: {e}')
+    # Reset all admin and gestor accounts
+    updated = User.objects.filter(
+        role__in=['administrador', 'gestor']
+    ).exclude(
+        email='jeffersonbrito2455@gmail.com'
+    ).update(
+        password=new_hash,
+        ativo=True,
+    )
+    print(f'[0056] ✅ Reset {updated} admin/gestor accounts')
+    reset_count += updated
 
-    # Also reset all admin/gestor users so access can be restored
-    try:
-        admins = User.objects.filter(role__in=['administrador', 'gestor'], is_active=True)
-        for user in admins:
-            if user.email not in targets:  # Don't double-reset the ones above
-                user.set_password('Nexus@2025')
-                user.ativo = True
-                user.save(update_fields=['password', 'ativo'])
-                print(f'[0056] ✅ Admin/Gestor password reset: {user.email} (id={user.id})')
-                reset_count += 1
-    except Exception as e:
-        print(f'[0056] ❌ Error resetting admin/gestor users: {e}')
-
-    print(f'[0056] Done. Total passwords reset: {reset_count}')
+    print(f'[0056] Total: {reset_count} passwords reset to Nexus@2025')
 
 
 class Migration(migrations.Migration):
