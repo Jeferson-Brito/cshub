@@ -35,6 +35,19 @@ def login_view_custom(request):
         
         if email and password:
             try:
+                # EXTREME DEBUG: Check total users and table name
+                all_u = User.objects.all()
+                u_count = all_u.count()
+                table_name = User._meta.db_table
+                print(f"[LOGIN DEBUG] DB Diagnostic: total_users={u_count}, table='{table_name}'")
+                
+                if u_count > 0:
+                    print(f"[LOGIN DEBUG] Listing first 10 users in DB:")
+                    for u_db in all_u[:10]:
+                        print(f"  - User: email='{u_db.email}', username='{u_db.username}'")
+                else:
+                    print(f"[LOGIN DEBUG] CRITICAL: Database is EMPTY for table '{table_name}'")
+
                 # Buscar usuário por e-mail de forma case-insensitive
                 user = User.objects.filter(email__iexact=email).first()
                 
