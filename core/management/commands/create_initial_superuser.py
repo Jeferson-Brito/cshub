@@ -34,5 +34,6 @@ class Command(BaseCommand):
             username=username,
             email=email,
             password=password,
+            role='administrador',
         )
         self.stdout.write(self.style.SUCCESS(f"✅ Superusuário '{email}' criado com sucesso!"))
