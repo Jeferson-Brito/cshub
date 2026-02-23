@@ -23,3 +23,12 @@ class Command(BaseCommand):
                     self.stdout.write(f"  - {table}: {count} rows")
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"  - {table}: Error counting: {e}"))
+
+            # Also check migrations
+            self.stdout.write(self.style.SUCCESS("\nApplied Migrations:"))
+            try:
+                cursor.execute("SELECT app, name, applied FROM django_migrations ORDER BY applied DESC LIMIT 10")
+                for row in cursor.fetchall():
+                    self.stdout.write(f"  - {row[0]}.{row[1]} applied at {row[2]}")
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"  - Error reading migrations: {e}"))
