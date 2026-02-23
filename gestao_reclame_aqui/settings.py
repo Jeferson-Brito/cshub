@@ -124,7 +124,7 @@ DATABASES = {
         "PASSWORD": get_env("DB_PASSWORD", ""),
         "HOST": get_env("DB_HOST", "db.sepcgocgjbxqqyyyvnpw.supabase.co"),
         "PORT": get_env("DB_PORT", "5432"),
-        "CONN_MAX_AGE": int(get_env("CONN_MAX_AGE", 60)),  # Keep connections open for 60s to reuse SSL handshakes
+        "CONN_MAX_AGE": int(get_env("CONN_MAX_AGE", 0)),  # 0 = fecha conexão após cada request (obrigatório com PgBouncer/pooler)
         "OPTIONS": {
             "sslmode": "require",
             "connect_timeout": 30,
