@@ -71,6 +71,10 @@ TABLES = [
 
 
 def enable_rls(apps, schema_editor):
+    # RLS e service_role são exclusivos do Supabase/PostgreSQL puro.
+    # No CockroachDB, esta migration é ignorada silenciosamente.
+    if "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
+        return
     with schema_editor.connection.cursor() as cursor:
         for table in TABLES:
             # Enable RLS on the table
@@ -79,9 +83,6 @@ def enable_rls(apps, schema_editor):
             cursor.execute(
                 f'DROP POLICY IF EXISTS "service_role_full_access" ON public."{table}";'
             )
-            # Create a policy that allows all operations for the service_role
-            # (Supabase service_role bypasses RLS anyway, but this also covers
-            # the postgres superuser role and any role with BYPASSRLS attribute)
             cursor.execute(
                 f"""
                 CREATE POLICY "service_role_full_access"
@@ -97,6 +98,8 @@ def enable_rls(apps, schema_editor):
 
 def disable_rls(apps, schema_editor):
     """Reverse: disable RLS on all tables."""
+    if "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
+        return
     with schema_editor.connection.cursor() as cursor:
         for table in TABLES:
             cursor.execute(
