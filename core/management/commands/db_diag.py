@@ -24,11 +24,30 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"  - {table}: Error counting: {e}"))
 
-            # Also check migrations
-            self.stdout.write(self.style.SUCCESS("\nApplied Migrations:"))
+            # Check for permission duplicates (IntegrityError investigation)
+            self.stdout.write(self.style.SUCCESS("\nPermission/ContentType Audit:"))
             try:
-                cursor.execute("SELECT app, name, applied FROM django_migrations ORDER BY applied DESC LIMIT 10")
-                for row in cursor.fetchall():
-                    self.stdout.write(f"  - {row[0]}.{row[1]} applied at {row[2]}")
+                cursor.execute("""
+                    SELECT ct.app_label, ct.model, p.codename, COUNT(*) 
+                    FROM auth_permission p 
+                    JOIN django_content_type ct ON p.content_type_id = ct.id 
+                    GROUP BY ct.app_label, ct.model, p.codename 
+                    HAVING COUNT(*) > 1
+                """)
+                dupes = cursor.fetchall()
+                if dupes:
+                    for d in dupes:
+                        self.stdout.write(self.style.ERROR(f"  - Duplicate: {d[0]}.{d[1]} - {d[2]} ({d[3]} times)"))
+                else:
+                    self.stdout.write("  - No duplicate permissions found in auth_permission.")
+                
+                # Check specific content type causing error
+                cursor.execute("SELECT id, app_label, model FROM django_content_type WHERE model = 'weeklyverificationkpi'")
+                ct_info = cursor.fetchone()
+                if ct_info:
+                    self.stdout.write(f"  - ContentType for weeklyverificationkpi: id={ct_info[0]}, app={ct_info[1]}")
+                else:
+                    self.stdout.write("  - ContentType for weeklyverificationkpi NOT FOUND.")
+                    
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f"  - Error reading migrations: {e}"))
+                self.stdout.write(self.style.ERROR(f"  - Error auditing permissions: {e}"))
