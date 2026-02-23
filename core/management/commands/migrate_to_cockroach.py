@@ -27,22 +27,24 @@ TABLES_IN_ORDER = [
     "core_turno",
     "core_store",
     # Core: users (depends on department)
+    # Core: users (depends on department)
     "core_user",
     "core_user_groups",
     "core_user_user_permissions",
-    # Core: operational data
-    "core_auditlog",
-    "core_activity",
+    # Core: basic operational data
     "core_complaint",
+    "core_activity",
+    "core_auditlog",
+    # Other core tables
     "core_evento",
     "core_ferramentaia",
     "core_artigobaseconhecimento",
     "core_observacaodesempenho",
     "core_indicadordesempenho",
     "core_metamensalglobal",
+    "core_analistaescala",
     "core_folgamanual",
     # Escala
-    "core_analistaescala",
     "core_escala",
     # Kanban board
     "core_kanbanboard",
@@ -74,10 +76,9 @@ TABLES_IN_ORDER = [
     "core_refundrequest",
     "core_refundrequestattachment",
     # Store audit
+    "core_storeauditissue",
     "core_storeaudit",
     "core_storeaudititem",
-    "core_storeauditissue",
-    "core_storeauditlog" if False else None,    # skip if doesn't exist
     "core_storeviewersession",
     "core_configuracaoauditoria",
     "core_auditoriaatendimento",
@@ -163,8 +164,16 @@ class Command(BaseCommand):
                     
                     # Insert
                     insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders})'
+                    import json
                     for row in rows:
-                        dest_cur.execute(insert_sql, list(row))
+                        # Pre-process row for JSON fields (dict/list to string)
+                        clean_row = []
+                        for val in row:
+                            if isinstance(val, (dict, list)):
+                                clean_row.append(json.dumps(val))
+                            else:
+                                clean_row.append(val)
+                        dest_cur.execute(insert_sql, clean_row)
                     
                     print(f"    ✅ {len(rows)} linhas copiadas para {table}", flush=True)
                     total_copied += len(rows)

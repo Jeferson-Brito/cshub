@@ -7,16 +7,19 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, date, timedelta
 from django.db.models import Q
 import json
+import logging
+import time
+import random
+import math
 
 from .models import (
     Store, StoreAudit, StoreAuditIssue, StoreAuditItem,
     AnalystAssignment, User
 )
-import logging
-import time
+
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +345,7 @@ def api_escalate_to_ticket(request, issue_id):
 
 
 # ==================================================
-# APIs para Gest�o de Analistas
+# APIs para Gesto de Analistas
 # ==================================================
 
 @login_required
@@ -417,7 +420,6 @@ def api_assign_store_to_analyst(request):
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
     try:
-        from datetime import datetime
         data = json.loads(request.body)
         analyst_id = data.get('analyst_id')
         store_id = data.get('store_id')
@@ -515,9 +517,7 @@ def api_get_available_stores(request):
                     }, status=400)
                 
                 # Seleção aleatória
-                import random
-                available_list = list(available_stores.values('id', 'code', 'city'))
-                selected_stores = random.sample(available_list, qty)
+                selected_stores = random.sample(list(available_stores.values('id', 'code', 'city')), qty)
                 
             except ValueError:
                 return JsonResponse({
@@ -549,7 +549,6 @@ def api_bulk_assign_stores(request):
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
     try:
-        from datetime import datetime
         data = json.loads(request.body)
         analyst_id = data.get('analyst_id')
         store_ids = data.get('store_ids', [])  # Lista de IDs
@@ -673,7 +672,6 @@ def get_daily_quota_info(analyst):
     Returns dict with quota details.
     """
     from core.models import DailyAuditQuota
-    from datetime import datetime
     
     daily_quota = DailyAuditQuota.get_or_create_today(analyst)
     
