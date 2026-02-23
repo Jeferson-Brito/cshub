@@ -2,7 +2,7 @@ services:
   - type: web
     name: cshub
     runtime: python
-    buildCommand: "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput --no-post-process"
+    buildCommand: "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput --no-post-process && python manage.py migrate --noinput"
     startCommand: "gunicorn gestao_reclame_aqui.wsgi:application --workers 2 --threads 2 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 100"
     envVars:
       - key: PYTHON_VERSION
@@ -11,8 +11,7 @@ services:
         generateValue: true
       - key: DEBUG
         value: "False"
-      - key: CONN_MAX_AGE
-        value: "60"
+
       - key: ALLOWED_HOSTS
         value: "cshub-deploy.onrender.com,cshub-l8jg.onrender.com,.onrender.com"
       - key: DB_NAME
