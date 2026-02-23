@@ -95,32 +95,36 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         source_url = os.environ.get("SOURCE_DATABASE_URL")
+        
+        print("\n--- Iniciando Migração de Dados ---", flush=True)
+        
         if not source_url:
-            self.stderr.write(self.style.ERROR(
-                "SOURCE_DATABASE_URL environment variable is not set."
-            ))
+            print("❌ ERRO: Variável SOURCE_DATABASE_URL não encontrada!", flush=True)
             return
 
-        self.stdout.write(self.style.MIGRATE_HEADING("Connecting to Supabase source..."))
+        print(f"📡 Tentando conectar ao Supabase (IPv4)...", flush=True)
         try:
-            # Connect to Supabase. sslmode=require is usually needed for Supabase.
-            # If the URL already has it, this will just append or override.
+            # Supabase Pooler geralmente requer sslmode=require
+            # Mas tentamos primeiro o padrão da URL (que já deve ter o parâmetro)
             src_conn = psycopg2.connect(source_url)
+            print("✅ Conectado ao Supabase com sucesso!", flush=True)
         except Exception as e:
-            self.stdout.write(self.style.WARNING(f"Direct connection failed, trying with sslmode='require'..."))
+            print(f"⚠️ Tentativa 1 falhou: {e}", flush=True)
+            print("📡 Tentando com sslmode='require' forçado...", flush=True)
             try:
                 src_conn = psycopg2.connect(source_url, sslmode="require")
+                print("✅ Conectado ao Supabase (SSL)!", flush=True)
             except Exception as e2:
-                self.stderr.write(self.style.ERROR(f"Failed to connect to source DB: {e2}"))
+                print(f"❌ Falha total na conexão: {e2}", flush=True)
                 return
 
         src_conn.autocommit = True
         src_cur = src_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        tables = [t for t in TABLES_IN_ORDER if t]  # filter None
+        tables = [t for t in TABLES_IN_ORDER if t]
         total_copied = 0
 
-        self.stdout.write(self.style.MIGRATE_HEADING("\nStarting table copy..."))
+        print(f"📋 Total de tabelas para processar: {len(tables)}\n", flush=True)
 
         for table in tables:
             # Check if table exists in source
@@ -130,17 +134,17 @@ class Command(BaseCommand):
                 [table]
             )
             if not src_cur.fetchone()[0]:
-                self.stdout.write(f"  ⚠️  Skipping {table} (not in source public schema)")
+                print(f"  ⚠️  PULANDO: {table} (não existe no Supabase)", flush=True)
                 continue
 
             # Check source rows
             src_cur.execute(f'SELECT COUNT(*) FROM public."{table}"')
             count = src_cur.fetchone()[0]
             if count == 0:
-                self.stdout.write(f"  — {table}: empty in source, skipping")
+                print(f"  — {table}: vazio no Supabase, pulando", flush=True)
                 continue
 
-            self.stdout.write(f"  → Processing {table} ({count} rows source)...")
+            print(f"  → Copiando {table} ({count} linhas)...", flush=True)
 
             # Fetch rows
             src_cur.execute(f'SELECT * FROM public."{table}"')
@@ -151,31 +155,24 @@ class Command(BaseCommand):
 
             with connection.cursor() as dest_cur:
                 try:
-                    # Clear destination table - using TRUNCATE CASCADE to handle FKs
-                    # NOTE: CockroachDB TRUNCATE is a heavy operation, but here we need it.
-                    # If TRUNCATE is too slow, we fall back to DELETE.
+                    # Clear destination table
                     try:
                         dest_cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
                     except Exception:
                         dest_cur.execute(f'DELETE FROM "{table}"')
                     
-                    # Insert in batches
+                    # Insert
                     insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders})'
                     for row in rows:
                         dest_cur.execute(insert_sql, list(row))
                     
-                    self.stdout.write(self.style.SUCCESS(f"    ✓ {len(rows)} rows copied to {table}"))
+                    print(f"    ✅ {len(rows)} linhas copiadas para {table}", flush=True)
                     total_copied += len(rows)
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"    ✗ Error in {table}: {e}"))
-                    # Don't return, try next table
+                    print(f"    ❌ Erro em {table}: {e}", flush=True)
 
         src_cur.close()
         src_conn.close()
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\n✅ Migration complete! {total_copied} total rows copied to CockroachDB."
-        ))
-        self.stdout.write(
-            "Next: create a superuser if not migrated, then remove SOURCE_DATABASE_URL from Render."
-        )
+        print(f"\n✨ MIGRAÇÃO CONCLUÍDA! Total de {total_copied} linhas copiadas.", flush=True)
+        print("Lembre-se de remover o comando do Start Command agora.", flush=True)
