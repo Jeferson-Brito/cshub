@@ -118,20 +118,15 @@ WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
 # ==============================
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": get_env("DB_NAME", "postgres"),
-        "USER": get_env("DB_USER", "postgres.sepcgocgjbxqqyyyvnpw"),
+        "ENGINE": "django_cockroachdb",
+        "NAME": get_env("DB_NAME", "defaultdb"),
+        "USER": get_env("DB_USER", "jeferson"),
         "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "db.sepcgocgjbxqqyyyvnpw.supabase.co"),
-        "PORT": get_env("DB_PORT", "5432"),
-        "CONN_MAX_AGE": int(get_env("CONN_MAX_AGE", 0)),  # 0 = fecha conexão após cada request (obrigatório com PgBouncer/pooler)
+        "HOST": get_env("DB_HOST", "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"),
+        "PORT": get_env("DB_PORT", "26257"),
+        "CONN_MAX_AGE": 0,
         "OPTIONS": {
-            "sslmode": "require",
-            "connect_timeout": 30,
-            "keepalives": 1,
-            "keepalives_idle": 30,
-            "keepalives_interval": 10,
-            "keepalives_count": 5,
+            "sslmode": "verify-full",
         },
     }
 }

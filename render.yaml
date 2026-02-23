@@ -16,12 +16,12 @@ services:
       - key: ALLOWED_HOSTS
         value: "cshub-deploy.onrender.com,cshub-l8jg.onrender.com,.onrender.com"
       - key: DB_NAME
-        sync: false
+        value: "defaultdb"
       - key: DB_USER
-        sync: false
+        value: "jeferson"
       - key: DB_PASSWORD
         sync: false
       - key: DB_HOST
-        sync: false
+        value: "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"
       - key: DB_PORT
-        sync: false
+        value: "26257"
