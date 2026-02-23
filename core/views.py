@@ -34,32 +34,42 @@ def login_view_custom(request):
             # Buscar usuário por e-mail
             try:
                 user = User.objects.get(email=email)
-                # Autenticar usando o username do usuário encontrado
-                user = authenticate(request, username=user.username, password=password)
+                # DEBUG: Log authentication details
+                print(f"[LOGIN DEBUG] Found user: email={user.email}, username={user.username}, id={user.id}")
+                print(f"[LOGIN DEBUG] is_active={user.is_active}, ativo={user.ativo}")
+                print(f"[LOGIN DEBUG] password hash (first 30 chars): {user.password[:30] if user.password else 'EMPTY'}")
+                print(f"[LOGIN DEBUG] check_password result: {user.check_password(password)}")
                 
-                if user is not None:
-                    if user.ativo:
-                        login(request, user)
+                # Autenticar usando o username do usuário encontrado
+                auth_user = authenticate(request, username=user.username, password=password)
+                print(f"[LOGIN DEBUG] authenticate() result: {auth_user}")
+                
+                if auth_user is not None:
+                    if auth_user.ativo:
+                        login(request, auth_user)
                         # Log acess history
                         try:
                             AuditLog.objects.create(
-                                usuario=user,
+                                usuario=auth_user,
                                 action='login',
                                 target_type='User',
-                                target_id=user.id,
+                                target_id=auth_user.id,
                                 detalhes_json={'ip': request.META.get('REMOTE_ADDR'), 'user_agent': request.META.get('HTTP_USER_AGENT')}
                             )
                         except Exception as e:
                             print(f"Error logging login: {e}")
                             
-                        messages.success(request, f'Bem-vindo, {user.get_full_name() or user.username}!')
+                        messages.success(request, f'Bem-vindo, {auth_user.get_full_name() or auth_user.username}!')
                         next_url = request.GET.get('next', '/')
                         return redirect(next_url)
                     else:
+                        print(f"[LOGIN DEBUG] User {user.email} found but ativo=False")
                         messages.error(request, 'Sua conta está inativa. Entre em contato com o administrador.')
                 else:
+                    print(f"[LOGIN DEBUG] authenticate() returned None for {user.email}")
                     messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
             except User.DoesNotExist:
+                print(f"[LOGIN DEBUG] User.DoesNotExist for email: {email}")
                 messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
             except User.MultipleObjectsReturned:
                 # Se houver múltiplos usuários com o mesmo e-mail, tentar autenticar com o primeiro
