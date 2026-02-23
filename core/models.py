@@ -1818,6 +1818,20 @@ class AuditoriaAtendimento(models.Model):
         help_text="Marcado automaticamente quando nota está abaixo do percentual mínimo aceitável"
     )
     
+    # Campos de feedback/conversa com o analista
+    feedback_data = models.DateField(
+        blank=True, null=True,
+        verbose_name="Data da Conversa",
+        help_text="Data em que o gestor conversou com o analista sobre o alerta"
+    )
+    feedback_gestor = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='feedbacks_dados',
+        verbose_name="Gestor que conversou"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

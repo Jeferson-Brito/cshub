@@ -1556,6 +1556,30 @@ body.dark-theme {
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
+/* FIX: Modal alignment on non-100% browser zoom.
+   The body has padding-left: 300px (sidebar width), which causes Bootstrap modals
+   (which use position: fixed) to appear offset at non-standard zoom levels.
+   We force the modal overlay to always fill the full viewport. */
+.modal {
+    padding-left: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+}
+
+.modal-dialog {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* SweetAlert2 fix: force it to use viewport center regardless of body padding */
+.swal2-container {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    padding-left: 0 !important;
+}
+
 .modal-body::-webkit-scrollbar {
     width: 6px;
     /* Um pouco mais fina dentro de popups */

@@ -538,7 +538,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="fw-bold">${aud.nota.toFixed(1)}</td>
                 <td>
                     <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
-                    ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
+                    ${aud.requer_acao ? `
+                        <i class="bi bi-exclamation-triangle icon-alert ms-2" title="Requer Ação"></i>
+                        ${aud.feedback_data
+                            ? `<br><small class="text-success"><i class="bi bi-check-circle me-1"></i>Discutido em ${formatDate(aud.feedback_data)}</small>`
+                            : `<br><small class="text-danger">Não discutido</small>`
+                        }
+                    ` : ''}
                 </td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
@@ -778,7 +784,24 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                     
-                    ${aud.requer_acao ? '<div class="alert alert-danger mt-3 shadow-sm border-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Atenção:</strong> Esta auditoria requer discussão.</div>' : ''}
+                    ${aud.requer_acao ? `
+                    <div class="alert ${aud.feedback_data ? 'alert-success' : 'alert-warning'} mt-3 shadow-sm">
+                        <div class="d-flex align-items-start">
+                            <i class="bi ${aud.feedback_data ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle text-warning'} me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <strong>${aud.feedback_data ? 'Conversa Registrada' : 'Atenção: Requer Discussão'}</strong>
+                                ${aud.feedback_data
+                                    ? `<p class="mb-0 mt-1 small">Discutido por <strong>${aud.feedback_gestor || 'Gestor'}</strong> em <strong>${formatDate(aud.feedback_data)}</strong></p>`
+                                    : `<p class="mb-0 mt-1 small">Esta auditoria ainda não foi discutida com o analista.</p>`
+                                }
+                            </div>
+                            ${aud.can_edit ? `
+                            <button class="btn btn-sm ${aud.feedback_data ? 'btn-outline-success' : 'btn-warning'} ms-2" 
+                                onclick="registrarFeedback(${aud.id})" title="Registrar data da conversa">
+                                <i class="bi bi-chat-dots me-1"></i>${aud.feedback_data ? 'Atualizar' : 'Registrar Conversa'}
+                            </button>` : ''}
+                        </div>
+                    </div>` : ''}
                 </div>
                 
                 <div class="col-md-7">
@@ -921,6 +944,72 @@ document.addEventListener('DOMContentLoaded', function () {
                         console.error('Erro:', error);
                         Swal.fire('Erro', 'Erro ao excluir auditoria', 'error');
                     });
+            }
+        });
+    };
+
+    // ========================================
+    // REGISTRAR FEEDBACK / CONVERSA
+    // ========================================
+
+    window.registrarFeedback = function (auditoriaId) {
+        Swal.fire({
+            title: 'Registrar Conversa',
+            html: `
+                <p class="text-muted mb-3">Informe a data em que você conversou com o analista sobre este alerta.</p>
+                <input type="date" id="swal-feedback-date" class="form-control" 
+                    value="${new Date().toISOString().split('T')[0]}" max="${new Date().toISOString().split('T')[0]}">
+            `,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-check-circle me-1"></i>Salvar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#198754',
+            preConfirm: () => {
+                const date = document.getElementById('swal-feedback-date').value;
+                if (!date) {
+                    Swal.showValidationMessage('Por favor, informe a data da conversa.');
+                    return false;
+                }
+                return date;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/auditoria/${auditoriaId}/feedback/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ feedback_data: result.value })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Conversa Registrada!',
+                                text: `Data: ${formatDate(data.feedback_data)} - por ${data.feedback_gestor}`,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Reload the details panel
+                                const container = document.querySelector(`#details-${auditoriaId} .details-container`);
+                                if (container) {
+                                    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+                                    fetch(`/api/auditoria/${auditoriaId}/`, { credentials: 'include' })
+                                        .then(r => r.json())
+                                        .then(d => {
+                                            if (d.success) renderDetailsContent(d.auditoria, container, auditoriaId);
+                                        });
+                                }
+                                loadAuditorias(state.currentPage);
+                            });
+                        } else {
+                            Swal.fire('Erro', data.error || 'Erro ao registrar feedback', 'error');
+                        }
+                    })
+                    .catch(err => Swal.fire('Erro', 'Erro de conexão', 'error'));
             }
         });
     };

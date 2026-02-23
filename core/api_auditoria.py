@@ -240,6 +240,8 @@ def api_auditoria_list(request):
                 'classificacao': aud.classificacao,
                 'classificacao_display': aud.get_classificacao_display(),
                 'requer_acao': aud.requer_acao,
+                'feedback_data': aud.feedback_data.isoformat() if aud.feedback_data else None,
+                'feedback_gestor': aud.feedback_gestor.get_full_name() if aud.feedback_gestor else None,
                 'created_at': aud.created_at.isoformat(),
                 'can_edit': request.user.is_gestor() or request.user.is_administrador(),
                 'can_delete': request.user.is_gestor() or request.user.is_administrador(),
@@ -333,6 +335,8 @@ def api_auditoria_detail(request, pk):
             'classificacao': auditoria.classificacao,
             'classificacao_display': auditoria.get_classificacao_display(),
             'requer_acao': auditoria.requer_acao,
+            'feedback_data': auditoria.feedback_data.isoformat() if auditoria.feedback_data else None,
+            'feedback_gestor': auditoria.feedback_gestor.get_full_name() if auditoria.feedback_gestor else None,
             'created_at': auditoria.created_at.isoformat(),
             'updated_at': auditoria.updated_at.isoformat(),
         }
@@ -781,5 +785,43 @@ def api_analistas_list(request):
         
         return JsonResponse({'success': True, 'analistas': data})
         
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ========================================
+# FEEDBACK / CONVERSA COM ANALISTA
+# ========================================
+
+@gestor_or_admin_required
+@require_POST
+def api_registrar_feedback(request, pk):
+    """Registra a data de conversa com o analista sobre um alerta de auditoria"""
+    try:
+        auditoria = AuditoriaAtendimento.objects.get(id=pk)
+        data = json.loads(request.body)
+
+        feedback_data_str = data.get('feedback_data')  # format: 'YYYY-MM-DD'
+        if not feedback_data_str:
+            return JsonResponse({'error': 'Data da conversa é obrigatória'}, status=400)
+
+        from datetime import date
+        try:
+            feedback_date = date.fromisoformat(feedback_data_str)
+        except ValueError:
+            return JsonResponse({'error': 'Formato de data inválido. Use YYYY-MM-DD'}, status=400)
+
+        auditoria.feedback_data = feedback_date
+        auditoria.feedback_gestor = request.user
+        auditoria.save(update_fields=['feedback_data', 'feedback_gestor'])
+
+        return JsonResponse({
+            'success': True,
+            'feedback_data': auditoria.feedback_data.isoformat(),
+            'feedback_gestor': request.user.get_full_name() or request.user.username,
+        })
+
+    except AuditoriaAtendimento.DoesNotExist:
+        return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

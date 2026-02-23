@@ -233,5 +233,6 @@ urlpatterns = [
     path('api/auditoria/config/', api_auditoria.api_configuracao_get, name='api_configuracao_get'),
     path('api/auditoria/config/update/', api_auditoria.api_configuracao_update, name='api_configuracao_update'),
     path('api/auditoria/analistas/', api_auditoria.api_analistas_list, name='api_auditoria_analistas_list'),
+    path('api/auditoria/<int:pk>/feedback/', api_auditoria.api_registrar_feedback, name='api_registrar_feedback'),
 ]
 
