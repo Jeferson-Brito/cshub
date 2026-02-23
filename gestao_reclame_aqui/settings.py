@@ -126,8 +126,7 @@ DATABASES = {
         "PORT": get_env("DB_PORT", "26257"),
         "CONN_MAX_AGE": 0,
         "OPTIONS": {
-            "sslmode": "verify-full",
-            "sslrootcert": "system",  # Usa os CAs do sistema (necessário no Render)
+            "sslmode": "require",
         },
     }
 }
