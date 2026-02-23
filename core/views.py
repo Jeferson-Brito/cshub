@@ -31,9 +31,15 @@ def login_view_custom(request):
         password = request.POST.get('password')
         
         if email and password:
-            # Buscar usuário por e-mail
             try:
-                user = User.objects.get(email=email)
+                # Buscar usuário por e-mail de forma case-insensitive
+                user = User.objects.filter(email__iexact=email).first()
+                
+                if not user:
+                    print(f"[LOGIN DEBUG] User.DoesNotExist for email: {email}")
+                    messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
+                    return render(request, 'core/login.html')
+
                 # DEBUG: Log authentication details
                 print(f"[LOGIN DEBUG] Found user: email={user.email}, username={user.username}, id={user.id}")
                 print(f"[LOGIN DEBUG] is_active={user.is_active}, ativo={user.ativo}")
@@ -71,29 +77,9 @@ def login_view_custom(request):
             except User.DoesNotExist:
                 print(f"[LOGIN DEBUG] User.DoesNotExist for email: {email}")
                 messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
-            except User.MultipleObjectsReturned:
-                # Se houver múltiplos usuários com o mesmo e-mail, tentar autenticar com o primeiro
-                user = User.objects.filter(email=email).first()
-                user = authenticate(request, username=user.username, password=password)
-                if user is not None and user.ativo:
-                    login(request, user)
-                    # Log acess history
-                    try:
-                        AuditLog.objects.create(
-                            usuario=user,
-                            action='login',
-                            target_type='User',
-                            target_id=user.id,
-                            detalhes_json={'ip': request.META.get('REMOTE_ADDR'), 'user_agent': request.META.get('HTTP_USER_AGENT')}
-                        )
-                    except Exception as e:
-                        print(f"Error logging login: {e}")
-
-                    messages.success(request, f'Bem-vindo, {user.get_full_name() or user.username}!')
-                    next_url = request.GET.get('next', '/')
-                    return redirect(next_url)
-                else:
-                    messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
+            except Exception as e:
+                print(f"[LOGIN DEBUG] Unexpected error in login_view_custom: {e}")
+                messages.error(request, 'Erro inesperado na autenticação. Tente novamente.')
         else:
             messages.error(request, 'Por favor, preencha todos os campos.')
     
