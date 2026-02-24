@@ -99,6 +99,13 @@ def api_auditoria_create(request):
                     'error': f'Descrição do erro é obrigatória quando o critério "{criterio}" não é atendido'
                 }, status=400)
         
+        # Bloquear duplicidade no mesmo departamento
+        id_conversa = data.get('id_conversa', '').strip()
+        if AuditoriaAtendimento.objects.filter(id_conversa=id_conversa, department=department).exists():
+            return JsonResponse({
+                'error': f'Já existe uma auditoria registrada para a conversa "{id_conversa}" neste departamento.'
+            }, status=400)
+        
         # Criar auditoria
         auditoria = AuditoriaAtendimento(
             data_atendimento=data['data_atendimento'],
@@ -174,18 +181,19 @@ def api_auditoria_list(request):
         if not department:
             return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
-        # Base queryset
-        queryset = AuditoriaAtendimento.objects.all()
-        
-        # Tentar otimizar, mas recuar se as colunas novas não existirem ainda
+        # Testar se as colunas novas existem no banco
+        has_new_columns = True
         try:
-             queryset.filter(id=0).exists() # Teste rápido de query
+            # Uma query simples que tenta acessar uma das colunas novas
+            AuditoriaAtendimento.objects.only('id', 'ciente_analista').first()
         except Exception:
-             # Se falhar geral, podemos estar sem as colunas.
-             # Mas aqui o Django costuma falhar apenas na execução da query final.
-             pass
+            has_new_columns = False
+        
+        # Base queryset
+        queryset = AuditoriaAtendimento.objects.filter(department=department).select_related('analista_auditado', 'auditor')
 
-        queryset = queryset.filter(department=department).select_related('analista_auditado', 'auditor')
+        if not has_new_columns:
+            queryset = queryset.defer('ciente_analista', 'data_ciente')
 
         # Se for analista, filtrar apenas as suas próprias auditorias
         if request.user.is_analista():
@@ -253,8 +261,8 @@ def api_auditoria_list(request):
                 'feedback_data': aud.feedback_data.isoformat() if aud.feedback_data else None,
                 'feedback_gestor': aud.feedback_gestor.get_full_name() if aud.feedback_gestor else None,
                 'created_at': aud.created_at.isoformat(),
-                'ciente_analista': getattr(aud, 'ciente_analista', False),
-                'data_ciente': getattr(aud, 'data_ciente', None).isoformat() if getattr(aud, 'data_ciente', None) else None,
+                'ciente_analista': aud.ciente_analista if has_new_columns else False,
+                'data_ciente': aud.data_ciente.isoformat() if has_new_columns and aud.data_ciente else None,
                 'can_edit': request.user.is_gestor() or request.user.is_administrador(),
                 'can_delete': request.user.is_gestor() or request.user.is_administrador(),
             })
@@ -277,27 +285,20 @@ def api_auditoria_list(request):
 def api_auditoria_detail(request, pk):
     """Detalhes de uma auditoria específica"""
     try:
+        # Verificar se as colunas novas existem
+        has_new_columns = True
         try:
-            # Tentar buscar com todos os campos (pós-migration)
-            auditoria = AuditoriaAtendimento.objects.get(id=pk)
+            # Tentar um fetch simples com as colunas novas
+            AuditoriaAtendimento.objects.only('id', 'ciente_analista').get(id=pk)
         except Exception:
-            # Se falhar (provavelmente colunas faltando), buscar apenas campos básicos (pré-migration)
-            campos_basicos = [
-                'id', 'data_atendimento', 'id_conversa', 'tipo_atendimento', 
-                'analista_auditado_id', 'auditor_id', 'department_id',
-                'apresentou_corretamente', 'erro_apresentacao', 'imagem_erro_apresentacao',
-                'analisou_historico', 'erro_historico', 'imagem_erro_historico',
-                'entendeu_solicitacao', 'erro_entendimento', 'imagem_erro_entendimento',
-                'informacao_clara', 'erro_informacao', 'imagem_erro_informacao',
-                'acordo_espera', 'erro_acordo_espera', 'imagem_erro_acordo_espera',
-                'atendimento_respeitoso', 'erro_respeito', 'imagem_erro_respeito',
-                'portugues_correto', 'erro_portugues', 'imagem_erro_portugues',
-                'finalizacao_correta', 'erro_finalizacao', 'imagem_erro_finalizacao',
-                'procedimento_correto', 'erro_procedimento', 'imagem_erro_procedimento',
-                'pontuacao', 'nota', 'classificacao', 'requer_acao',
-                'feedback_data', 'feedback_gestor_id', 'created_at', 'updated_at'
-            ]
-            auditoria = AuditoriaAtendimento.objects.only(*campos_basicos).get(id=pk)
+            has_new_columns = False
+
+        # Buscar a auditoria (com ou sem as colunas novas)
+        queryset = AuditoriaAtendimento.objects.select_related('analista_auditado', 'auditor', 'feedback_gestor')
+        if not has_new_columns:
+            queryset = queryset.defer('ciente_analista', 'data_ciente')
+            
+        auditoria = queryset.get(id=pk)
             
         # Verificar permissão de department
         department = request.session.get('current_department_obj') or request.user.department
@@ -371,8 +372,8 @@ def api_auditoria_detail(request, pk):
             'feedback_gestor': auditoria.feedback_gestor.get_full_name() if auditoria.feedback_gestor else None,
             'created_at': auditoria.created_at.isoformat(),
             'updated_at': auditoria.updated_at.isoformat(),
-            'ciente_analista': getattr(auditoria, 'ciente_analista', False),
-            'data_ciente': getattr(auditoria, 'data_ciente', None).isoformat() if getattr(auditoria, 'data_ciente', None) else None,
+            'ciente_analista': auditoria.ciente_analista if has_new_columns else False,
+            'data_ciente': auditoria.data_ciente.isoformat() if has_new_columns and auditoria.data_ciente else None,
         }
         
         return JsonResponse({'success': True, 'auditoria': data})
@@ -395,7 +396,16 @@ def api_auditoria_update(request, pk):
         if 'data_atendimento' in data:
             auditoria.data_atendimento = data['data_atendimento']
         if 'id_conversa' in data:
-            auditoria.id_conversa = data['id_conversa']
+            new_id = data['id_conversa'].strip()
+            # Verificar se já existe EM OUTRA auditoria no mesmo departamento
+            if AuditoriaAtendimento.objects.filter(
+                id_conversa=new_id, 
+                department=auditoria.department
+            ).exclude(id=pk).exists():
+                return JsonResponse({
+                    'error': f'Já existe outra auditoria com o ID de conversa "{new_id}" neste departamento.'
+                }, status=400)
+            auditoria.id_conversa = new_id
         if 'tipo_atendimento' in data:
             auditoria.tipo_atendimento = data['tipo_atendimento']
         
@@ -445,13 +455,21 @@ def api_auditoria_update(request, pk):
 def api_auditoria_delete(request, pk):
     """Exclui uma auditoria (gestor e admin)"""
     try:
+        # Garantir que pertence ao departamento ou que o usuário tem permissão total
         auditoria = AuditoriaAtendimento.objects.get(id=pk)
+        
+        # Log de segurança (opcional)
+        print(f"[AUDIT] Excluindo auditoria {pk} - ID Conversa: {auditoria.id_conversa} por {request.user.username}")
+        
         auditoria.delete()
         return JsonResponse({'success': True})
     except AuditoriaAtendimento.DoesNotExist:
-        return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
+        # Se não encontrar por ID, pode ser que o PK enviado esteja errado ou já deletado
+        print(f"[AUDIT] Erro na exclusão: Auditoria {pk} não encontrada")
+        return JsonResponse({'error': 'Auditoria não encontrada ou já excluída.'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"[AUDIT] Erro inesperado na exclusão {pk}: {str(e)}")
+        return JsonResponse({'error': f'Erro ao excluir: {str(e)}'}, status=500)
 
 
 # ========================================
