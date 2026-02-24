@@ -151,7 +151,7 @@ def api_auditoria_create(request):
         return JsonResponse({
             'success': True,
             'auditoria': {
-                'id': auditoria.id,
+                'id': str(auditoria.id),
                 'pontuacao': auditoria.pontuacao,
                 'nota': float(auditoria.nota),
                 'classificacao': auditoria.classificacao,
@@ -240,17 +240,17 @@ def api_auditoria_list(request):
         data = []
         for aud in auditorias:
             data.append({
-                'id': aud.id,
+                'id': str(aud.id),
                 'data_atendimento': aud.data_atendimento.isoformat(),
                 'id_conversa': aud.id_conversa,
                 'tipo_atendimento': aud.get_tipo_atendimento_display(),
                 'analista_auditado': {
-                    'id': aud.analista_auditado.id,
+                    'id': str(aud.analista_auditado.id),
                     'username': aud.analista_auditado.username,
                     'nome_completo': aud.analista_auditado.get_full_name() or aud.analista_auditado.username,
                 },
                 'auditor': {
-                    'id': aud.auditor.id,
+                    'id': str(aud.auditor.id),
                     'username': aud.auditor.username,
                 } if not request.user.is_analista() else None,
                 'pontuacao': aud.pontuacao,
@@ -315,18 +315,18 @@ def api_auditoria_detail(request, pk):
                 return JsonResponse({'error': 'Acesso negado (departamento)'}, status=403)
 
         data = {
-            'id': auditoria.id,
+            'id': str(auditoria.id),
             'data_atendimento': auditoria.data_atendimento.isoformat(),
             'id_conversa': auditoria.id_conversa,
             'tipo_atendimento': auditoria.get_tipo_atendimento_display(),
             'tipo_atendimento_key': auditoria.tipo_atendimento,
             'analista_auditado': {
-                'id': auditoria.analista_auditado.id,
+                'id': str(auditoria.analista_auditado.id),
                 'username': auditoria.analista_auditado.username,
                 'nome_completo': auditoria.analista_auditado.get_full_name() or auditoria.analista_auditado.username,
             },
             'auditor': {
-                'id': auditoria.auditor.id,
+                'id': str(auditoria.auditor.id),
                 'username': auditoria.auditor.username,
                 'nome_completo': auditoria.auditor.get_full_name() or auditoria.auditor.username,
             } if not request.user.is_analista() else None,
@@ -439,7 +439,7 @@ def api_auditoria_update(request, pk):
         return JsonResponse({
             'success': True,
             'auditoria': {
-                'id': auditoria.id,
+                'id': str(auditoria.id),
                 'pontuacao': auditoria.pontuacao,
                 'nota': float(auditoria.nota),
                 'classificacao': auditoria.classificacao,
@@ -554,7 +554,7 @@ def api_ranking_analistas(request):
             
             data.append({
                 'posicao': idx,
-                'analista_id': analista_id,
+                'analista_id': str(analista_id),
                 'analista_username': item['analista_auditado__username'],
                 'analista_nome': nome_completo,
                 'total_auditorias': item['total_auditorias'],
@@ -594,7 +594,7 @@ def api_estatisticas_analista(request, analista_id):
             return JsonResponse({
                 'success': True,
                 'analista': {
-                    'id': analista.id,
+                    'id': str(analista.id),
                     'username': analista.username,
                     'nome_completo': analista.get_full_name() or analista.username,
                 },
@@ -624,7 +624,7 @@ def api_estatisticas_analista(request, analista_id):
         return JsonResponse({
             'success': True,
             'analista': {
-                'id': analista.id,
+                'id': str(analista.id),
                 'username': analista.username,
                 'nome_completo': analista.get_full_name() or analista.username,
             },
@@ -763,7 +763,7 @@ def api_configuracao_get(request):
         return JsonResponse({
             'success': True,
             'configuracao': {
-                'id': config.id,
+                'id': str(config.id),
                 'percentual_minimo_aceitavel': float(config.percentual_minimo_aceitavel),
                 'ativo': config.ativo,
             }
@@ -800,7 +800,7 @@ def api_configuracao_update(request):
         return JsonResponse({
             'success': True,
             'configuracao': {
-                'id': config.id,
+                'id': str(config.id),
                 'percentual_minimo_aceitavel': float(config.percentual_minimo_aceitavel),
                 'ativo': config.ativo,
             }
@@ -840,7 +840,7 @@ def api_analistas_list(request):
         for analista in analistas:
             nome_completo = analista.get_full_name() or analista.username
             data.append({
-                'id': analista.id,
+                'id': str(analista.id),
                 'username': analista.username,
                 'nome_completo': nome_completo,
                 'role': analista.get_role_display(),

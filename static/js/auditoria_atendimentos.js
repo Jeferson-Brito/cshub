@@ -576,10 +576,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
-                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
+                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit('${aud.id}')" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
-                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit(${aud.id})" title="Excluir">
+                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit('${aud.id}')" title="Excluir">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                 </td>
@@ -823,7 +823,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                             ${aud.can_edit ? `
                             <button class="btn btn-sm ${aud.feedback_data ? 'btn-outline-success' : 'btn-warning'} ms-2" 
-                                onclick="registrarFeedback(${aud.id})" title="Registrar data da conversa">
+                                onclick="registrarFeedback('${aud.id}')" title="Registrar data da conversa">
                                 <i class="bi bi-chat-dots"></i>
                             </button>` : ''}
                         </div>
@@ -833,7 +833,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="alert alert-info mt-2">
                         <div class="d-flex align-items-center justify-content-between">
                             <span><i class="bi bi-info-circle me-2"></i>Você deve dar o seu ciente sobre esta auditoria:</span>
-                            <button class="btn btn-sm btn-primary" onclick="darCiente(${aud.id})">
+                            <button class="btn btn-sm btn-primary" onclick="darCiente('${aud.id}')">
                                 <i class="bi bi-check-square me-1"></i>Dar Ciente
                             </button>
                         </div>
@@ -858,10 +858,10 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             
             <div class="d-flex justify-content-end pt-3 border-top">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="viewDetails(${aud.id}, event)">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="viewDetails('${aud.id}', event)">
                     <i class="bi bi-eye-slash me-1"></i>Fechar Detalhes
                 </button>
-                ${aud.can_edit ? `<button type="button" class="btn btn-sm btn-primary" onclick="editAudit(${aud.id})"><i class="bi bi-pencil me-1"></i>Editar Auditoria</button>` : ''}
+                ${aud.can_edit ? `<button type="button" class="btn btn-sm btn-primary" onclick="editAudit('${aud.id}')"><i class="bi bi-pencil me-1"></i>Editar Auditoria</button>` : ''}
             </div>
         `;
 
@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 'success'
                             ).then(() => {
                                 // Remover linha visualmente se existir
-                                const row = document.querySelector(`button[onclick="deleteAudit(${id})"]`)?.closest('tr');
+                                const row = document.querySelector(`button[onclick="deleteAudit('${id}')"]`)?.closest('tr');
                                 if (row) row.remove();
 
                                 const modalEl = document.getElementById('modalDetalhes');
@@ -1158,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             html += `
                 <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="analista-card ${alertClass}" onclick="showAnalystAudits(${stats.analista.id}, '${stats.analista.nome_completo.replace(/'/g, "\\'")}')">
+                    <div class="analista-card ${alertClass}" onclick="showAnalystAudits('${stats.analista.id}', '${stats.analista.nome_completo.replace(/'/g, "\\'")}')">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="mb-0">${stats.analista.nome_completo}</h5>
                             ${stats.tem_alertas ? '<span class="badge-alert"><i class="bi bi-exclamation-triangle"></i> Alerta</span>' : ''}
@@ -1278,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${aud.id})">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('${aud.id}')">
                         <i class="bi bi-eye"></i>
                     </button>
                 </td>
@@ -1517,10 +1517,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
-                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit(${aud.id})" title="Editar">
+                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit('${aud.id}')" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
-                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit(${aud.id})" title="Excluir">
+                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit('${aud.id}')" title="Excluir">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                 </td>
