@@ -593,7 +593,6 @@
                                 <th class="ps-4 py-3">Cód. Loja</th>
                                 <th>Status Operacional</th>
 
-                                <th class="text-center">Auditorias (Mês)</th>
 
                                 <th>Última Auditoria</th>
 
@@ -622,8 +621,6 @@
                                     {% endif %}
                                 </td>
 
-                                <td class="text-center"><span class="badge bg-secondary rounded-pill px-3">{{
-                                        store.audits_this_month_count|default:"0" }}</span></td>
 
                                 <!-- Columns Removed -->
                                 <!-- Otimização: Uso de latest_audit anexado na view para evitar N+1 queries -->
