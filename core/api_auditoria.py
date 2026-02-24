@@ -284,6 +284,7 @@ def api_auditoria_list(request):
 @require_GET
 def api_auditoria_detail(request, pk):
     """Detalhes de uma auditoria específica"""
+    print(f"[AUDIT DEBUG] detail context: user={request.user.username}, pk={pk}, method={request.method}")
     try:
         # Verificar se as colunas novas existem
         has_new_columns = True
@@ -300,21 +301,18 @@ def api_auditoria_detail(request, pk):
             
         auditoria = queryset.get(id=pk)
             
-        # Verificar permissão de department
-        department = request.session.get('current_department_obj') or request.user.department
-        if isinstance(department, dict):
-            department = Department.objects.get(id=department['id'])
+        if not request.user.is_gestor() and not request.user.is_administrador():
+            # Se for analista, só pode ver sua própria auditoria
+            if auditoria.analista_auditado != request.user:
+                return JsonResponse({'error': 'Acesso negado'}, status=403)
             
-        if not department:
-            department = Department.objects.filter(id=1).first() or Department.objects.first()
-        
-        if auditoria.department != department:
-            return JsonResponse({'error': 'Acesso negado'}, status=403)
-
-        # Se for analista, só pode ver sua própria auditoria
-        # Se for analista, só pode ver sua própria auditoria
-        if request.user.is_analista() and auditoria.analista_auditado != request.user:
-            return JsonResponse({'error': 'Acesso negado'}, status=403)
+            # Verificar departamento para analista
+            department = request.session.get('current_department_obj') or request.user.department
+            if isinstance(department, dict):
+                department = Department.objects.filter(id=department['id']).first()
+            
+            if auditoria.department != department:
+                return JsonResponse({'error': 'Acesso negado (departamento)'}, status=403)
 
         data = {
             'id': auditoria.id,
@@ -379,8 +377,12 @@ def api_auditoria_detail(request, pk):
         return JsonResponse({'success': True, 'auditoria': data})
         
     except AuditoriaAtendimento.DoesNotExist:
+        print(f"[AUDIT DEBUG] detail: auditoria {pk} not found")
         return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
     except Exception as e:
+        print(f"[AUDIT DEBUG] detail: error {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 
@@ -388,6 +390,7 @@ def api_auditoria_detail(request, pk):
 @require_POST
 def api_auditoria_update(request, pk):
     """Atualiza uma auditoria (gestor e admin)"""
+    print(f"[AUDIT DEBUG] update start: pk={pk}, user={request.user.username}")
     try:
         auditoria = AuditoriaAtendimento.objects.get(id=pk)
         data = json.loads(request.body)
@@ -445,8 +448,12 @@ def api_auditoria_update(request, pk):
         })
         
     except AuditoriaAtendimento.DoesNotExist:
+        print(f"[AUDIT DEBUG] update: auditoria {pk} not found")
         return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
     except Exception as e:
+        print(f"[AUDIT DEBUG] update: error {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
 
@@ -460,15 +467,18 @@ def api_auditoria_delete(request, pk):
         
         # Log de segurança (opcional)
         print(f"[AUDIT] Excluindo auditoria {pk} - ID Conversa: {auditoria.id_conversa} por {request.user.username}")
+        print(f"[AUDIT DEBUG] delete: Excluindo auditoria {pk} - ID Conversa: {auditoria.id_conversa} por {request.user.username}")
         
         auditoria.delete()
         return JsonResponse({'success': True})
     except AuditoriaAtendimento.DoesNotExist:
         # Se não encontrar por ID, pode ser que o PK enviado esteja errado ou já deletado
-        print(f"[AUDIT] Erro na exclusão: Auditoria {pk} não encontrada")
+        print(f"[AUDIT DEBUG] delete: Auditoria {pk} não encontrada")
         return JsonResponse({'error': 'Auditoria não encontrada ou já excluída.'}, status=404)
     except Exception as e:
-        print(f"[AUDIT] Erro inesperado na exclusão {pk}: {str(e)}")
+        print(f"[AUDIT DEBUG] delete: Erro inesperado {pk}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': f'Erro ao excluir: {str(e)}'}, status=500)
 
 
