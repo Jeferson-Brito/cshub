@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ("core", "0052_enable_rls_all_tables"),
+        ("core", "0057_reset_all_passwords"),
     ]
 
     operations = [
