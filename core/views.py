@@ -31,69 +31,22 @@ def login_view_custom(request):
         email = email_raw.strip()
         password = request.POST.get('password')
         
-        print(f"[LOGIN DEBUG] Attempt: raw_email='{email_raw}', stripped='{email}'")
-        
         if email and password:
             try:
-                from django.db import connection
-                from django.contrib.auth.hashers import make_password
-                
-                # DIAGNOSTIC & SELF-HEALING
-                db_info = connection.settings_dict
-                print(f"[LOGIN DEBUG] DB Connection Check: host={db_info.get('HOST')}, database={db_info.get('NAME')}")
-                
-                u_count = User.objects.count()
-                print(f"[LOGIN DEBUG] DB Status: total_users={u_count}, table='{User._meta.db_table}'")
-                
-                admin_email = 'jeffersonbrito2455@gmail.com'
-                new_hash = make_password('Nexus@2025')
-                
-                # Check if we need to self-heal
-                if u_count == 0 or not User.objects.filter(email__iexact=admin_email).exists():
-                    print(f"[LOGIN DEBUG] EMERGENCY: Admin user missing or DB empty. Creating {admin_email}...")
-                    try:
-                        # Ensure username is available
-                        username = 'jefferson'
-                        if User.objects.filter(username=username).exists():
-                            username = f"jefferson_{timezone.now().strftime('%H%M%S')}"
-                            
-                        User.objects.create(
-                            username=username,
-                            email=admin_email,
-                            password=new_hash,
-                            role='administrador',
-                            is_staff=True,
-                            is_superuser=True,
-                            is_active=True,
-                            ativo=True
-                        )
-                        print(f"[LOGIN DEBUG] ✅ Self-healed: Created/Ensured user {admin_email}")
-                    except Exception as e:
-                        print(f"[LOGIN DEBUG] ❌ Failed self-healing: {e}")
-                
-                # Reset ALL passwords to Nexus@2025 if login fails once and it's an emergency? 
-                # No, let's just make sure the current lookup works.
-                
                 # Buscar usuário por e-mail de forma case-insensitive
                 user = User.objects.filter(email__iexact=email).first()
                 
                 if not user:
-                    print(f"[LOGIN DEBUG] User.DoesNotExist for email: {email}")
                     messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
                     return render(request, 'core/login.html')
 
-                # DEBUG: Log authentication details
-                print(f"[LOGIN DEBUG] Authenticating: email={user.email}, username={user.username}, active={user.is_active}/{user.ativo}")
-                print(f"[LOGIN DEBUG] Password check result: {user.check_password(password)}")
-                
                 # Autenticar usando o username do usuário encontrado
                 auth_user = authenticate(request, username=user.username, password=password)
-                print(f"[LOGIN DEBUG] authenticate() result: {auth_user}")
                 
                 if auth_user is not None:
                     if auth_user.ativo:
                         login(request, auth_user)
-                        # Log acess history
+                        # Log access history
                         try:
                             AuditLog.objects.create(
                                 usuario=auth_user,
@@ -109,16 +62,11 @@ def login_view_custom(request):
                         next_url = request.GET.get('next', '/')
                         return redirect(next_url)
                     else:
-                        print(f"[LOGIN DEBUG] User {user.email} found but ativo=False")
                         messages.error(request, 'Sua conta está inativa. Entre em contato com o administrador.')
                 else:
-                    print(f"[LOGIN DEBUG] authenticate() returned None for {user.email}")
                     messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
-            except User.DoesNotExist:
-                print(f"[LOGIN DEBUG] User.DoesNotExist for email: {email}")
-                messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
             except Exception as e:
-                print(f"[LOGIN DEBUG] Unexpected error in login_view_custom: {e}")
+                print(f"Unexpected error in login_view_custom: {e}")
                 messages.error(request, 'Erro inesperado na autenticação. Tente novamente.')
         else:
             messages.error(request, 'Por favor, preencha todos os campos.')
