@@ -1,4 +1,4 @@
-Django==5.0.1
+Django==5.1.2
 python-dotenv==1.0.0
 Pillow
 django-crispy-forms==2.1
@@ -11,7 +11,7 @@ whitenoise==6.6.0
 gunicorn==21.2.0
 uvicorn[standard]==0.27.0
 psycopg2-binary==2.9.9
-django-cockroachdb==5.0.*
+django-cockroachdb==5.1.0
 dj-database-url==2.1.0
 django-cors-headers==4.3.1
 

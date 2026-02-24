@@ -175,7 +175,17 @@ def api_auditoria_list(request):
             return JsonResponse({'error': 'Nenhum departamento encontrado'}, status=400)
         
         # Base queryset
-        queryset = AuditoriaAtendimento.objects.filter(department=department).select_related('analista_auditado', 'auditor')
+        queryset = AuditoriaAtendimento.objects.all()
+        
+        # Tentar otimizar, mas recuar se as colunas novas não existirem ainda
+        try:
+             queryset.filter(id=0).exists() # Teste rápido de query
+        except Exception:
+             # Se falhar geral, podemos estar sem as colunas.
+             # Mas aqui o Django costuma falhar apenas na execução da query final.
+             pass
+
+        queryset = queryset.filter(department=department).select_related('analista_auditado', 'auditor')
 
         # Se for analista, filtrar apenas as suas próprias auditorias
         if request.user.is_analista():
@@ -243,6 +253,8 @@ def api_auditoria_list(request):
                 'feedback_data': aud.feedback_data.isoformat() if aud.feedback_data else None,
                 'feedback_gestor': aud.feedback_gestor.get_full_name() if aud.feedback_gestor else None,
                 'created_at': aud.created_at.isoformat(),
+                'ciente_analista': getattr(aud, 'ciente_analista', False),
+                'data_ciente': getattr(aud, 'data_ciente', None).isoformat() if getattr(aud, 'data_ciente', None) else None,
                 'can_edit': request.user.is_gestor() or request.user.is_administrador(),
                 'can_delete': request.user.is_gestor() or request.user.is_administrador(),
             })
@@ -265,24 +277,44 @@ def api_auditoria_list(request):
 def api_auditoria_detail(request, pk):
     """Detalhes de uma auditoria específica"""
     try:
-        auditoria = AuditoriaAtendimento.objects.get(id=pk)
-        
+        try:
+            # Tentar buscar com todos os campos (pós-migration)
+            auditoria = AuditoriaAtendimento.objects.get(id=pk)
+        except Exception:
+            # Se falhar (provavelmente colunas faltando), buscar apenas campos básicos (pré-migration)
+            campos_basicos = [
+                'id', 'data_atendimento', 'id_conversa', 'tipo_atendimento', 
+                'analista_auditado_id', 'auditor_id', 'department_id',
+                'apresentou_corretamente', 'erro_apresentacao', 'imagem_erro_apresentacao',
+                'analisou_historico', 'erro_historico', 'imagem_erro_historico',
+                'entendeu_solicitacao', 'erro_entendimento', 'imagem_erro_entendimento',
+                'informacao_clara', 'erro_informacao', 'imagem_erro_informacao',
+                'acordo_espera', 'erro_acordo_espera', 'imagem_erro_acordo_espera',
+                'atendimento_respeitoso', 'erro_respeito', 'imagem_erro_respeito',
+                'portugues_correto', 'erro_portugues', 'imagem_erro_portugues',
+                'finalizacao_correta', 'erro_finalizacao', 'imagem_erro_finalizacao',
+                'procedimento_correto', 'erro_procedimento', 'imagem_erro_procedimento',
+                'pontuacao', 'nota', 'classificacao', 'requer_acao',
+                'feedback_data', 'feedback_gestor_id', 'created_at', 'updated_at'
+            ]
+            auditoria = AuditoriaAtendimento.objects.only(*campos_basicos).get(id=pk)
+            
         # Verificar permissão de department
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
             
         if not department:
-             department = Department.objects.filter(id=1).first() or Department.objects.first()
+            department = Department.objects.filter(id=1).first() or Department.objects.first()
         
         if auditoria.department != department:
             return JsonResponse({'error': 'Acesso negado'}, status=403)
 
         # Se for analista, só pode ver sua própria auditoria
+        # Se for analista, só pode ver sua própria auditoria
         if request.user.is_analista() and auditoria.analista_auditado != request.user:
             return JsonResponse({'error': 'Acesso negado'}, status=403)
 
-        
         data = {
             'id': auditoria.id,
             'data_atendimento': auditoria.data_atendimento.isoformat(),
@@ -339,6 +371,8 @@ def api_auditoria_detail(request, pk):
             'feedback_gestor': auditoria.feedback_gestor.get_full_name() if auditoria.feedback_gestor else None,
             'created_at': auditoria.created_at.isoformat(),
             'updated_at': auditoria.updated_at.isoformat(),
+            'ciente_analista': getattr(auditoria, 'ciente_analista', False),
+            'data_ciente': getattr(auditoria, 'data_ciente', None).isoformat() if getattr(auditoria, 'data_ciente', None) else None,
         }
         
         return JsonResponse({'success': True, 'auditoria': data})
@@ -801,27 +835,64 @@ def api_registrar_feedback(request, pk):
     try:
         auditoria = AuditoriaAtendimento.objects.get(id=pk)
         data = json.loads(request.body)
+        
+        if 'feedback_data' in data:
+            auditoria.feedback_data = data['feedback_data']
+            auditoria.feedback_gestor = request.user
+            auditoria.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'error': 'Data de feedback não informada'}, status=400)
+            
+    except AuditoriaAtendimento.DoesNotExist:
+        return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
-        feedback_data_str = data.get('feedback_data')  # format: 'YYYY-MM-DD'
-        if not feedback_data_str:
-            return JsonResponse({'error': 'Data da conversa é obrigatória'}, status=400)
 
-        from datetime import date
-        try:
-            feedback_date = date.fromisoformat(feedback_data_str)
-        except ValueError:
-            return JsonResponse({'error': 'Formato de data inválido. Use YYYY-MM-DD'}, status=400)
+@gestor_or_admin_required
+@require_GET
+def api_check_conversation_id(request):
+    """Verifica se um ID de conversa já foi auditado no departamento do usuário"""
+    id_conversa = request.GET.get('id')
+    if not id_conversa:
+        return JsonResponse({'error': 'ID não informado'}, status=400)
+    
+    department = request.session.get('current_department_obj') or request.user.department
+    if isinstance(department, dict):
+        department = Department.objects.get(id=department['id'])
+        
+    exists = AuditoriaAtendimento.objects.filter(
+        id_conversa=id_conversa,
+        department=department
+    ).exists()
+    
+    return JsonResponse({'exists': exists})
 
-        auditoria.feedback_data = feedback_date
-        auditoria.feedback_gestor = request.user
-        auditoria.save(update_fields=['feedback_data', 'feedback_gestor'])
 
+@gestor_admin_or_analyst_required
+@require_POST
+def api_registrar_ciente(request, pk):
+    """Registra o ciente do analista sobre a auditoria realizada"""
+    try:
+        auditoria = AuditoriaAtendimento.objects.get(id=pk)
+        
+        # Apenas o analista auditado daquela auditoria pode dar o ciente
+        if auditoria.analista_auditado != request.user:
+             return JsonResponse({'error': 'Ação permitida apenas para o analista auditado'}, status=403)
+        
+        if auditoria.ciente_analista:
+            return JsonResponse({'error': 'Ciente já registrado anteriormente'}, status=400)
+            
+        auditoria.ciente_analista = True
+        auditoria.data_ciente = timezone.now()
+        auditoria.save()
+        
         return JsonResponse({
             'success': True,
-            'feedback_data': auditoria.feedback_data.isoformat(),
-            'feedback_gestor': request.user.get_full_name() or request.user.username,
+            'data_ciente': auditoria.data_ciente.isoformat()
         })
-
+        
     except AuditoriaAtendimento.DoesNotExist:
         return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
     except Exception as e:

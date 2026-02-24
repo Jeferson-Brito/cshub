@@ -1836,6 +1836,17 @@ class AuditoriaAtendimento(models.Model):
         verbose_name="Gestor que conversou"
     )
     
+    # Ciente do analista sobre a auditoria (para casos de alerta)
+    ciente_analista = models.BooleanField(
+        default=False,
+        verbose_name="Ciente pelo Analista",
+        help_text="Marcado pelo analista ao reconhecer a auditoria"
+    )
+    data_ciente = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name="Data do Ciente"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

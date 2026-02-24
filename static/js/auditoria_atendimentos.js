@@ -111,6 +111,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 handleTabChange(target);
             });
         });
+
+        // Verificação de ID de Conversa Duplicado
+        const inputIdConversa = document.getElementById('id_conversa');
+        if (inputIdConversa) {
+            inputIdConversa.addEventListener('blur', function () {
+                const id = this.value.trim();
+                if (!id) return;
+
+                fetch(`/api/auditoria/check-id/?id=${encodeURIComponent(id)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.exists) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Atenção: ID Duplicado',
+                                text: `A conversa "${id}" já possui uma auditoria registrada no sistema.`,
+                                confirmButtonText: 'Entendi'
+                            });
+                        }
+                    });
+            });
+        }
     }
 
     function setupCriteriosHandlers() {
@@ -541,9 +563,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${aud.requer_acao ? `
                         <i class="bi bi-exclamation-triangle icon-alert ms-2" title="Requer Ação"></i>
                         ${aud.feedback_data
-                            ? `<br><small class="text-success"><i class="bi bi-check-circle me-1"></i>Discutido em ${formatDate(aud.feedback_data)}</small>`
-                            : `<br><small class="text-danger">Não discutido</small>`
-                        }
+                        ? `<br><small class="text-success"><i class="bi bi-check-circle me-1"></i>Discutido em ${formatDate(aud.feedback_data)}</small>`
+                        : `<br><small class="text-danger">Não discutido</small>`
+                    }
+                        ${aud.ciente_analista
+                        ? `<br><small class="text-primary"><i class="bi bi-person-check-fill me-1"></i>Analista Ciente (${formatDate(aud.data_ciente.split('T')[0])})</small>`
+                        : `<br><small class="text-muted">Aguardando ciente do analista</small>`
+                    }
                     ` : ''}
                 </td>
                 <td>
@@ -791,17 +817,36 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="flex-grow-1">
                                 <strong>${aud.feedback_data ? 'Conversa Registrada' : 'Atenção: Requer Discussão'}</strong>
                                 ${aud.feedback_data
-                                    ? `<p class="mb-0 mt-1 small">Discutido por <strong>${aud.feedback_gestor || 'Gestor'}</strong> em <strong>${formatDate(aud.feedback_data)}</strong></p>`
-                                    : `<p class="mb-0 mt-1 small">Esta auditoria ainda não foi discutida com o analista.</p>`
-                                }
+                    ? `<p class="mb-0 mt-1 small">Discutido por <strong>${aud.feedback_gestor || 'Gestor'}</strong> em <strong>${formatDate(aud.feedback_data)}</strong></p>`
+                    : `<p class="mb-0 mt-1 small">Esta auditoria ainda não foi discutida com o analista.</p>`
+                }
                             </div>
                             ${aud.can_edit ? `
                             <button class="btn btn-sm ${aud.feedback_data ? 'btn-outline-success' : 'btn-warning'} ms-2" 
                                 onclick="registrarFeedback(${aud.id})" title="Registrar data da conversa">
-                                <i class="bi bi-chat-dots me-1"></i>${aud.feedback_data ? 'Atualizar' : 'Registrar Conversa'}
+                                <i class="bi bi-chat-dots"></i>
                             </button>` : ''}
                         </div>
-                    </div>` : ''}
+                    </div>
+                    
+                    ${aud.requer_acao && !aud.can_edit && !aud.ciente_analista ? `
+                    <div class="alert alert-info mt-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span><i class="bi bi-info-circle me-2"></i>Você deve dar o seu ciente sobre esta auditoria:</span>
+                            <button class="btn btn-sm btn-primary" onclick="darCiente(${aud.id})">
+                                <i class="bi bi-check-square me-1"></i>Dar Ciente
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${aud.ciente_analista ? `
+                    <div class="alert alert-light mt-2 border shadow-sm small py-2">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        Analista deu ciente em <strong>${new Date(aud.data_ciente).toLocaleString('pt-BR')}</strong>
+                    </div>
+                    ` : ''}
+                    ` : ''}
                 </div>
                 
                 <div class="col-md-7">
@@ -1559,3 +1604,43 @@ document.addEventListener('DOMContentLoaded', function () {
         dataInput.value = new Date().toISOString().split('T')[0];
     }
 });
+// Registrar Ciente do Analista
+window.darCiente = function (id) {
+    Swal.fire({
+        title: 'Confirmar Ciente',
+        text: 'Deseja registrar que você está ciente dos pontos identificados nesta auditoria?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, dar ciente',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/api/auditoria/${id}/ciente/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Sucesso!', 'Seu ciente foi registrado com sucesso.', 'success')
+                            .then(() => {
+                                // Recarregar detalhes ou a lista
+                                const container = document.querySelector(`#details-${id} .details-container`);
+                                if (container) container.innerHTML = '';
+                                viewDetails(id);
+                                if (typeof initAnalystView === 'function') initAnalystView();
+                            });
+                    } else {
+                        Swal.fire('Erro', data.error || 'Erro ao registrar ciente', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    Swal.fire('Erro', 'Ocorreu um erro na comunicação com o servidor', 'error');
+                });
+        }
+    });
+};
