@@ -546,11 +546,12 @@ def api_estatisticas_analista(request, analista_id):
         # Calcular estatísticas
         nota_media = auditorias.aggregate(Avg('nota'))['nota__avg']
         
-        # Distribuição por classificação
-        distribuicao = {}
-        for classificacao in ['excelente', 'bom', 'regular', 'insatisfatorio']:
-            count = auditorias.filter(classificacao=classificacao).count()
-            distribuicao[classificacao] = count
+        # Distribuição por classificação — OTIMIZADO: 1 query em vez de 4
+        dist_data = auditorias.values('classificacao').annotate(count=Count('id'))
+        distribuicao = {'excelente': 0, 'bom': 0, 'regular': 0, 'insatisfatorio': 0}
+        for item in dist_data:
+            if item['classificacao'] in distribuicao:
+                distribuicao[item['classificacao']] = item['count']
         
         # Última auditoria
         ultima = auditorias.order_by('-created_at').first()

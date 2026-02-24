@@ -125,7 +125,7 @@ DATABASES = {
         "PASSWORD": get_env("DB_PASSWORD", ""),
         "HOST": get_env("DB_HOST", "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"),
         "PORT": get_env("DB_PORT", "26257"),
-        "CONN_MAX_AGE": 60,
+        "CONN_MAX_AGE": 300,  # 5 minutos — reduz overhead de conexão com CockroachDB
         "OPTIONS": {
             "sslmode": "require",
         },

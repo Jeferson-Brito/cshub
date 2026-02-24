@@ -183,6 +183,10 @@ class Complaint(models.Model):
             models.Index(fields=['analista']),
             models.Index(fields=['status']),
             models.Index(fields=['created_at']),
+            # Índices compostos para filtros por departamento (padrões de query mais comuns)
+            models.Index(fields=['department', 'status'], name='complaint_dept_status_idx'),
+            models.Index(fields=['department', 'created_at'], name='complaint_dept_created_idx'),
+            models.Index(fields=['department', 'analista'], name='complaint_dept_analista_idx'),
         ]
     
     def __str__(self):
@@ -1880,10 +1884,14 @@ class AuditoriaAtendimento(models.Model):
     def verificar_alerta(self, nota):
         """Verifica se a nota está abaixo do percentual mínimo aceitável"""
         try:
-            config = ConfiguracaoAuditoria.objects.filter(
-                department=self.department, 
-                ativo=True
-            ).first()
+            # Cache na instância para evitar query repetida durante o mesmo save()
+            config = getattr(self, '_config_auditoria_cache', None)
+            if config is None:
+                config = ConfiguracaoAuditoria.objects.filter(
+                    department=self.department,
+                    ativo=True
+                ).first()
+                self._config_auditoria_cache = config
             if config:
                 # Converter nota (0-10) para percentual (0-100) para comparação
                 return (nota * 10) < float(config.percentual_minimo_aceitavel)
