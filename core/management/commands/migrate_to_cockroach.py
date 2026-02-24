@@ -152,8 +152,10 @@ class Command(BaseCommand):
             rows = src_cur.fetchall()
             columns = [desc[0] for desc in src_cur.description]
             col_list = ", ".join(f'"{c}"' for c in columns)
-            placeholders = ", ".join(["%s"] * len(columns))
-
+            
+            # Using execute_values for much faster bulk insertion
+            from psycopg2.extras import execute_values
+            
             with connection.cursor() as dest_cur:
                 try:
                     # Clear destination table
@@ -162,18 +164,21 @@ class Command(BaseCommand):
                     except Exception:
                         dest_cur.execute(f'DELETE FROM "{table}"')
                     
-                    # Insert
-                    insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES ({placeholders})'
+                    # Pre-process rows for JSON fields
                     import json
+                    clean_rows = []
                     for row in rows:
-                        # Pre-process row for JSON fields (dict/list to string)
                         clean_row = []
                         for val in row:
                             if isinstance(val, (dict, list)):
                                 clean_row.append(json.dumps(val))
                             else:
                                 clean_row.append(val)
-                        dest_cur.execute(insert_sql, clean_row)
+                        clean_rows.append(tuple(clean_row))
+
+                    # Batch insert
+                    insert_sql = f'INSERT INTO "{table}" ({col_list}) VALUES %s'
+                    execute_values(dest_cur, insert_sql, clean_rows)
                     
                     print(f"    ✅ {len(rows)} linhas copiadas para {table}", flush=True)
                     total_copied += len(rows)
