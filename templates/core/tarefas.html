@@ -37,6 +37,9 @@
                         <li><a class="dropdown-item" href="#" onclick="openRefundRequestModal(); return false;">
                                 <i class="bi bi-receipt-cutoff text-warning"></i> Solicitar ao CS Clientes
                             </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="openChatInactivityModal(); return false;">
+                                <i class="bi bi-chat-left-dots text-info"></i> Remoção de Inatividade - Chats
+                            </a></li>
                     </ul>
                 </div>
                 {% endif %}
@@ -180,6 +183,52 @@
                                 <tr>
                                     <td colspan="9" class="text-center py-4">
                                         <div class="spinner-border text-primary" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remoção de Inatividades - Chats (NRS Suporte) -->
+    <div class="row mt-4" style="position: relative; z-index: 1;">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-dark py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-dots me-2"></i>Remoção de Inatividade - Chats
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="chatInactivityStatusFilter" style="width: 150px;"
+                            onchange="loadChatInactivityRequests()">
+                            <option value="">Todos Status</option>
+                            <option value="pendente">Pendentes</option>
+                            <option value="aprovado">Aprovados</option>
+                            <option value="reprovado">Reprovados</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Analista</th>
+                                    <th>ID Chat</th>
+                                    <th>Data Chat</th>
+                                    <th>Motivo</th>
+                                    <th>Status</th>
+                                    <th>Revisado por</th>
+                                    <th>Criação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chat-inactivity-list">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="spinner-border text-info" role="status"></div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -589,6 +638,102 @@
     </div>
 </div>
 
+<!-- Modal Solicitação de Remoção de Inatividade -->
+<div class="modal fade" id="chatInactivityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-dark">
+                <h5 class="modal-title"><i class="bi bi-chat-left-dots"></i> Solicitar Remoção de Inatividade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="chatInactivityForm">
+                    <div class="alert alert-light border border-info mb-3 small">
+                        <i class="bi bi-info-circle"></i> Adicione um ou mais IDs de chat. Para cada linha, uma
+                        solicitação separada será criada.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Data do Chat <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="chat_date" id="chat-inactivity-date" required>
+                    </div>
+
+                    <div id="chat-rows-container">
+                        <div class="row g-2 mb-2 chat-row">
+                            <div class="col-md-5">
+                                <label class="form-label small text-muted mb-1">ID do Chat <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" name="chat_id[]"
+                                    placeholder="Ex: 5678912" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted mb-1">Link do Chat (opcional)</label>
+                                <input type="url" class="form-control form-control-sm" name="chat_link[]"
+                                    placeholder="https://...">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100 d-none remove-chat-row"
+                                    onclick="removeChatRow(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addChatRow()">
+                        <i class="bi bi-plus-lg"></i> Adicionar outro chat
+                    </button>
+
+                    <hr>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="wasInactivityCheck" name="was_inactivity"
+                            checked>
+                        <label class="form-check-label" for="wasInactivityCheck">Confirmo que a avaliação foi negativa
+                            por inatitividade do cliente.</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="submitChatInactivity()">
+                    <i class="bi bi-send"></i> Enviar Solicitações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Revisão de Inatividade (Gestor) -->
+<div class="modal fade" id="reviewChatInactivityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Revisar Solicitação de Inatividade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="review-chat-pk">
+                <div id="review-chat-info" class="mb-3 p-3 bg-light rounded small">
+                    <!-- Preenchido via JS -->
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Observações (opcional)</label>
+                    <textarea class="form-control" id="review-chat-notes" rows="3"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success flex-grow-1" onclick="submitChatReview('aprovado')">
+                        <i class="bi bi-check-circle"></i> Aprovar
+                    </button>
+                    <button type="button" class="btn btn-danger flex-grow-1" onclick="submitChatReview('reprovado')">
+                        <i class="bi bi-x-circle"></i> Reprovar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -599,6 +744,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         loadTasks();
         loadMyRefunds();
+        loadChatInactivityRequests();
         loadAnalystsForFilter();
         if (document.getElementById('manager-alerts')) {
             loadManagerAlerts();
@@ -1524,6 +1670,220 @@
                     text: 'Erro de conexão'
                 });
             }
+        }
+    }
+
+    // ===================== REMOÇÃO DE INATIVIDADE - CHATS =====================
+
+    function openChatInactivityModal() {
+        const form = document.getElementById('chatInactivityForm');
+        form.reset();
+
+        // Reset rows: keep only the first one
+        const container = document.getElementById('chat-rows-container');
+        container.innerHTML = `
+            <div class="row g-2 mb-2 chat-row">
+                <div class="col-md-5">
+                    <label class="form-label small text-muted mb-1">ID do Chat <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" name="chat_id[]" placeholder="Ex: 5678912" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted mb-1">Link do Chat (opcional)</label>
+                    <input type="url" class="form-control form-control-sm" name="chat_link[]" placeholder="https://...">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 d-none remove-chat-row" onclick="removeChatRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Set today's date
+        document.getElementById('chat-inactivity-date').valueAsDate = new Date();
+
+        new bootstrap.Modal(document.getElementById('chatInactivityModal')).show();
+    }
+
+    function addChatRow() {
+        const container = document.getElementById('chat-rows-container');
+        const firstRow = container.querySelector('.chat-row');
+        const newRow = firstRow.cloneNode(true);
+
+        // Clear inputs
+        newRow.querySelectorAll('input').forEach(input => input.value = '');
+
+        // Show remove button
+        const removeBtn = newRow.querySelector('.remove-chat-row');
+        removeBtn.classList.remove('d-none');
+
+        container.appendChild(newRow);
+    }
+
+    function removeChatRow(btn) {
+        btn.closest('.chat-row').remove();
+    }
+
+    async function submitChatInactivity() {
+        const form = document.getElementById('chatInactivityForm');
+
+        const chatIds = Array.from(form.querySelectorAll('input[name="chat_id[]"]')).map(i => i.value).filter(v => v.trim() !== '');
+        const chatLinks = Array.from(form.querySelectorAll('input[name="chat_link[]"]')).map(i => i.value);
+        const chatDate = form.chat_date.value;
+        const wasInactivity = form.was_inactivity.checked;
+
+        if (chatIds.length === 0 || !chatDate) {
+            Swal.fire('Erro', 'Por favor, informe pelo menos um ID de chat e a data.', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/chat-inactivity/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    chat_ids: chatIds,
+                    chat_links: chatLinks,
+                    chat_date: chatDate,
+                    was_inactivity: wasInactivity
+                })
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                bootstrap.Modal.getInstance(document.getElementById('chatInactivityModal')).hide();
+                Swal.fire('Sucesso!', result.message, 'success');
+                loadChatInactivityRequests();
+            } else {
+                const err = await res.json();
+                Swal.fire('Erro!', err.error || 'Erro ao processar solicitação', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Erro!', 'Erro de conexão', 'error');
+        }
+    }
+
+    async function loadChatInactivityRequests() {
+        const status = document.getElementById('chatInactivityStatusFilter').value;
+        let url = `/api/chat-inactivity/list/?status=${status}`;
+
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                renderChatInactivityRequests(data);
+            }
+        } catch (e) {
+            console.error('Erro ao carregar solicitações de chat', e);
+        }
+    }
+
+    function renderChatInactivityRequests(requests) {
+        const tbody = document.getElementById('chat-inactivity-list');
+        if (requests.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Nenhuma solicitação encontrada.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = requests.map(r => {
+            const statusBadge = getChatStatusBadge(r.status);
+            const linkBtn = r.chat_link
+                ? `<a href="${r.chat_link}" target="_blank" class="btn btn-xs btn-outline-info py-0 px-1" title="Ver Chat"><i class="bi bi-link-45deg"></i></a>`
+                : '';
+
+            let actions = '';
+            if (isManager && r.status === 'pendente') {
+                actions += `
+                    <button class="btn btn-sm btn-info" onclick="openReviewChatModal(${r.id}, '${r.chat_id}', '${r.analyst_name}')" title="Revisar">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                `;
+            } else if (r.status === 'pendente') {
+                actions += `
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest(${r.id})" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td><small>${r.analyst_name}</small></td>
+                    <td><strong>${r.chat_id}</strong> ${linkBtn}</td>
+                    <td><small>${r.chat_date}</small></td>
+                    <td>${r.was_inactivity ? '<span class="badge bg-light text-dark">Inatividade</span>' : '<span class="badge bg-light text-dark">Outro</span>'}</td>
+                    <td>${statusBadge}</td>
+                    <td><small>${r.reviewed_by_name || '-'}</small></td>
+                    <td><small>${r.created_at}</small></td>
+                    <td>${actions}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getChatStatusBadge(status) {
+        const badges = {
+            'pendente': '<span class="badge bg-warning text-dark">Pendente</span>',
+            'aprovado': '<span class="badge bg-success">Aprovado</span>',
+            'reprovado': '<span class="badge bg-danger">Reprovado</span>'
+        };
+        return badges[status] || status;
+    }
+
+    function openReviewChatModal(id, chatId, analyst) {
+        document.getElementById('review-chat-pk').value = id;
+        document.getElementById('review-chat-info').innerHTML = `
+            <strong>Analista:</strong> ${analyst}<br>
+            <strong>Chat ID:</strong> ${chatId}
+        `;
+        document.getElementById('review-chat-notes').value = '';
+        new bootstrap.Modal(document.getElementById('reviewChatInactivityModal')).show();
+    }
+
+    async function submitChatReview(action) {
+        const id = document.getElementById('review-chat-pk').value;
+        const notes = document.getElementById('review-chat-notes').value;
+
+        try {
+            const res = await fetch(`/api/chat-inactivity/${id}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ action, notes })
+            });
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('reviewChatInactivityModal')).hide();
+                Swal.fire('Sucesso!', `Solicitação ${action} com sucesso.`, 'success');
+                loadChatInactivityRequests();
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Erro!', 'Erro ao processar revisão.', 'error');
+        }
+    }
+
+    async function deleteChatRequest(id) {
+        if (!confirm('Deseja excluir esta solicitação?')) return;
+
+        try {
+            const res = await fetch(`/api/chat-inactivity/${id}/delete/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            });
+
+            if (res.ok) {
+                loadChatInactivityRequests();
+                if (window.showToast) window.showToast('Solicitação excluída.', 'success');
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
 

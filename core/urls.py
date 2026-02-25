@@ -13,6 +13,7 @@ from . import api_stores
 from . import api_kanban
 from . import api_store_verification
 from . import api_auditoria
+from . import api_chat_inactivity
 from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
@@ -258,5 +259,11 @@ urlpatterns = [
     path('api/auditoria/<int:pk>/feedback/', api_auditoria.api_registrar_feedback, name='api_registrar_feedback'),
     path('api/auditoria/check-id/', api_auditoria.api_check_conversation_id, name='api_check_conversation_id'),
     path('api/auditoria/<int:pk>/ciente/', api_auditoria.api_registrar_ciente, name='api_registrar_ciente'),
+
+    # Chat Inactivity Removal APIs
+    path('api/chat-inactivity/list/', api_chat_inactivity.api_chat_inactivity_list, name='api_chat_inactivity_list'),
+    path('api/chat-inactivity/create/', api_chat_inactivity.api_chat_inactivity_create, name='api_chat_inactivity_create'),
+    path('api/chat-inactivity/<int:pk>/delete/', api_chat_inactivity.api_chat_inactivity_delete, name='api_chat_inactivity_delete'),
+    path('api/chat-inactivity/<int:pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
 ]
 

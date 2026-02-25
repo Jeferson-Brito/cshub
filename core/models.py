@@ -752,6 +752,37 @@ class RefundRequestAttachment(models.Model):
         return f"Anexo {self.id} - Solicitação #{self.refund_request.id}"
 
 
+class ChatInactivityRequest(models.Model):
+    """Solicitações de remoção de inatividade em chats"""
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aprovado', 'Aprovado'),
+        ('reprovado', 'Reprovado'),
+    ]
+    
+    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_inactivity_requests')
+    chat_id = models.CharField(max_length=100)
+    chat_link = models.URLField(max_length=500)
+    chat_date = models.DateField()
+    was_inactivity = models.BooleanField(default=True, verbose_name="Foi inatividade?")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_chat_requests')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Solicitação de Inatividade"
+        verbose_name_plural = "Solicitações de Inatividade"
+
+    def __str__(self):
+        return f"Chat {self.chat_id} - {self.analyst.username} ({self.status})"
+
+
 # ========================================
 # MODELOS PARA VERIFICAÇÃO DE LOJAS (AUDITORIA)
 # ========================================
