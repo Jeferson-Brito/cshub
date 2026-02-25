@@ -2391,8 +2391,15 @@ def verificacao_lojas(request):
 
     # 1. Base QuerySet and status annotations (Prevents N+1)
     tab = request.GET.get('tab', 'all')
+    scope = request.GET.get('scope', 'all')
     search_query = request.GET.get('q', '')
     
+    # Import necessário para a filtragem por atribuição
+    from .models import AnalystAssignment
+    my_ids = []
+    if scope == 'my_stores' and request.user.is_authenticated:
+        my_ids = list(AnalystAssignment.objects.filter(analyst=request.user, active=True).values_list('store_id', flat=True))
+
     has_open_issue = StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')
     has_audit = StoreAudit.objects.filter(store=OuterRef('pk'))
 
@@ -2406,16 +2413,14 @@ def verificacao_lojas(request):
     # Para o dashboard global, mantemos a contagem total, mas para a visão do analista, os números devem refletir suas lojas.
     
     base_stats_query = Store.objects.filter(active=True)
-    if scope == 'my_stores' and request.user.is_authenticated:
-        my_ids = AnalystAssignment.objects.filter(analyst=request.user, active=True).values_list('store_id', flat=True)
+    if scope == 'my_stores':
         base_stats_query = base_stats_query.filter(id__in=my_ids)
 
     stats = base_stats_query.aggregate(
         total_active=Count('id'),
-        # Outras métricas podem ser calculadas aqui se necessário
     )
     
-    total_active_count = stats['total_active']
+    total_active = stats['total_active']
     
     # Lojas irregulares (com pendência aberta)
     irregular_qs = StoreAuditIssue.objects.filter(status='aberta')
@@ -2456,15 +2461,9 @@ def verificacao_lojas(request):
     else:
         stores_queryset = stores_queryset.filter(active=True)
 
-    # Scope Filter (My Stores)
-    scope = request.GET.get('scope', 'all')
+    # Scope Filter already applied to base queries if needed
     if scope == 'my_stores' and request.user.is_authenticated:
-        from .models import AnalystAssignment 
-        my_store_ids = AnalystAssignment.objects.filter(
-            analyst=request.user, 
-            active=True
-        ).values_list('store_id', flat=True)
-        stores_queryset = stores_queryset.filter(id__in=my_store_ids)
+        stores_queryset = stores_queryset.filter(id__in=my_ids)
 
     # 4. Pagination
     paginator = Paginator(stores_queryset, 25)
