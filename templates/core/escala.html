@@ -1036,7 +1036,8 @@
                             <th>Analista</th>
                             <th>Turno</th>
                             <th style="text-align: center;">Dias Trabalhados</th>
-                            <th style="text-align: center;">Folgas/Férias/At.</th>
+                            <th style="text-align: center;">Folgas/Férias</th>
+                            <th style="text-align: center;">Atestados</th>
                             <th style="text-align: center;">Domingos Folga</th>
                         </tr>
                     </thead>
@@ -1114,7 +1115,8 @@
 
             analistasDoTurno.forEach(analista => {
                 let diasTrabalho = 0;
-                let folgasTotais = 0;
+                let folgasFerias = 0;
+                let atestados = 0;
                 let domingosFolga = 0;
 
                 for (let dia = 1; dia <= totalDays; dia++) {
@@ -1123,8 +1125,10 @@
 
                     if (cellData.class === 'trabalho') {
                         diasTrabalho++;
-                    } else if (['folga', 'ferias', 'atestado'].includes(cellData.class)) {
-                        folgasTotais++;
+                    } else if (['folga', 'ferias'].includes(cellData.class)) {
+                        folgasFerias++;
+                    } else if (cellData.class === 'atestado') {
+                        atestados++;
                     }
 
                     // Verificar se é domingo (getDay() === 0)
@@ -1140,7 +1144,8 @@
                     <td style="font-weight: 500;">${analista.nome}</td>
                     <td><span class="badge" style="background-color: ${turno.cor}; color: #fff; padding: 4px 8px; font-size: 10px; border-radius: 4px;">${turno.nome}</span></td>
                     <td style="text-align: center; font-weight: bold; color: #059669;">${diasTrabalho}</td>
-                    <td style="text-align: center; font-weight: bold; color: #64748b;">${folgasTotais}</td>
+                    <td style="text-align: center; font-weight: bold; color: #64748b;">${folgasFerias}</td>
+                    <td style="text-align: center; font-weight: bold; color: #7c3aed;">${atestados}</td>
                     <td style="text-align: center; font-weight: bold; color: #dc2626;">${domingosFolga}</td>
                 `;
                 tbody.appendChild(row);

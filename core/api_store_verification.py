@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db import models
 from datetime import datetime, date, timedelta
 from django.db.models import Q
 import json
@@ -369,15 +370,44 @@ def api_get_analyst_assignments(request):
         active=True
     ).select_related('store')
     
+    # OTIMIZAÇÃO: Buscar todas as auditorias da semana para estas lojas de uma vez
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    from django.db.models import Count
+    
+    today = timezone.localtime(timezone.now()).date()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
+    
+    # Store IDs atribuídos
+    store_ids = [a.store_id for a in assignments]
+    
+    # Query única para contar auditorias por loja nesta semana
+    audit_counts = StoreAudit.objects.filter(
+        analyst_id=analyst_id,
+        store_id__in=store_ids,
+        created_at__gte=start_datetime
+    ).values('store_id').annotate(count=Count('id'))
+    
+    # Map store_id -> count
+    counts_map = {item['store_id']: item['count'] for item in audit_counts}
+    
     result = []
     for assignment in assignments:
-        progress = assignment.get_weekly_progress()
+        completed = counts_map.get(assignment.store_id, 0)
+        target = assignment.weekly_target
+        percentage = (completed / target * 100) if target > 0 else 0
+        
         result.append({
-            'store_id': str(assignment.store.id),
+            'store_id': str(assignment.store_id),
             'store_code': assignment.store.code,
             'store_city': assignment.store.city,
-            'weekly_target': assignment.weekly_target,
-            'progress': progress
+            'weekly_target': target,
+            'progress': {
+                'completed': completed,
+                'target': target,
+                'percentage': round(percentage, 1)
+            }
         })
     
     return JsonResponse({'success': True, 'assignments': result})

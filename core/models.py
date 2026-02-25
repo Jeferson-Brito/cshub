@@ -1365,7 +1365,7 @@ class DailyAuditQuota(models.Model):
             
             for assignment in assignments:
                 # How many audits done for this specific store this week?
-                store_audits_done = audits_map.get(assignment.store.id, 0)
+                store_audits_done = audits_map.get(assignment.store_id, 0)
                 
                 # How many are remaining based on weekly target?
                 remaining = max(0, assignment.weekly_target - store_audits_done)

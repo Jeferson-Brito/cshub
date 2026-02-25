@@ -2649,7 +2649,7 @@ def store_audit_create(request, store_id):
         else:
             messages.success(request, f"Auditoria da loja {store.code} finalizada com sucesso (Tudo conforme).")
             
-        return redirect('/verificacao_lojas/?tab=management')
+        return redirect('/verificacao-lojas/?tab=management')
 
     # Checklist items
     items_choices = [
