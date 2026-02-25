@@ -598,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -1428,20 +1428,26 @@
     function initRankingFilters() {
         const monthSelect = document.getElementById('rankingMonth');
         const yearSelect = document.getElementById('rankingYear');
-        if (!monthSelect || !yearSelect) return;
+        if (!yearSelect) return;
 
-        // Populate years (current year and 2 previous)
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear; y >= currentYear - 2; y--) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            yearSelect.appendChild(opt);
+        // Populate years if empty
+        if (yearSelect.options.length === 0) {
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
         }
 
-        // Set current month
-        const currentMonth = new Date().getMonth() + 1;
-        monthSelect.value = currentMonth;
+        if (!monthSelect) return;
+
+        // Set current month if not already set
+        if (!monthSelect.value) {
+            const currentMonth = new Date().getMonth() + 1;
+            monthSelect.value = currentMonth;
+        }
 
         // Load ranking automatically
         loadRanking();
@@ -1559,20 +1565,26 @@
     function initPodiumFilters() {
         const monthSelect = document.getElementById('podiumMonth');
         const yearSelect = document.getElementById('podiumYear');
-        if (!monthSelect || !yearSelect) return;
+        if (!yearSelect) return;
 
-        // Populate years (current year and 2 previous)
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear; y >= currentYear - 2; y--) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            yearSelect.appendChild(opt);
+        // Populate years if empty
+        if (yearSelect.options.length === 0) {
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
         }
 
-        // Set current month
-        const currentMonth = new Date().getMonth() + 1;
-        monthSelect.value = currentMonth;
+        if (!monthSelect) return;
+
+        // Set current month if not already set
+        if (!monthSelect.value) {
+            const currentMonth = new Date().getMonth() + 1;
+            monthSelect.value = currentMonth;
+        }
 
         // Load podium automatically
         loadPodium();
@@ -1694,7 +1706,7 @@
             console.error('Confetti library not loaded');
             return;
         }
-        
+
         const duration = 3 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
@@ -1703,7 +1715,7 @@
             return Math.random() * (max - min) + min;
         }
 
-        const interval = setInterval(function() {
+        const interval = setInterval(function () {
             const timeLeft = animationEnd - Date.now();
 
             if (timeLeft <= 0) {
@@ -1711,7 +1723,7 @@
             }
 
             const particleCount = 50 * (timeLeft / duration);
-            
+
             // Fire from left and right sides
             confetti(Object.assign({}, defaults, {
                 particleCount,

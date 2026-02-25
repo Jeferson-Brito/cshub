@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <small class="text-muted d-block">ID Conversa</small>
                                     <div class="d-flex align-items-center">
                                         <span class="fw-semibold text-primary">#${aud.id_conversa}</span>
-                                        ${aud.link_conversa ? `<a href="${aud.link_conversa}" target="_blank" class="ms-2 btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 0.7rem;" title="Abrir conversa"><i class="bi bi-box-arrow-up-right"></i></a>` : ''}
+                                        ${aud.link_conversa ? `<a href="${aud.link_conversa}" target="_blank" class="ms-3 btn btn-sm btn-primary d-inline-flex align-items-center" style="font-size: 0.75rem; border-radius: 20px; padding: 2px 10px; box-shadow: 0 2px 4px rgba(13, 110, 253, 0.25);" title="Abrir conversa"><i class="bi bi-box-arrow-up-right me-1"></i>Ver Conversa</a>` : ''}
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -876,12 +876,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.editAudit = function (id) {
+        // Garantir que temos o ID como string
+        const auditId = String(id);
+
         // Se temos a auditoria em cache e é a mesma, usa ela
-        if (state.currentAudit && state.currentAudit.id === id) {
+        if (state.currentAudit && String(state.currentAudit.id) === auditId) {
             populateAndShowEditForm(state.currentAudit);
         } else {
             // Se não, busca do servidor
-            fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
+            fetch(`/api/auditoria/${auditId}/`, { credentials: 'include' })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
@@ -938,10 +941,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (titulo) titulo.innerHTML = '<i class="bi bi-pencil me-2"></i>Editando Auditoria #' + aud.id;
 
         // Ir para aba de cadastro
-        const cadastrarTab = document.querySelector('#cadastrar-tab');
-        if (cadastrarTab) {
-            const tab = new bootstrap.Tab(cadastrarTab);
-            tab.show();
+        const cadastrarTabBtn = document.querySelector('#cadastrar-tab');
+        if (cadastrarTabBtn) {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                const tab = new bootstrap.Tab(cadastrarTabBtn);
+                tab.show();
+            } else {
+                // Fallback se bootstrap.Tab não estiver pronto
+                cadastrarTabBtn.click();
+            }
         }
 
         updatePreview();
