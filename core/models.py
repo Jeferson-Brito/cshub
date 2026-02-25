@@ -791,7 +791,7 @@ class StoreAudit(models.Model):
     """Representa uma sessão de verificação/auditoria de uma loja"""
     analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_audits')
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='audits')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     class Meta:
         ordering = ['-created_at']
@@ -875,9 +875,9 @@ class StoreAuditIssue(models.Model):
     gestor_notes = models.TextField(blank=True, verbose_name="Notas do Gestor")
     resolved_at = models.DateTimeField(null=True, blank=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_audit_issues')
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='aberta')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='aberta', db_index=True)
     notified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     # Campos para rastreamento de resolução
     resolution_stage = models.CharField(max_length=30, choices=RESOLUTION_STAGE_CHOICES, default='pendente', verbose_name="Etapa da Resolução")
@@ -970,10 +970,10 @@ class StoreViewerSession(models.Model):
 
 class AnalystAssignment(models.Model):
     """Atribuição de lojas a analistas para verificação"""
-    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_assignments')
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='analyst_assignments')
+    analyst = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_assignments', db_index=True)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='analyst_assignments', db_index=True)
     weekly_target = models.IntegerField(default=1, verbose_name="Meta Semanal", help_text="Quantas vezes por semana deve auditar")
-    active = models.BooleanField(default=True, verbose_name="Ativo")
+    active = models.BooleanField(default=True, verbose_name="Ativo", db_index=True)
     
     # Campos para período personalizado
     period_start = models.DateField(null=True, blank=True, verbose_name="Início do Período")

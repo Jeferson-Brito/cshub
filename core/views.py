@@ -2402,23 +2402,43 @@ def verificacao_lojas(request):
     ).order_by('code')
 
     # 2. Status Calculation (Aggregate counts in a single query)
-    stats = Store.objects.aggregate(
-        total_active=Count('id', filter=Q(active=True)),
-        suspended=Count('id', filter=Q(active=False)),
+    # OTIMIZAÇÃO: Calcular todos os contadores principais em menos queries e respeitando o escopo se necessário
+    # Para o dashboard global, mantemos a contagem total, mas para a visão do analista, os números devem refletir suas lojas.
+    
+    base_stats_query = Store.objects.filter(active=True)
+    if scope == 'my_stores' and request.user.is_authenticated:
+        my_ids = AnalystAssignment.objects.filter(analyst=request.user, active=True).values_list('store_id', flat=True)
+        base_stats_query = base_stats_query.filter(id__in=my_ids)
+
+    stats = base_stats_query.aggregate(
+        total_active=Count('id'),
+        # Outras métricas podem ser calculadas aqui se necessário
     )
     
-    total_active = stats['total_active']
-    suspended_count = stats['suspended']
+    total_active_count = stats['total_active']
     
-    # Verified (Compliant): Has audit AND no open issue
-    verified_count = Store.objects.filter(active=True).annotate(
+    # Lojas irregulares (com pendência aberta)
+    irregular_qs = StoreAuditIssue.objects.filter(status='aberta')
+    if scope == 'my_stores' and request.user.is_authenticated:
+        irregular_qs = irregular_qs.filter(store_id__in=my_ids)
+    
+    irregular_store_ids = set(irregular_qs.values_list('store_id', flat=True).distinct())
+    irregular_count = len(irregular_store_ids)
+
+    # Lojas verificadas este mês (Conforme): Auditoria existe AND sem pendência aberta
+    # OTIMIZAÇÃO: Usar count() direto com os filtros necessários
+    verified_count = base_stats_query.annotate(
         _has_issue=Exists(StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')),
         _has_audit=Exists(StoreAudit.objects.filter(store=OuterRef('pk')))
     ).filter(_has_audit=True, _has_issue=False).count()
     
-    irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True).distinct())
-    irregular_count = len(irregular_store_ids)
     ok_count = verified_count
+
+    # Contagem de suspensos (Sempre global ou por escopo)
+    suspended_query = Store.objects.filter(active=False)
+    if scope == 'my_stores' and request.user.is_authenticated:
+         suspended_query = suspended_query.filter(id__in=my_ids)
+    suspended_count = suspended_query.count()
     
     # 3. Apply Filters
     if search_query:
