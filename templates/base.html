@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 {% load user_tags %}
 <html lang="pt-BR">
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v=15.4">
     <link rel="stylesheet" href="{% static 'css/custom_timepicker.css' %}">
 
-    <!-- EasyMDE — carregado apenas em páginas que precisam via block extra_head -->
+    <!-- EasyMDE � carregado apenas em p�ginas que precisam via block extra_head -->
     {% block extra_head %}{% endblock %}
 
     <!-- SweetAlert2 -->
@@ -119,11 +119,11 @@
         {% endif %}
         {% endif %}
 
-        <!-- Menu de NavegaÃ§Ã£o -->
+        <!-- Menu de Navegação -->
         <nav class="sidebar-nav">
             {% if current_department.name == 'Reclame Aqui' %}
             <!-- Reclame Aqui -->
-            <div class="nav-group-title">OperaÃ§Ã£o</div>
+            <div class="nav-group-title">Operação</div>
 
             <a href="#reclameAquiSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -136,166 +136,6 @@
             </a>
             <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
                 id="reclameAquiSubmenu">
-                <div class="nav-submenu">
-                    <a href="{% url 'dashboard' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                        title="Dashboard">
-                        <i class="bi bi-speedometer2"></i>
-                        <span class="link-text">Dashboard</span>
-                    </a>
-                    <a href="{% url 'complaint_list' %}"
-                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="ReclamaÃ§Ãµes">
-                        <i class="bi bi-list-ul"></i>
-                        <span class="link-text">ReclamaÃ§Ãµes</span>
-                    </a>
-                    <a href="{% url 'store_list' %}"
-                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Lojas">
-                        <i class="bi bi-shop"></i>
-                        <span class="link-text">Lojas</span>
-                    </a>
-                    <a href="{% url 'reports' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="RelatÃ³rios">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="link-text">RelatÃ³rios</span>
-                    </a>
-
-                </div>
-            </div>
-
-            <div class="nav-group-title">Canais</div>
-            <a href="{% url 'google_meu_negocio' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Negócio">
-                <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Negócio</span>
-            </a>
-
-            {% elif current_department.name == 'RH' or current_department.slug == 'rh' %}
-            <!-- RH -->
-            <div class="nav-group-title">Recursos Humanos</div>
-            <a href="{% url 'escala' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
-                <i class="bi bi-calendar-event"></i>
-                <span class="link-text">Escala</span>
-            </a>
-
-            <div class="nav-group-title">Em Breve</div>
-            <a href="{% url 'rh_ponto_frequencia' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_ponto_frequencia' %}active{% endif %}">
-                <i class="bi bi-clock-history"></i>
-                <span class="link-text">Ponto e Frequência</span>
-            </a>
-            <a href="{% url 'rh_ferias_folgas' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_ferias_folgas' %}active{% endif %}">
-                <i class="bi bi-calendar-check"></i>
-                <span class="link-text">Férias e Folgas</span>
-            </a>
-            <a href="{% url 'rh_absenteismo' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_absenteismo' %}active{% endif %}">
-                <i class="bi bi-graph-down-arrow"></i>
-                <span class="link-text">Absenteísmo</span>
-            </a>
-            <a href="{% url 'rh_dossie_colaborador' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_dossie_colaborador' %}active{% endif %}">
-                <i class="bi bi-person-lines-fill"></i>
-                <span class="link-text">Dossiê</span>
-            </a>
-            <a href="{% url 'rh_onboarding' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
-                <i class="bi bi-person-plus"></i>
-                <span class="link-text">Onboarding</span>
-            </a>
-
-            {% elif current_department.name == 'NRS Suporte' %}
-            <!-- NRS Suporte -->
-            <div class="nav-group-title">Operação</div>
-            <a href="{% url 'escala' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
-                <i class="bi bi-calendar-event"></i>
-                <span class="link-text">Escala</span>
-            </a>
-            <a href="{% url 'quadro' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'quadro' %}active{% endif %}">
-                <i class="bi bi-grid-3x3"></i>
-                <span class="link-text">Quadro</span>
-            </a>
-            <a href="{% url 'calendario' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
-                <i class="bi bi-calendar3"></i>
-                <span class="link-text">Calendário</span>
-            </a>
-            <a href="{% url 'tasks_view' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
-                <i class="bi bi-list-check"></i>
-                <span class="link-text">Tarefas</span>
-            </a>
-            <a href="{% url 'verificacao_lojas' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
-                <i class="bi bi-shield-check"></i>
-                <span class="link-text">Verificação de Lojas</span>
-            </a>
-
-
-            <div class="nav-group-title">Informação</div>
-            <a href="{% url 'base_conhecimento' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
-                <i class="bi bi-book"></i>
-                <span class="link-text">Suporte</span>
-            </a>
-            <a href="{% url 'desempenho' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'desempenho' %}active{% endif %}">
-                <i class="bi bi-activity"></i>
-                <span class="link-text">Desempenho</span>
-
-            </a>
-
-            {% if user.is_gestor or user.is_administrador or user.is_analista %}
-            <a href="{% url 'auditoria_atendimentos' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'auditoria_atendimentos' %}active{% endif %}">
-                <i class="bi bi-clipboard-check"></i>
-                <span class="link-text">Auditoria de Atendimentos</span>
-            </a>
-            {% endif %}
-
-
-            {% elif current_department.name == 'Onboarding' %}
-            <!-- Onboarding -->
-            <div class="nav-group-title">Implantação</div>
-            <a href="{% url 'onboarding_dev_1' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
-            <a href="{% url 'onboarding_dev_2' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_2' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
-            <a href="{% url 'onboarding_dev_3' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_3' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
-
-
-            {% elif current_department.name == 'CS Clientes' %}
-
-            <!-- CS Clientes -->
-            <div class="nav-group-title">Operação</div>
-            <a href="#reclameAquiSubmenuCS"
-                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
-                aria-controls="reclameAquiSubmenuCS">
-                <i class="bi bi-headset"></i>
-                <span class="link-text">Reclame Aqui</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
-                id="reclameAquiSubmenuCS">
                 <div class="nav-submenu">
                     <a href="{% url 'dashboard' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
@@ -328,16 +168,176 @@
             <div class="nav-group-title">Canais</div>
             <a href="{% url 'google_meu_negocio' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu NegÃ³cio">
+                title="Google Meu Neg�cio">
                 <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu NegÃ³cio</span>
+                <span class="link-text">Google Meu Neg�cio</span>
+            </a>
+
+            {% elif current_department.name == 'RH' or current_department.slug == 'rh' %}
+            <!-- RH -->
+            <div class="nav-group-title">Recursos Humanos</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+
+            <div class="nav-group-title">Em Breve</div>
+            <a href="{% url 'rh_ponto_frequencia' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_ponto_frequencia' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i>
+                <span class="link-text">Ponto e Frequ�ncia</span>
+            </a>
+            <a href="{% url 'rh_ferias_folgas' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_ferias_folgas' %}active{% endif %}">
+                <i class="bi bi-calendar-check"></i>
+                <span class="link-text">F�rias e Folgas</span>
+            </a>
+            <a href="{% url 'rh_absenteismo' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_absenteismo' %}active{% endif %}">
+                <i class="bi bi-graph-down-arrow"></i>
+                <span class="link-text">Absente�smo</span>
+            </a>
+            <a href="{% url 'rh_dossie_colaborador' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_dossie_colaborador' %}active{% endif %}">
+                <i class="bi bi-person-lines-fill"></i>
+                <span class="link-text">Dossi�</span>
+            </a>
+            <a href="{% url 'rh_onboarding' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
+                <i class="bi bi-person-plus"></i>
+                <span class="link-text">Onboarding</span>
+            </a>
+
+            {% elif current_department.name == 'NRS Suporte' %}
+            <!-- NRS Suporte -->
+            <div class="nav-group-title">Opera��o</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+            <a href="{% url 'quadro' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'quadro' %}active{% endif %}">
+                <i class="bi bi-grid-3x3"></i>
+                <span class="link-text">Quadro</span>
+            </a>
+            <a href="{% url 'calendario' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
+                <i class="bi bi-calendar3"></i>
+                <span class="link-text">Calend�rio</span>
+            </a>
+            <a href="{% url 'tasks_view' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
+                <i class="bi bi-list-check"></i>
+                <span class="link-text">Tarefas</span>
+            </a>
+            <a href="{% url 'verificacao_lojas' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
+                <i class="bi bi-shield-check"></i>
+                <span class="link-text">Verifica��o de Lojas</span>
+            </a>
+
+
+            <div class="nav-group-title">Informa��o</div>
+            <a href="{% url 'base_conhecimento' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
+                <i class="bi bi-book"></i>
+                <span class="link-text">Suporte</span>
+            </a>
+            <a href="{% url 'desempenho' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'desempenho' %}active{% endif %}">
+                <i class="bi bi-activity"></i>
+                <span class="link-text">Desempenho</span>
+
+            </a>
+
+            {% if user.is_gestor or user.is_administrador or user.is_analista %}
+            <a href="{% url 'auditoria_atendimentos' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'auditoria_atendimentos' %}active{% endif %}">
+                <i class="bi bi-clipboard-check"></i>
+                <span class="link-text">Auditoria de Atendimentos</span>
+            </a>
+            {% endif %}
+
+
+            {% elif current_department.name == 'Onboarding' %}
+            <!-- Onboarding -->
+            <div class="nav-group-title">Implanta��o</div>
+            <a href="{% url 'onboarding_dev_1' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+            <a href="{% url 'onboarding_dev_2' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_2' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+            <a href="{% url 'onboarding_dev_3' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_3' %}active{% endif %}">
+                <i class="bi bi-hammer"></i>
+                <span class="link-text">Em desenvolvimento</span>
+            </a>
+
+
+            {% elif current_department.name == 'CS Clientes' %}
+
+            <!-- CS Clientes -->
+            <div class="nav-group-title">Opera��o</div>
+            <a href="#reclameAquiSubmenuCS"
+                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
+                aria-controls="reclameAquiSubmenuCS">
+                <i class="bi bi-headset"></i>
+                <span class="link-text">Reclame Aqui</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
+            </a>
+            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
+                id="reclameAquiSubmenuCS">
+                <div class="nav-submenu">
+                    <a href="{% url 'dashboard' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                        title="Dashboard">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                    <a href="{% url 'complaint_list' %}"
+                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Reclama��es">
+                        <i class="bi bi-list-ul"></i>
+                        <span class="link-text">Reclama��es</span>
+                    </a>
+                    <a href="{% url 'store_list' %}"
+                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Lojas">
+                        <i class="bi bi-shop"></i>
+                        <span class="link-text">Lojas</span>
+                    </a>
+                    <a href="{% url 'reports' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+                        title="Relat�rios">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="link-text">Relat�rios</span>
+                    </a>
+
+                </div>
+            </div>
+
+            <div class="nav-group-title">Canais</div>
+            <a href="{% url 'google_meu_negocio' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
+                title="Google Meu Negócio">
+                <i class="bi bi-google"></i>
+                <span class="link-text">Google Meu Negócio</span>
             </a>
 
             <div class="nav-group-title">Atendimento</div>
             <a href="{% url 'solicitacoes' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
                 <i class="bi bi-receipt-cutoff"></i>
-                <span class="link-text">Solicitações</span>
+                <span class="link-text">Solicita��es</span>
             </a>
 
             {% endif %}
@@ -364,14 +364,14 @@
         <div class="d-flex align-items-center gap-3 ms-auto">
             <!-- Notification Dropdown -->
             <div class="dropdown">
-                <button class="btn btn-link text-secondary p-0 position-relative" title="Notificações"
+                <button class="btn btn-link text-secondary p-0 position-relative" title="Notifica��es"
                     id="notificationDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false"
                     data-bs-auto-close="outside">
                     <i class="bi bi-bell" style="font-size: 1.25rem;"></i>
                     <span id="notificationBadge"
                         class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
                         style="display: none;">
-                        <span class="visually-hidden">Novas notificações</span>
+                        <span class="visually-hidden">Novas notifica��es</span>
                     </span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
@@ -413,10 +413,10 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
                     {% if user.role == 'gestor' or user.role == 'administrador' %}
                     <li><a class="dropdown-item" href="{% url 'user_list' %}"><i
-                                class="bi bi-people me-2"></i>Usuários</a></li>
+                                class="bi bi-people me-2"></i>Usu�rios</a></li>
                     {% endif %}
                     <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i>
-                            Configurações</a></li>
+                            Configura��es</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
@@ -431,7 +431,7 @@
     </header>
     {% endif %}
 
-    <!-- Conteúdo Principal -->
+    <!-- Conte�do Principal -->
     <div class="{% if user.is_authenticated %}main-content{% endif %}" style="padding-top: 80px;">
         {% if user.is_authenticated %}
         <!-- Header antigo removido -->
@@ -467,7 +467,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <script>
-        // Carregar tema salvo ao carregar a página
+        // Carregar tema salvo ao carregar a p�gina
         document.addEventListener('DOMContentLoaded', function () {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
@@ -508,7 +508,7 @@
                 const isCollapsed = sidebar.classList.contains('collapsed');
                 localStorage.setItem('sidebarCollapsed', isCollapsed);
 
-                // Trocar ícones nos botões (se existirem)
+                // Trocar �cones nos bot�es (se existirem)
                 const toggleBtns = [sidebarToggle, document.getElementById('headerSidebarToggle')];
 
                 toggleBtns.forEach(btn => {
@@ -519,10 +519,10 @@
                                 icon.classList.remove('bi-chevron-left');
                                 icon.classList.remove('bi-list'); // Remove list icon if it was list
 
-                                // Se for o botão do header, mantemos 'list' ou usamos outra lógica?
-                                // A referência visual sugere hamburger menu.
-                                // Geralmente hamburger menu nÃ£o muda de Ã­cone, mas vamos manter simples.
-                                // Se for o toggle da sidebar (seta), vira direita. Se for hambúrguer, pode ficar hambúrguer ou virar X.
+                                // Se for o bot�o do header, mantemos 'list' ou usamos outra l�gica?
+                                // A refer�ncia visual sugere hamburger menu.
+                                // Geralmente hamburger menu não muda de ícone, mas vamos manter simples.
+                                // Se for o toggle da sidebar (seta), vira direita. Se for hamb�rguer, pode ficar hamb�rguer ou virar X.
 
                                 if (btn.id === 'sidebarToggle') {
                                     icon.classList.add('bi-chevron-right');
@@ -605,12 +605,12 @@
                 if (!toggle || !submenu) return;
 
                 toggle.addEventListener('click', function (e) {
-                    // Se a sidebar estÃƒÂ¡ recolhida, forÃƒÂ§ar a abertura do submenu
+                    // Se a sidebar estÃ¡ recolhida, forÃ§ar a abertura do submenu
                     if (sidebar && sidebar.classList.contains('collapsed')) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        // Posicionar o submenu ao lado do ÃƒÂ­cone
+                        // Posicionar o submenu ao lado do Ã­cone
                         const rect = toggle.getBoundingClientRect();
                         submenu.style.top = rect.top + 'px';
 
@@ -648,7 +648,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
+        const currentUserId = {% if user.id %}{{ user.id }} {% else %} 0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
@@ -729,7 +729,7 @@
                     }
                 }
             } catch (e) {
-                console.error('Erro ao verificar notificaÃ§Ãµes', e);
+                console.error('Erro ao verificar notificações', e);
             }
         }
 
@@ -765,7 +765,7 @@
             return fetch(url, options);
         }
     </script>
-    <!-- Modal Detalhes da Notificação DO SISTEMA -->
+    <!-- Modal Detalhes da Notifica��o DO SISTEMA -->
     <div class="modal fade" id="systemNotificationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg">
@@ -824,7 +824,7 @@
         });
 
         function fetchSystemNotifications() {
-            // Cache no sessionStorage com TTL de 5 minutos para evitar request a cada página
+            // Cache no sessionStorage com TTL de 5 minutos para evitar request a cada p�gina
             const CACHE_KEY = 'nexus_sysNotifs';
             const CACHE_TIME_KEY = 'nexus_sysNotifsTime';
             const TTL_MS = 5 * 60 * 1000; // 5 minutos
@@ -849,7 +849,7 @@
                 })
                 .catch(err => {
                     const list = document.getElementById('notificationListContainer');
-                    if (list) list.innerHTML = '<li class="p-3 text-muted small text-center">Não foi possível carregar.</li>';
+                    if (list) list.innerHTML = '<li class="p-3 text-muted small text-center">N�o foi poss�vel carregar.</li>';
                 });
         }
 
@@ -891,7 +891,7 @@
                 });
             } else {
                 badge.style.display = 'none';
-                list.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-4 d-block mb-2"></i><small>Nenhuma nova notificação</small></div>';
+                list.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-4 d-block mb-2"></i><small>Nenhuma nova notifica��o</small></div>';
             }
         }
 
@@ -899,7 +899,7 @@
             const modal = new bootstrap.Modal(document.getElementById('systemNotificationModal'));
 
             document.getElementById('notifModalTitle').innerText = notif.title;
-            document.getElementById('notifModalDate').innerText = notif.created_at + ' • ' + notif.category;
+            document.getElementById('notifModalDate').innerText = notif.created_at + ' � ' + notif.category;
 
             // Set Icon
             let iconClass = 'bi-info-circle';
