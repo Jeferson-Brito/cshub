@@ -1148,9 +1148,10 @@ def api_get_monthly_kpi(request):
     """
     Retorna KPIs das últimas 4-5 semanas do mês atual para o analista
     Mostra desempenho semanal ao longo do mês
+    OTIMIZADO: Busca dados em massa para evitar N+1 queries
     """
     from datetime import timedelta, datetime
-    from core.models import WeeklyVerificationKPI
+    from core.models import WeeklyVerificationKPI, AnalystAssignment, StoreAudit
     
     analyst_id = request.GET.get('analyst_id', request.user.id)
     
@@ -1163,33 +1164,62 @@ def api_get_monthly_kpi(request):
         
         # Buscar semana atual
         today = timezone.now().date()
-        start_of_week = today - timedelta(days=today.weekday())
+        start_of_week_today = today - timedelta(days=today.weekday())
+        five_weeks_ago = start_of_week_today - timedelta(weeks=4)
         
-        # Buscar KPIs das últimas 5 semanas (incluindo semana atual)
-        # Calcula data de início (5 semanas atrás)
-        five_weeks_ago = start_of_week - timedelta(weeks=4)
+        # 1. Buscar KPIs existentes (já salvos no banco)
+        kpis_db = {
+            kpi.week_start_date: kpi 
+            for kpi in WeeklyVerificationKPI.objects.filter(
+                analyst=analyst,
+                week_start_date__gte=five_weeks_ago,
+                week_start_date__lte=start_of_week_today
+            )
+        }
         
-        # Buscar KPIs existentes
-        kpis = WeeklyVerificationKPI.objects.filter(
+        # 2. Buscar atribuições ativas do analista (apenas uma query)
+        # Assumimos que as atribuições atuais são as que contam para o histórico recente
+        # se não houver registros de KPI congelados para as semanas passadas.
+        active_assignments = list(AnalystAssignment.objects.filter(
             analyst=analyst,
-            week_start_date__gte=five_weeks_ago,
-            week_start_date__lte=start_of_week
-        ).order_by('week_start_date')
+            active=True
+        ).select_related('store'))
+        total_assigned = len(active_assignments)
         
-        # Preparar dados das semanas
+        # 3. Buscar TODAS as auditorias do período (apenas uma query)
+        period_start_dt = timezone.make_aware(datetime.combine(five_weeks_ago, datetime.min.time()))
+        period_end_dt = timezone.now() # Até o momento atual
+        
+        all_audits = StoreAudit.objects.filter(
+            analyst=analyst,
+            created_at__gte=period_start_dt,
+            created_at__lte=period_end_dt
+        ).values('store_id', 'created_at')
+        
+        # Organizar auditorias por loja e por semana na memória para acesso rápido
+        # Usaremos uma lista de dicts mesmo, ou um mapeamento
+        audits_by_store = {}
+        for audit in all_audits:
+            sid = audit['store_id']
+            if sid not in audits_by_store:
+                audits_by_store[sid] = []
+            audits_by_store[sid].append(audit['created_at'])
+
+        # 4. Preparar dados das 5 semanas
         weeks_data = []
-        current_date = five_weeks_ago
+        current_iter_date = five_weeks_ago
         
         for i in range(5):
-            week_kpi = kpis.filter(week_start_date=current_date).first()
+            week_kpi = kpis_db.get(current_iter_date)
+            is_current = (current_iter_date == start_of_week_today)
             
             if week_kpi:
-                # KPI existe, usar dados salvos
+                # KPI já existe e está consolidado no banco
                 week_info = {
-                    'week_number': i + 1,  # Relative week number (1-5)
+                    'week_number': i + 1,
                     'week_start': week_kpi.week_start_date.strftime('%d/%m'),
                     'week_end': (week_kpi.week_start_date + timedelta(days=6)).strftime('%d/%m'),
-                    'is_current': current_date == start_of_week,
+                    'is_current': is_current,
                     'total_assigned': week_kpi.total_assigned_stores,
                     'stores_verified': week_kpi.stores_verified,
                     'total_audits': week_kpi.total_audits_performed,
@@ -1198,64 +1228,48 @@ def api_get_monthly_kpi(request):
                     'status': 'complete' if week_kpi.goal_met else 'incomplete'
                 }
             else:
-                # KPI não existe, calcular em tempo real para semana atual ou passada
-                week_end = current_date + timedelta(days=6)
+                # Calcular em tempo real para a semana atual ou semanas sem KPI salvo
+                week_end = current_iter_date + timedelta(days=6)
+                sw_dt = timezone.make_aware(datetime.combine(current_iter_date, datetime.min.time()))
+                ew_dt = timezone.make_aware(datetime.combine(week_end, datetime.max.time()))
                 
-                # Calcular métricas para esta semana
-                start_datetime = timezone.make_aware(
-                    datetime.combine(current_date, datetime.min.time())
-                )
-                end_datetime = timezone.make_aware(
-                    datetime.combine(week_end, datetime.max.time())
-                )
+                stores_verified_count = 0
+                total_audits_count = 0
                 
-                # Buscar atribuições ativas
-                from core.models import AnalystAssignment, StoreAudit
-                assignments = AnalystAssignment.objects.filter(
-                    analyst=analyst,
-                    active=True,
-                    created_at__lte=end_datetime
-                )
-                
-                total_assigned = assignments.count()
-                stores_verified_set = set()
-                total_audits = 0
-                
-                for assignment in assignments:
-                    audits = StoreAudit.objects.filter(
-                        analyst=analyst,
-                        store=assignment.store,
-                        created_at__gte=start_datetime,
-                        created_at__lte=end_datetime
-                    )
+                for ass in active_assignments:
+                    # Verificar auditorias no período para esta loja nos dados em memória
+                    store_audits = audits_by_store.get(ass.store_id, [])
+                    # Contar quantas auditorias caem nesta semana
+                    audits_in_week = [a for a in store_audits if sw_dt <= a <= ew_dt]
                     
-                    if audits.exists():
-                        stores_verified_set.add(assignment.store.id)
-                        total_audits += audits.count()
+                    if audits_in_week:
+                        stores_verified_count += 1
+                        total_audits_count += len(audits_in_week)
                 
-                stores_verified = len(stores_verified_set)
-                percentage = (stores_verified / total_assigned * 100) if total_assigned > 0 else 0
-                goal_met = stores_verified >= total_assigned
+                percentage = (stores_verified_count / total_assigned * 100) if total_assigned > 0 else 0
+                goal_met = (stores_verified_count >= total_assigned) if total_assigned > 0 else False
                 
                 week_info = {
-                    'week_number': i + 1,  # Relative week number (1-5)
-                    'week_start': current_date.strftime('%d/%m'),
+                    'week_number': i + 1,
+                    'week_start': current_iter_date.strftime('%d/%m'),
                     'week_end': week_end.strftime('%d/%m'),
-                    'is_current': current_date == start_of_week,
+                    'is_current': is_current,
                     'total_assigned': total_assigned,
-                    'stores_verified': stores_verified,
-                    'total_audits': total_audits,
+                    'stores_verified': stores_verified_count,
+                    'total_audits': total_audits_count,
                     'percentage': round(percentage, 1),
                     'goal_met': goal_met,
-                    'status': 'current' if current_date == start_of_week else ('complete' if goal_met else 'incomplete')
+                    'status': 'current' if is_current else ('complete' if goal_met else 'incomplete')
                 }
             
             weeks_data.append(week_info)
-            current_date += timedelta(weeks=1)
+            current_iter_date += timedelta(weeks=1)
         
-        # Calcular taxa de sucesso mensal (% de semanas com meta atingida)
-        completed_weeks = sum(1 for w in weeks_data if w['goal_met'] and not w['is_current'])
-        total_past_weeks = sum(1 for w in weeks_data if not w['is_current'])
+        # 5. Estatísticas Mensais
+        # Apenas semanas passadas entram no cálculo de taxa de sucesso
+        past_weeks = [w for w in weeks_data if not w['is_current']]
+        completed_weeks = sum(1 for w in past_weeks if w['goal_met'])
+        total_past_weeks = len(past_weeks)
         monthly_success_rate = (completed_weeks / total_past_weeks * 100) if total_past_weeks > 0 else 0
         
         return JsonResponse({
@@ -1274,8 +1288,7 @@ def api_get_monthly_kpi(request):
         
     except Exception as e:
         import traceback
-        error_details = traceback.format_exc()
-        print(f"Error in api_get_monthly_kpi: {error_details}")
+        logger.error(f"Error in api_get_monthly_kpi: {str(e)}\n{traceback.format_exc()}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
@@ -1284,165 +1297,134 @@ def api_get_monthly_kpi(request):
 def api_get_all_analysts_monthly_kpi(request):
     """
     Retorna KPIs mensais de todos os analistas para gestores
+    ALTAMENTE OTIMIZADO: Busca todos os dados globais em poucas queries
     """
-    # Verificar permissão
     if request.user.role not in ['gestor', 'administrador']:
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
-    # Buscar todos os analistas com atribuições ativas
-    assignments = AnalystAssignment.objects.filter(active=True).values_list('analyst_id', flat=True).distinct()
-    analysts = User.objects.filter(id__in=assignments).order_by('first_name', 'username')
-    
-    all_analysts_data = []
-    
-    # Importar funções auxiliares necessárias
-    from .models import WeeklyVerificationKPI, StoreAudit
-    from django.utils import timezone
-    from datetime import timedelta, datetime
+    from .models import WeeklyVerificationKPI, StoreAudit, AnalystAssignment
+    from django.db.models import Prefetch
     
     today = timezone.now().date()
-    start_of_week = today - timedelta(days=today.weekday())
-    five_weeks_ago = start_of_week - timedelta(weeks=4)
+    start_of_week_today = today - timedelta(days=today.weekday())
+    five_weeks_ago = start_of_week_today - timedelta(weeks=4)
+    period_start_dt = timezone.make_aware(datetime.combine(five_weeks_ago, datetime.min.time()))
+    period_end_dt = timezone.now()
+
+    # 1. Buscar analistas ativos com suas atribuições
+    analysts = User.objects.filter(
+        role='analista', 
+        ativo=True,
+        department__name='NRS Suporte' # Filtro padrão do sistema
+    ).prefetch_related(
+        Prefetch('store_assignments', queryset=AnalystAssignment.objects.filter(active=True))
+    ).order_by('first_name', 'username')
     
+    # 2. Buscar TODOS os KPIs existentes do período para esses analistas
+    all_kpis = WeeklyVerificationKPI.objects.filter(
+        week_start_date__gte=five_weeks_ago,
+        week_start_date__lte=start_of_week_today
+    )
+    kpi_map = {} # (analyst_id, week_start_date) -> kpi
+    for kpi in all_kpis:
+        kpi_map[(kpi.analyst_id, kpi.week_start_date)] = kpi
+        
+    # 3. Buscar TODAS as auditorias do período para todos
+    all_audits = StoreAudit.objects.filter(
+        created_at__gte=period_start_dt,
+        created_at__lte=period_end_dt
+    ).values('analyst_id', 'store_id', 'created_at')
+    
+    audit_map = {} # (analyst_id, store_id) -> list of created_at
+    for audit in all_audits:
+        key = (audit['analyst_id'], audit['store_id'])
+        if key not in audit_map:
+            audit_map[key] = []
+        audit_map[key].append(audit['created_at'])
+
+    # 4. Buscar última auditoria de cada analista (para o campo last_audit_date)
+    # Infelizmente o Django não tem um "distinct on" portátil fácil para isso sem Raw SQL em Bancos não-Postgres
+    # Mas como o volume de analistas é pequeno (~20), podemos buscar o último de cada ou fazer uma query global
+    # Vamos buscar o último de cada para ser seguro e simples.
+    last_audits = {
+        item['analyst_id']: item['latest']
+        for item in StoreAudit.objects.values('analyst_id').annotate(latest=models.Max('created_at'))
+    }
+
+    all_analysts_data = []
+
     for analyst in analysts:
-        try:
-            # Initializar variáveis de cache para este analista
-            fetched_audits = None
-            fetched_assigned_ids = None
+        assignments = list(analyst.store_assignments.all())
+        total_assigned = len(assignments)
+        assigned_store_ids = [a.store_id for a in assignments]
+        
+        weeks_data = []
+        completed_weeks_count = 0
+        goal_met_count = 0
+        
+        current_iter_date = five_weeks_ago
+        for i in range(5):
+            is_current = (current_iter_date == start_of_week_today)
+            week_kpi = kpi_map.get((analyst.id, current_iter_date))
+            
+            if week_kpi:
+                percentage = float(week_kpi.completion_percentage)
+                gm = week_kpi.goal_met
+                sv = week_kpi.stores_verified
+                ta = week_kpi.total_assigned_stores
+            else:
+                # Cálculo em tempo real
+                week_end = current_iter_date + timedelta(days=6)
+                sw_dt = timezone.make_aware(datetime.combine(current_iter_date, datetime.min.time()))
+                ew_dt = timezone.make_aware(datetime.combine(week_end, datetime.max.time()))
+                
+                sv = 0
+                for sid in assigned_store_ids:
+                    store_audits = audit_map.get((analyst.id, sid), [])
+                    if any(sw_dt <= a <= ew_dt for a in store_audits):
+                        sv += 1
+                
+                ta = total_assigned
+                percentage = (sv / ta * 100) if ta > 0 else 0
+                gm = (sv >= ta) if ta > 0 else False
+                
+            week_info = {
+                'week_number': i + 1,
+                'start_date': current_iter_date.strftime('%d/%m'),
+                'is_current': is_current,
+                'percentage': round(percentage, 1),
+                'goal_met': gm,
+                'total_assigned': ta,
+                'stores_verified': sv
+            }
+            
+            if not is_current:
+                completed_weeks_count += 1
+                if gm:
+                    goal_met_count += 1
+                    
+            weeks_data.append(week_info)
+            current_iter_date += timedelta(weeks=1)
+            
+        success_rate = (goal_met_count / completed_weeks_count * 100) if completed_weeks_count > 0 else 0
+        
+        last_audit_dt = last_audits.get(analyst.id)
+        
+        all_analysts_data.append({
+            'analyst': {
+                'id': analyst.id,
+                'name': analyst.get_full_name() or analyst.username,
+                'last_audit_date': last_audit_dt.strftime('%d/%m/%Y %H:%M') if last_audit_dt else None
+            },
+            'weeks': weeks_data,
+            'monthly_stats': {
+                'total_weeks': len(weeks_data),
+                'completed_weeks': goal_met_count,
+                'weeks_evaluated': completed_weeks_count,
+                'success_rate': round(success_rate, 1)
+            }
+        })
 
-            # Buscar KPIs existentes deste analista
-            kpis = WeeklyVerificationKPI.objects.filter(
-                analyst=analyst,
-                week_start_date__gte=five_weeks_ago,
-                week_start_date__lte=start_of_week
-            ).order_by('week_start_date')
-            
-            weeks_data = []
-            current_iter_date = five_weeks_ago
-            
-            # Contadores para estatísticas mensais
-            completed_weeks_count = 0
-            goal_met_count = 0
-            
-            for i in range(5):
-                week_kpi = kpis.filter(week_start_date=current_iter_date).first()
-                is_current_week = (current_iter_date == start_of_week)
-                
-                if week_kpi:
-                    # Usar dado salvo
-                    week_info = {
-                        'week_number': i + 1,
-                        'start_date': current_iter_date.strftime('%d/%m'),
-                        'is_current': is_current_week,
-                        'percentage': float(week_kpi.completion_percentage),
-                        'goal_met': week_kpi.goal_met,
-                        'total_assigned': week_kpi.total_assigned_stores,
-                        'stores_verified': week_kpi.stores_verified
-                    }
-                    if not is_current_week:
-                        completed_weeks_count += 1
-                        if week_kpi.goal_met:
-                            goal_met_count += 1
-                else:
-                    # Calcular em tempo real (fallback ou semana atual)
-                    # OTIMIZAÇÃO: Evitar queries dentro do loop
-                    if fetched_audits is None:
-                         # Buscar TODAS as auditorias do período de uma vez só
-                        period_start_dt = timezone.make_aware(
-                            datetime.combine(five_weeks_ago, datetime.min.time())
-                        )
-                        period_end_dt = timezone.make_aware(
-                            datetime.combine(start_of_week + timedelta(days=6), datetime.max.time())
-                        )
-                        
-                        # Trazer apenas os dados necessários (.values)
-                        raw_audits = StoreAudit.objects.filter(
-                            analyst=analyst,
-                            created_at__gte=period_start_dt,
-                            created_at__lte=period_end_dt
-                        ).values('store_id', 'created_at')
-                        
-                        # Buscar atribuições ativas uma vez
-                        active_assignments = AnalystAssignment.objects.filter(
-                            analyst=analyst, 
-                            active=True
-                        ).values_list('store_id', flat=True)
-                        
-                        fetched_assigned_ids = set(active_assignments)
-                        fetched_audits = list(raw_audits)
-
-                    # Filtrar na memória
-                    week_end = current_iter_date + timedelta(days=6)
-                    start_datetime = timezone.make_aware(
-                        datetime.combine(current_iter_date, datetime.min.time())
-                    )
-                    end_datetime = timezone.make_aware(
-                        datetime.combine(week_end, datetime.max.time())
-                    )
-                    
-                    total_assigned = len(fetched_assigned_ids)
-                    
-                    # Verificar quais lojas atribuídas têm auditoria nesta semana
-                    stores_verified_count = 0
-                    for store_id in fetched_assigned_ids:
-                        # Check existance in pre-fetched list
-                        has_audit = any(
-                            a['store_id'] == store_id and 
-                            start_datetime <= a['created_at'] <= end_datetime
-                            for a in fetched_audits
-                        )
-                        if has_audit:
-                            stores_verified_count += 1
-                    
-                    percentage = (stores_verified_count / total_assigned * 100) if total_assigned > 0 else 0
-                    percentage = min(100, percentage)
-                    goal_met = stores_verified_count >= total_assigned and total_assigned > 0
-                    
-                    week_info = {
-                        'week_number': i + 1,
-                        'start_date': current_iter_date.strftime('%d/%m'),
-                        'is_current': is_current_week,
-                        'percentage': round(percentage, 1),
-                        'goal_met': goal_met,
-                        'total_assigned': total_assigned,
-                        'stores_verified': stores_verified_count
-                    }
-                    
-                    if not is_current_week:
-                        completed_weeks_count += 1
-                        if goal_met:
-                            goal_met_count += 1
-                
-                weeks_data.append(week_info)
-                current_iter_date += timedelta(weeks=1)
-                
-            # Calcular taxa de sucesso -> OTIMIZADO
-            success_rate = 0
-            if completed_weeks_count > 0:
-                success_rate = round((goal_met_count / completed_weeks_count) * 100, 1)
-                
-            # Buscar última auditoria global deste analista
-            last_audit_global = StoreAudit.objects.filter(analyst=analyst).order_by('-created_at').first()
-            last_audit_date_global = last_audit_global.created_at.strftime('%d/%m/%Y %H:%M') if last_audit_global else None
-                
-            all_analysts_data.append({
-                'analyst': {
-                    'id': analyst.id,
-                    'name': analyst.get_full_name() or analyst.username,
-                    'last_audit_date': last_audit_date_global  # Novo campo
-                },
-                'weeks': weeks_data,
-                'monthly_stats': {
-                    'total_weeks': len(weeks_data),
-                    'completed_weeks': goal_met_count,
-                    'weeks_evaluated': completed_weeks_count,
-                    'success_rate': success_rate
-                }
-            })
-        except Exception as e:
-            print(f"Erro ao processar KPI para analista {analyst.username}: {e}")
-            continue
-    
     # Ordenar por taxa de sucesso (decrescente) e depois por nome
     all_analysts_data.sort(key=lambda x: (x['monthly_stats']['success_rate'], x['analyst']['name']), reverse=True)
     
