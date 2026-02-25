@@ -12,10 +12,14 @@
                         <i class="bi bi-tools text-primary" style="font-size: 4rem;"></i>
                     </div>
                     <h1 class="display-5 mb-3">{{ page_name }}</h1>
+                    {% if description %}
+                    <p class="lead text-muted mb-4">{{ description }}</p>
+                    {% else %}
                     <p class="lead text-muted mb-4">Esta página está em desenvolvimento.</p>
+                    {% endif %}
                     <div class="alert alert-info d-inline-block">
-                        <i class="bi bi-info-circle me-2"></i> Estamos trabalhando para trazer estas funcionalidades em
-                        breve.
+                        <i class="bi bi-info-circle me-2"></i> Em breve: Esta funcionalidade está sendo preparada para o
+                        departamento.
                     </div>
                 </div>
             </div>

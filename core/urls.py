@@ -94,6 +94,28 @@ urlpatterns = [
     path('onboarding/dev1/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 1'}, name='onboarding_dev_1'),
     path('onboarding/dev2/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 2'}, name='onboarding_dev_2'),
     path('onboarding/dev3/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 3'}, name='onboarding_dev_3'),
+
+    # Abas em desenvolvimento - RH
+    path('rh/ponto-frequencia/', views.under_development, {
+        'page_name': 'Gestão de Ponto e Frequência',
+        'description': 'Integração para comparação entre a escala planejada e o registro de ponto realizado, permitindo identificar divergências de horário automaticamente.'
+    }, name='rh_ponto_frequencia'),
+    path('rh/ferias-folgas/', views.under_development, {
+        'page_name': 'Solicitação de Férias e Folgas',
+        'description': 'Portal para que colaboradores solicitem períodos de descanso, com fluxo de aprovação integrado entre gestores de operação e RH.'
+    }, name='rh_ferias_folgas'),
+    path('rh/absenteismo/', views.under_development, {
+        'page_name': 'Dashboard de Absenteísmo',
+        'description': 'Indicadores automáticos de taxas de falta e rotatividade (turnover) baseados nos registros de escala e frequência.'
+    }, name='rh_absenteismo'),
+    path('rh/dossie-colaborador/', views.under_development, {
+        'page_name': 'Dossiê do Colaborador',
+        'description': 'Centralização de documentos, histórico de feedbacks e evolução de desempenho de cada membro do time.'
+    }, name='rh_dossie_colaborador'),
+    path('rh/onboarding/', views.under_development, {
+        'page_name': 'Acompanhamento de Onboarding',
+        'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
+    }, name='rh_onboarding'),
     
     # API Escala NRS
     path('api/escala/turnos/', api_escala.api_turnos_list, name='api_turnos_list'),

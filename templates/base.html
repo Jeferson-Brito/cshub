@@ -182,6 +182,33 @@
                 <span class="link-text">Escala</span>
             </a>
 
+            <div class="nav-group-title">Em Breve</div>
+            <a href="{% url 'rh_ponto_frequencia' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_ponto_frequencia' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i>
+                <span class="link-text">Ponto e Frequência</span>
+            </a>
+            <a href="{% url 'rh_ferias_folgas' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_ferias_folgas' %}active{% endif %}">
+                <i class="bi bi-calendar-check"></i>
+                <span class="link-text">Férias e Folgas</span>
+            </a>
+            <a href="{% url 'rh_absenteismo' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_absenteismo' %}active{% endif %}">
+                <i class="bi bi-graph-down-arrow"></i>
+                <span class="link-text">Absenteísmo</span>
+            </a>
+            <a href="{% url 'rh_dossie_colaborador' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_dossie_colaborador' %}active{% endif %}">
+                <i class="bi bi-person-lines-fill"></i>
+                <span class="link-text">Dossiê</span>
+            </a>
+            <a href="{% url 'rh_onboarding' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
+                <i class="bi bi-person-plus"></i>
+                <span class="link-text">Onboarding</span>
+            </a>
+
             {% elif current_department.name == 'NRS Suporte' %}
             <!-- NRS Suporte -->
             <div class="nav-group-title">Operação</div>

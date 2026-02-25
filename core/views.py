@@ -2004,8 +2004,11 @@ def store_audit_form(request, store_id):
     return render(request, 'core/store_audit_form.html', context)
     
 @login_required
-def under_development(request, page_name='Página'):
-    return render(request, 'core/under_development.html', {'page_name': page_name})
+def under_development(request, page_name='Página', description=None):
+    return render(request, 'core/under_development.html', {
+        'page_name': page_name,
+        'description': description
+    })
 
 
 @login_required
