@@ -173,6 +173,15 @@
                 <span class="link-text">Google Meu Negócio</span>
             </a>
 
+            {% elif current_department.name == 'RH' or current_department.slug == 'rh' %}
+            <!-- RH -->
+            <div class="nav-group-title">Recursos Humanos</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+
             {% elif current_department.name == 'NRS Suporte' %}
             <!-- NRS Suporte -->
             <div class="nav-group-title">Operação</div>
@@ -303,6 +312,7 @@
                 <i class="bi bi-receipt-cutoff"></i>
                 <span class="link-text">Solicitações</span>
             </a>
+
             {% endif %}
 
 

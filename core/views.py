@@ -2033,35 +2033,24 @@ def localizacao_view(request):
 @login_required
 def escala_view(request):
     """Página de Escala - NRS Suporte"""
-    if not request.user.is_administrador():
-        if not request.user.department or request.user.department.name != 'NRS Suporte':
+    user = request.user
+    if not user.is_administrador():
+        # Permitir acesso se for NRS Suporte OU RH
+        if not user.department or user.department.name not in ['NRS Suporte', 'RH']:
             messages.error(request, 'Você não tem permissão para acessar as ferramentas de NRS Suporte.')
             return redirect('dashboard')
             
     from .models import Turno, AnalistaEscala, FolgaManual
     
-    # --- Sincronização de Usuários (Comentada para performance, rodar via management command se necessário) ---
-    # try:
-    #     users_missing_profile = User.objects.filter(
-    #         department__name='NRS Suporte', 
-    #         role='analista', 
-    #         ativo=True,
-    #         escala_perfil__isnull=True
-    #     )
-    #     for user in users_missing_profile:
-    #         formatted_name = AnalistaEscala.format_schedule_name(user.first_name, user.last_name)
-    #         existing = AnalistaEscala.objects.filter(nome=formatted_name, user__isnull=True).first()
-    #         if existing:
-    #             existing.user = user
-    #             existing.save()
-    #         else:
-    #             AnalistaEscala.objects.create(user=user, nome=formatted_name, ativo=True)
-    # except Exception as e:
-    #     print(f"Erro ao sincronizar analistas na escala: {e}")
-    # ---------------------------------------------------
-
     turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
-    analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+    
+    # Lógica de filtragem:
+    # Se for RH, mostrar apenas analistas que pertencem ao departamento "NRS Suporte"
+    analistas_qs = AnalistaEscala.objects.filter(ativo=True).select_related('turno')
+    if not user.is_administrador() and user.department and user.department.name == 'RH':
+        analistas_qs = analistas_qs.filter(user__department__name='NRS Suporte')
+        
+    analistas = analistas_qs.order_by('turno__ordem', 'ordem', 'nome')
     
     # Preparar dados para JSON
     turnos_data = [{
@@ -2083,7 +2072,11 @@ def escala_view(request):
     } for a in analistas]
     
     # Folgas manuais como dicionário
-    folgas = FolgaManual.objects.select_related('analista').all()
+    folgas_qs = FolgaManual.objects.select_related('analista')
+    if not user.is_administrador() and user.department and user.department.name == 'RH':
+        folgas_qs = folgas_qs.filter(analista__user__department__name='NRS Suporte')
+        
+    folgas = folgas_qs.all()
     folgas_data = {}
     for f in folgas:
         key = f"{f.analista.id}-{f.data.year}-{f.data.month}-{f.data.day}"
@@ -2094,13 +2087,20 @@ def escala_view(request):
         }
     
     import json
-    is_admin = request.user.is_gestor() or request.user.is_administrador()
+    # RH SEMPRE é modo leitura, mesmo que o usuário tenha role de gestor no RH
+    # is_admin controla botões de CADASTRO e EDIÇÃO (Analistas, Turnos, Salvar Folgas)
+    is_admin = (user.is_gestor() or user.is_administrador()) and (user.department.name != 'RH' if user.department else True)
+    
+    # can_export permite ver o botão de Exportar (Excel/PDF)
+    can_export = is_admin or (user.department and user.department.name == 'RH')
+    
     context = {
         'turnos_json': json.dumps(turnos_data),
         'analistas_json': json.dumps(analistas_data),
         'folgas_json': json.dumps(folgas_data),
         'is_admin': is_admin,
-        'is_admin_json': 'true' if is_admin else 'false'
+        'is_admin_json': 'true' if is_admin else 'false',
+        'can_export': can_export
     }
     
     return render(request, 'core/escala.html', context)

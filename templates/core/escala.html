@@ -737,19 +737,22 @@
                 </button>
             </div>
         </div>
-        {% if is_admin %}
         <div class="page-actions">
+            {% if is_admin %}
             <button class="btn-escala" onclick="openAnalystModal()">
                 <i class="fa-solid fa-users-gear"></i> Gerenciar Analistas
             </button>
             <button class="btn-escala" onclick="openShiftModal()">
                 <i class="fa-solid fa-clock"></i> Turnos
             </button>
+            {% endif %}
+
+            {% if can_export %}
             <button class="btn-escala" onclick="openExportModal()">
                 <i class="fa-solid fa-download"></i> Exportar
             </button>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     <!-- Loading -->

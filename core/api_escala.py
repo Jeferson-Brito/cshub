@@ -14,9 +14,16 @@ from functools import wraps
 def check_nrs_permission(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if not request.user.is_administrador():
-            if not request.user.department or request.user.department.name != 'NRS Suporte':
-                return JsonResponse({'error': 'Acesso negado. Apenas departamento NRS Suporte.'}, status=403)
+        user = request.user
+        if not user.is_administrador():
+            # Permitir acesso se for NRS Suporte OU RH
+            if not user.department or user.department.name not in ['NRS Suporte', 'RH']:
+                return JsonResponse({'error': 'Acesso negado. Apenas departamentos NRS Suporte ou RH.'}, status=403)
+            
+            # Se for RH, permitir APENAS leitura
+            if user.department.name == 'RH' and request.method not in ['GET']:
+                return JsonResponse({'error': 'Acesso negado. RH possui apenas permissão de leitura.'}, status=403)
+                
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -99,7 +106,13 @@ def api_turno_detail(request, pk):
 @check_nrs_permission
 def api_analistas_list(request):
     """Lista todos os analistas da escala"""
-    analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+    queryset = AnalistaEscala.objects.filter(ativo=True).select_related('turno')
+    
+    # Se for RH, filtrar apenas analistas que PERTENCEM ao NRS Suporte
+    if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
+        queryset = queryset.filter(user__department__name='NRS Suporte')
+        
+    analistas = queryset.order_by('turno__ordem', 'ordem', 'nome')
     data = [{
         'id': a.id,
         'nome': a.nome,
@@ -194,7 +207,13 @@ def api_analista_detail(request, pk):
 @check_nrs_permission
 def api_folgas_list(request):
     """Lista todas as folgas manuais"""
-    folgas = FolgaManual.objects.select_related('analista').all()
+    queryset = FolgaManual.objects.select_related('analista')
+    
+    # Se for RH, filtrar apenas folgas de analistas que PERTENCEM ao NRS Suporte
+    if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
+        queryset = queryset.filter(analista__user__department__name='NRS Suporte')
+        
+    folgas = queryset.all()
     
     # Retornar como dicionário com chave no formato analista_id-ano-mes-dia
     data = {}
