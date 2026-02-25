@@ -89,7 +89,7 @@ def change_department(request, dept_id):
     messages.success(request, f"Departamento alterado para: {dept.name}")
     
     # Redirecionar para a página principal de cada departamento
-    if dept.name == 'NRS Suporte':
+    if dept.name == 'NRS Suporte' or dept.name == 'RH':
         return redirect('escala')
     elif dept.name == 'CS Clientes':
         return redirect('dashboard')
@@ -104,8 +104,8 @@ def dashboard(request):
     selected_dept_id = request.session.get('selected_department_id')
     
     if not request.user.is_administrador():
-        # Redirecionar usuários do NRS Suporte para a escala (página operacional principal deles)
-        if request.user.department and request.user.department.name == 'NRS Suporte':
+        # Redirecionar usuários do NRS Suporte e RH para a escala (página operacional principal deles)
+        if request.user.department and request.user.department.name in ['NRS Suporte', 'RH']:
             return redirect('escala')
         queryset = Complaint.objects.filter(department=request.user.department)
     else:
@@ -113,7 +113,7 @@ def dashboard(request):
         if selected_dept_id:
             from .models import Department
             current_dept = Department.objects.filter(id=selected_dept_id).first()
-            if current_dept and current_dept.name == 'NRS Suporte':
+            if current_dept and current_dept.name in ['NRS Suporte', 'RH']:
                 return redirect('escala')
             queryset = Complaint.objects.filter(department_id=selected_dept_id)
         else:
