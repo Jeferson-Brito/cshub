@@ -918,17 +918,28 @@ document.addEventListener('DOMContentLoaded', function () {
         // Criterios
         const criterios = aud.criterios;
         for (const [key, value] of Object.entries(criterios)) {
-            if (key.startsWith('erro_')) continue;
+            // Pular campos de erro e imagens no loop principal de switches
+            if (key.startsWith('erro_') || key.startsWith('imagem_')) continue;
 
             const switchInput = document.getElementById(key);
             if (switchInput) {
-                switchInput.checked = value;
+                switchInput.checked = !!value;
                 // Disparar evento para mostrar/ocultar erro
                 switchInput.dispatchEvent(new Event('change'));
 
                 if (!value) {
                     const erroField = switchInput.dataset.erro;
-                    document.getElementById(erroField).value = criterios[erroField] || '';
+                    const erroInput = document.getElementById(erroField);
+                    if (erroInput) {
+                        erroInput.value = criterios[erroField] || '';
+                    }
+
+                    // Se houver imagem de erro, preencher o link oculto
+                    const imgKey = 'imagem_' + erroField;
+                    const urlInput = document.getElementById(imgKey + '_url');
+                    if (urlInput && criterios[imgKey]) {
+                        urlInput.value = criterios[imgKey];
+                    }
                 }
             }
         }
