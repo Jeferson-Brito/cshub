@@ -494,6 +494,9 @@ document.addEventListener('DOMContentLoaded', function () {
             dataInput.value = new Date().toISOString().split('T')[0];
         }
 
+        const linkInput = document.getElementById('link_conversa');
+        if (linkInput) linkInput.value = '';
+
         updatePreview();
         updateCriteriosCount();
     }
@@ -766,7 +769,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted d-block">ID Conversa</small>
-                                    <span class="fw-semibold text-primary">#${aud.id_conversa}</span>
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-semibold text-primary">#${aud.id_conversa}</span>
+                                        ${aud.link_conversa ? `<a href="${aud.link_conversa}" target="_blank" class="ms-2 btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 0.7rem;" title="Abrir conversa"><i class="bi bi-box-arrow-up-right"></i></a>` : ''}
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted d-block">Tipo</small>
@@ -900,6 +906,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Preencher formulário
         document.getElementById('data_atendimento').value = aud.data_atendimento.split('T')[0];
         document.getElementById('id_conversa').value = aud.id_conversa;
+        const linkInput = document.getElementById('link_conversa');
+        if (linkInput) linkInput.value = aud.link_conversa || '';
         document.getElementById('tipo_atendimento').value = aud.tipo_atendimento_key || aud.tipo_atendimento;
 
         document.getElementById('analista_auditado_id').value = aud.analista_auditado.id;

@@ -110,6 +110,7 @@ def api_auditoria_create(request):
         auditoria = AuditoriaAtendimento(
             data_atendimento=data['data_atendimento'],
             id_conversa=data['id_conversa'],
+            link_conversa=data.get('link_conversa'),
             tipo_atendimento=data['tipo_atendimento'],
             analista_auditado=analista,
             auditor=request.user,
@@ -243,6 +244,7 @@ def api_auditoria_list(request):
                 'id': str(aud.id),
                 'data_atendimento': aud.data_atendimento.isoformat(),
                 'id_conversa': aud.id_conversa,
+                'link_conversa': aud.link_conversa,
                 'tipo_atendimento': aud.get_tipo_atendimento_display(),
                 'analista_auditado': {
                     'id': str(aud.analista_auditado.id),
@@ -318,6 +320,7 @@ def api_auditoria_detail(request, pk):
             'id': str(auditoria.id),
             'data_atendimento': auditoria.data_atendimento.isoformat(),
             'id_conversa': auditoria.id_conversa,
+            'link_conversa': auditoria.link_conversa,
             'tipo_atendimento': auditoria.get_tipo_atendimento_display(),
             'tipo_atendimento_key': auditoria.tipo_atendimento,
             'analista_auditado': {
@@ -411,6 +414,8 @@ def api_auditoria_update(request, pk):
             auditoria.id_conversa = new_id
         if 'tipo_atendimento' in data:
             auditoria.tipo_atendimento = data['tipo_atendimento']
+        if 'link_conversa' in data:
+            auditoria.link_conversa = data['link_conversa']
         
         # Atualizar critérios
         criterios = [

@@ -6,6 +6,16 @@ import json
 from .models import IndicadorDesempenho, User, Department, MetaMensalGlobal
 
 
+def get_nrs_department(user=None):
+    """Obtém o departamento com fallback robusto (NRS Suporte -> Dept do Usuário -> Primeiro Dept)"""
+    dept = Department.objects.filter(name='NRS Suporte').first()
+    if not dept and user and hasattr(user, 'department') and user.department:
+        dept = user.department
+    if not dept:
+        dept = Department.objects.first()
+    return dept
+
+
 @login_required
 @require_http_methods(["GET"])
 def api_kpis_list(request):
@@ -174,10 +184,15 @@ def api_global_meta_save(request):
         if not mes or not ano:
             return JsonResponse({'error': 'Mês e Ano são obrigatórios'}, status=400)
             
-        try:
-            nrs_dept = Department.objects.get(name='NRS Suporte')
-        except Department.DoesNotExist:
-            return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
+        # Obter departamento (prioridade: 'NRS Suporte', senão o do usuário, senão o primeiro disponível)
+        nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+        if not nrs_dept and user.department:
+            nrs_dept = user.department
+        if not nrs_dept:
+            nrs_dept = Department.objects.first()
+            
+        if not nrs_dept:
+            return JsonResponse({'error': 'Nenhum departamento disponível'}, status=404)
             
         meta, created = MetaMensalGlobal.objects.update_or_create(
             mes=mes,

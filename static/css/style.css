@@ -1572,8 +1572,8 @@ body.dark-theme {
     margin-right: auto;
 }
 
-/* SweetAlert2 fix: force it to use viewport center regardless of body padding */
-.swal2-container {
+/* SweetAlert2 fix: force it to use viewport center regardless of body padding (ONLY for modals, not corner toasts) */
+.swal2-container:not(.swal2-top-end):not(.swal2-top-start):not(.swal2-bottom-end):not(.swal2-bottom-start) {
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;

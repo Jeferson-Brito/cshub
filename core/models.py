@@ -1688,6 +1688,7 @@ class AuditoriaAtendimento(models.Model):
     # Informações básicas
     data_atendimento = models.DateField(verbose_name="Data do Atendimento")
     id_conversa = models.CharField(max_length=200, verbose_name="ID da Conversa")
+    link_conversa = models.URLField(max_length=500, blank=True, null=True, verbose_name="Link da Conversa")
     tipo_atendimento = models.CharField(max_length=20, choices=TIPO_ATENDIMENTO_CHOICES)
     
     # Relacionamentos

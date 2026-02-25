@@ -2143,11 +2143,12 @@ def performance_view(request):
     
     user = request.user
     
-    # Obter departamento NRS Suporte
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
-        nrs_dept = None
+    # Obter departamento (prioridade: 'NRS Suporte', senão o do usuário, senão o primeiro disponível)
+    nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+    if not nrs_dept and user.department:
+        nrs_dept = user.department
+    if not nrs_dept:
+        nrs_dept = Department.objects.first()
     
     # Determinar se é analista ou gestor/admin
     is_analista = user.role == 'analista'
@@ -2174,11 +2175,14 @@ def performance_view(request):
     elif not selected_analista_id and analistas:
         selected_analista_id = analistas.first().id if analistas.exists() else None
     
+    # Evitar cast para int se for UUID ou outro tipo não-inteiro
     if selected_analista_id:
         try:
-            selected_analista_id = int(selected_analista_id)
+            # Tenta converter apenas se for numérico puro, senão deixa como está (UUID, etc)
+            if str(selected_analista_id).isdigit():
+                selected_analista_id = int(selected_analista_id)
         except (ValueError, TypeError):
-            selected_analista_id = None
+            pass
 
     # Filtro de período
     period = request.GET.get('period', '6')
