@@ -1248,8 +1248,10 @@ class DailyAuditQuota(models.Model):
             
             # Ciclo de 8 dias (2 folga + 6 trabalho, já que data_primeira_folga marca o início das folgas)
             cycle_pos = delta % 8
-            if cycle_pos < 2: # 0 e 1 são dias de folga (o dia marcado e o seguinte)
-                return False
+            
+            # 0 e 1 são folgas (data_primeira_folga e o dia seguinte)
+            # 2 a 7 são dias de trabalho
+            return cycle_pos >= 2
         
         return True
 
@@ -1262,11 +1264,46 @@ class DailyAuditQuota(models.Model):
         try:
             # Determine today in Local Time
             today = self.date 
-            # If self.date is just a date, it is timezone naive usually, but semantically it represents the local date
-            # We need to make sure we are comparing apples to apples.
             
+            # Buscar perfil de escala uma única vez
+            try:
+                # O acesso reverso escala_perfil pode lançar exceção se não existir
+                escala_profile = self.analyst.escala_perfil
+            except Exception:
+                escala_profile = None
+
+            # 1. Buscar todas as folgas manuais da semana em uma única query
+            start_of_week = today - timedelta(days=today.weekday())
+            end_of_week = start_of_week + timedelta(days=6)
+            
+            manual_folgas_week = {}
+            if escala_profile:
+                folgas_qs = FolgaManual.objects.filter(
+                    analista=escala_profile,
+                    data__gte=start_of_week,
+                    data__lte=end_of_week
+                )
+                manual_folgas_week = {f.data: f.tipo for f in folgas_qs}
+
+            # Helper local otimizado para não fazer queries
+            def check_working_day_optimized(date_to_check):
+                # 1. Manual check
+                tipo_manual = manual_folgas_week.get(date_to_check)
+                if tipo_manual:
+                    return tipo_manual == 'trabalho'
+                
+                # 2. Escala check
+                if not escala_profile:
+                    return True
+                
+                if escala_profile.data_primeira_folga:
+                    delta = (date_to_check - escala_profile.data_primeira_folga).days
+                    if delta < 0: return True
+                    return (delta % 8) >= 2
+                return True
+
             # Se HOJE for folga, meta é 0
-            if not self.is_working_day(today):
+            if not check_working_day_optimized(today):
                 return 0
 
             assignments = AnalystAssignment.objects.filter(analyst=self.analyst, active=True)
@@ -1317,7 +1354,7 @@ class DailyAuditQuota(models.Model):
             
             for i in range(days_to_check):
                 date_check = today + timedelta(days=i)
-                if self.is_working_day(date_check):
+                if check_working_day_optimized(date_check):
                     working_days_remaining += 1
             
             # Garantir divisor mínimo de 1

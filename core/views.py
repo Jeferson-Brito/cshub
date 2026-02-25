@@ -2401,14 +2401,13 @@ def verificacao_lojas(request):
         stores_queryset = Store.objects.filter(active=True).order_by('code')
     
     # 2. Status Calculation (Aggregate counts efficiently)
-    # OPTIMIZED: Use distinct() to avoid loading duplicate store_ids
-    # This prevents WORKER TIMEOUT when there are thousands of audits
-    verified_store_ids = set(StoreAudit.objects.values_list('store_id', flat=True).distinct())
+    # OPTIMIZED: Use count() directly on DB instead of creating large sets in memory
+    total_stores_all = stores_queryset.count()
+    verified_count = StoreAudit.objects.values('store_id').distinct().count()
     irregular_store_ids = set(StoreAuditIssue.objects.filter(status='aberta').values_list('store_id', flat=True).distinct())
+    irregular_count = len(irregular_store_ids)
+    ok_count = max(0, verified_count - irregular_count)
     suspended_count = Store.objects.filter(active=False).count()
-    
-    # Calculate OK stores
-    ok_store_ids = verified_store_ids - irregular_store_ids
     
     # 3. Apply Filters
     # Scope Filter (My Stores vs All Stores)
@@ -2427,17 +2426,18 @@ def verificacao_lojas(request):
     if tab == 'irregular':
         stores_queryset = stores_queryset.filter(id__in=irregular_store_ids)
     elif tab == 'verified':
-        stores_queryset = stores_queryset.filter(id__in=ok_store_ids)
+        # Para lojas 'verified' (conforme), precisamos de lojas que TEM auditoria mas NÃO TEM pendência aberta
+        verified_stores_with_audit = StoreAudit.objects.values_list('store_id', flat=True).distinct()
+        stores_queryset = stores_queryset.filter(id__in=verified_stores_with_audit).exclude(id__in=irregular_store_ids)
     elif tab == 'suspended':
         # Already filtered by active=False above
         pass
     
     # Legacy 'filter' param support (optional, but good for backward compat link)
     filter_type = request.GET.get('filter')
-    if filter_type == 'verified':
-        stores_queryset = stores_queryset.filter(id__in=verified_store_ids)
-    elif filter_type == 'ok':
-        stores_queryset = stores_queryset.filter(id__in=ok_store_ids)
+    if filter_type == 'verified' or filter_type == 'ok':
+        verified_stores_with_audit = StoreAudit.objects.values_list('store_id', flat=True).distinct()
+        stores_queryset = stores_queryset.filter(id__in=verified_stores_with_audit).exclude(id__in=irregular_store_ids)
     elif filter_type == 'irregular':
         stores_queryset = stores_queryset.filter(id__in=irregular_store_ids)
     
@@ -2497,22 +2497,20 @@ def verificacao_lojas(request):
         
         
         # Determine status for UI badge
+        # Otimizado: Só verificamos se tem auditoria se não for irregular
         if not store.active:
             store.ui_status = 'suspended'
         elif store.id in irregular_store_ids:
             store.ui_status = 'irregular'
-        elif store.id in verified_store_ids:
-            store.ui_status = 'compliant'
         else:
-            store.ui_status = 'pending'
+            # Check if has ANY audit (cached or quick check)
+            if StoreAudit.objects.filter(store=store).exists():
+                store.ui_status = 'compliant'
+            else:
+                store.ui_status = 'pending'
 
-    # 6. Dashboard Counters (Cached if possible, but distinct count is okay for now)
-    # Note: These counts are for the WHOLE dataset, not just the page/filter
-    # To optimize further, we could cache these or calculate only once per session
+    # 6. Dashboard Counters (Calculados na etapa 2)
     total_stores = Store.objects.filter(active=True).count()
-    verified_count = len(verified_store_ids)
-    ok_count = len(ok_store_ids)
-    irregular_count = len(irregular_store_ids)
 
     # Pendências abertas para exibição no dashboard (se o usuário for gestor/admin)
     # Adicionar paginação para pendências (10 por página)
