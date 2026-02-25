@@ -34,11 +34,11 @@ def api_tasks_list(request):
         tasks = Task.objects.filter(assigned_to=user).select_related('assigned_to', 'created_by').order_by('due_date', '-priority')
 
     data = [{
-        'id': t.id,
+        'id': str(t.id),
         'title': t.title,
         'description': t.description,
         'assigned_to': f"{t.assigned_to.first_name} {t.assigned_to.last_name}" if t.assigned_to.first_name else t.assigned_to.username,
-        'assigned_to_id': t.assigned_to.id,
+        'assigned_to_id': str(t.assigned_to.id),
         'created_by': t.created_by.username,
         'due_date': t.due_date.isoformat() if t.due_date else None,
         'priority': t.priority,
@@ -102,7 +102,7 @@ def api_task_create(request):
             )
             created_ids.append(task.id)
         
-        return JsonResponse({'ids': created_ids, 'status': 'success'})
+        return JsonResponse({'ids': [str(x) for x in created_ids], 'status': 'success'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -197,8 +197,8 @@ def api_routines_daily(request):
         log = existing_logs.get(r.id)
         if log:
             checklist.append({
-                'log_id': log.id,
-                'routine_id': r.id,
+                'log_id': str(log.id),
+                'routine_id': str(r.id),
                 'title': r.title,
                 'description': r.description,
                 'completed': log.completed
@@ -244,7 +244,7 @@ def api_routines_overview(request):
         routines = Routine.objects.filter(assigned_to=analyst, active=True)
         analyst_data = {
             'analyst_name': f"{analyst.first_name} {analyst.last_name}".strip() or analyst.username,
-            'analyst_id': analyst.id,
+            'analyst_id': str(analyst.id),
             'routines': []
         }
         
@@ -355,7 +355,7 @@ def api_routine_create(request):
             )
             created_ids.append(routine.id)
         
-        return JsonResponse({'ids': created_ids, 'status': 'success'})
+        return JsonResponse({'ids': [str(x) for x in created_ids], 'status': 'success'})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -440,7 +440,7 @@ def api_notifications_check(request):
                 notifications.append({
                     'type': 'warning_routine',
                     'title': r.title,
-                    'id': r.id,
+                    'id': str(r.id),
                     'message': f"ATENÇÃO: A rotina '{r.title}' deve ser feita até {r.time_limit.strftime('%H:%M')}!"
                 })
                 log.warning_sent = True

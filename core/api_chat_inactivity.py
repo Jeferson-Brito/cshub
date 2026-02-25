@@ -36,7 +36,7 @@ def api_chat_inactivity_list(request):
     requests_data = []
     for r in queryset:
         requests_data.append({
-            'id': r.id,
+            'id': str(r.id),
             'chat_id': r.chat_id,
             'chat_link': r.chat_link,
             'chat_date': r.chat_date.strftime('%d/%m/%Y'),
@@ -46,6 +46,7 @@ def api_chat_inactivity_list(request):
             'created_at': r.created_at.strftime('%d/%m/%Y %H:%M'),
             'reviewed_by_name': r.reviewed_by.get_full_name() or r.reviewed_by.username if r.reviewed_by else None,
             'reviewed_at': r.reviewed_at.strftime('%d/%m/%Y %H:%M') if r.reviewed_at else None,
+            'analyst_id': str(r.analyst.id),
             'review_notes': r.review_notes
         })
         

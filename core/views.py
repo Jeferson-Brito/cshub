@@ -2390,6 +2390,9 @@ def verificacao_lojas(request):
     from .models import Store, StoreAudit, StoreAuditIssue
 
     # 1. Base QuerySet and status annotations (Prevents N+1)
+    tab = request.GET.get('tab', 'all')
+    search_query = request.GET.get('q', '')
+    
     has_open_issue = StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')
     has_audit = StoreAudit.objects.filter(store=OuterRef('pk'))
 

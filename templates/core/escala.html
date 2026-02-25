@@ -748,6 +748,9 @@
             {% endif %}
 
             {% if can_export %}
+            <button class="btn-escala" onclick="openMonthlySummaryModal()" style="background: #0ea5e9;">
+                <i class="fa-solid fa-list-check"></i> Resumo Mensal
+            </button>
             <button class="btn-escala" onclick="openExportModal()">
                 <i class="fa-solid fa-download"></i> Exportar
             </button>
@@ -1015,6 +1018,37 @@
     </div>
 </div>
 
+<!-- Modal de Resumo Mensal -->
+<div class="modal-escala" id="monthlySummaryModal">
+    <div class="modal-content-escala large">
+        <div class="modal-header-escala">
+            <h2 style="color: #0ea5e9;"><i class="fa-solid fa-list-check"></i> Resumo Mensal da Escala</h2>
+            <button class="modal-close" onclick="closeMonthlySummaryModal()">&times;</button>
+        </div>
+        <div class="modal-body-escala">
+            <p style="text-align: center; color: #64748b; margin-bottom: 20px;">
+                Métricas calculadas com base na escala do mês selecionado.
+            </p>
+            <div class="table-responsive">
+                <table class="escala-table" id="summaryTable">
+                    <thead>
+                        <tr>
+                            <th>Analista</th>
+                            <th>Turno</th>
+                            <th style="text-align: center;">Dias Trabalhados</th>
+                            <th style="text-align: center;">Folgas/Férias/At.</th>
+                            <th style="text-align: center;">Domingos Folga</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryTableBody">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // ========================================
     // DADOS INICIAIS
@@ -1054,6 +1088,71 @@
             updateMonthDisplay();
         });
     });
+
+    // ========================================
+    // RESUMO MENSAL DA ESCALA
+    // ========================================
+    function openMonthlySummaryModal() {
+        const inputVal = document.getElementById('mesInput').value;
+        if (!inputVal) {
+            alert('Selecione um mês');
+            return;
+        }
+
+        const [ano, mesNum] = inputVal.split('-').map(Number);
+        const monthIndex = mesNum - 1;
+        const totalDays = new Date(ano, monthIndex + 1, 0).getDate();
+
+        const tbody = document.getElementById('summaryTableBody');
+        tbody.innerHTML = '';
+
+        // Ordenar turnos para exibição organizada
+        const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+        turnosOrdenados.forEach(turno => {
+            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+
+            analistasDoTurno.forEach(analista => {
+                let diasTrabalho = 0;
+                let folgasTotais = 0;
+                let domingosFolga = 0;
+
+                for (let dia = 1; dia <= totalDays; dia++) {
+                    const data = new Date(ano, monthIndex, dia);
+                    const cellData = getCellData(analista, turno, ano, monthIndex, dia);
+
+                    if (cellData.class === 'trabalho') {
+                        diasTrabalho++;
+                    } else if (['folga', 'ferias', 'atestado'].includes(cellData.class)) {
+                        folgasTotais++;
+                    }
+
+                    // Verificar se é domingo (getDay() === 0)
+                    if (data.getDay() === 0) {
+                        if (cellData.class !== 'trabalho') {
+                            domingosFolga++;
+                        }
+                    }
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: 500;">${analista.nome}</td>
+                    <td><span class="badge" style="background-color: ${turno.cor}; color: #fff; padding: 4px 8px; font-size: 10px; border-radius: 4px;">${turno.nome}</span></td>
+                    <td style="text-align: center; font-weight: bold; color: #059669;">${diasTrabalho}</td>
+                    <td style="text-align: center; font-weight: bold; color: #64748b;">${folgasTotais}</td>
+                    <td style="text-align: center; font-weight: bold; color: #dc2626;">${domingosFolga}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        });
+
+        document.getElementById('monthlySummaryModal').classList.add('show');
+    }
+
+    function closeMonthlySummaryModal() {
+        document.getElementById('monthlySummaryModal').classList.remove('show');
+    }
 
     function updateMonthDisplay() {
         const mes = document.getElementById('mesInput').value;

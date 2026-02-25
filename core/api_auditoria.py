@@ -725,10 +725,10 @@ def api_dashboard_auditoria(request):
             'nota_media_geral': round(float(nota_media_geral), 2),
             'distribuicao': distribuicao,
             'total_alertas': auditorias.filter(requer_acao=True).count(),
-            'analistas_com_alertas': list(analistas_com_alertas),
+            'analistas_com_alertas': [{'id': str(a['analista_auditado__id']), 'username': a['analista_auditado__username']} for a in analistas_com_alertas],
             'top_3': [
                 {
-                    'id': item['analista_auditado__id'],
+                    'id': str(item['analista_auditado__id']),
                     'username': item['analista_auditado__username'],
                     'nome': f"{item['analista_auditado__first_name']} {item['analista_auditado__last_name']}".strip() or item['analista_auditado__username'],
                     'nota_media': round(float(item['nota_media']), 2),

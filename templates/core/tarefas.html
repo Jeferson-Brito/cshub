@@ -728,6 +728,10 @@
                     <button type="button" class="btn btn-danger flex-grow-1" onclick="submitChatReview('reprovado')">
                         <i class="bi bi-x-circle"></i> Reprovar
                     </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="deleteChatRequestFromModal()"
+                        title="Excluir Permanentemente">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1801,6 +1805,9 @@
                     <button class="btn btn-sm btn-info" onclick="openReviewChatModal(${r.id}, '${r.chat_id}', '${r.analyst_name}')" title="Revisar">
                         <i class="bi bi-pencil-square"></i>
                     </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest(${r.id})" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 `;
             } else if (r.status === 'pendente') {
                 actions += `
@@ -1848,6 +1855,20 @@
         const id = document.getElementById('review-chat-pk').value;
         const notes = document.getElementById('review-chat-notes').value;
 
+        if (!id) {
+            Swal.fire('Erro!', 'ID da solicitação não encontrado.', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Processando...',
+            text: 'Por favor, aguarde.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         try {
             const res = await fetch(`/api/chat-inactivity/${id}/action/`, {
                 method: 'POST',
@@ -1859,18 +1880,50 @@
             });
 
             if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('reviewChatInactivityModal')).hide();
+                const modalEl = document.getElementById('reviewChatInactivityModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
                 Swal.fire('Sucesso!', `Solicitação ${action} com sucesso.`, 'success');
                 loadChatInactivityRequests();
+            } else {
+                const err = await res.json();
+                Swal.fire('Erro!', err.error || 'Erro ao processar revisão.', 'error');
             }
         } catch (e) {
             console.error(e);
-            Swal.fire('Erro!', 'Erro ao processar revisão.', 'error');
+            Swal.fire('Erro!', 'Erro de conexão ou ao processar revisão.', 'error');
         }
     }
 
+    async function deleteChatRequestFromModal() {
+        const id = document.getElementById('review-chat-pk').value;
+        if (!id) return;
+
+        const modalEl = document.getElementById('reviewChatInactivityModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        await deleteChatRequest(id);
+    }
+
     async function deleteChatRequest(id) {
-        if (!confirm('Deseja excluir esta solicitação?')) return;
+        const result = await Swal.fire({
+            title: 'Excluir Solicitação?',
+            text: "Esta ação não pode ser desfeita!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!result.isConfirmed) {
+            // Se veio do modal, talvez queira abrir o modal de volta? 
+            // Por simplicidade, vamos apenas não fazer nada.
+            return;
+        }
 
         try {
             const res = await fetch(`/api/chat-inactivity/${id}/delete/`, {
@@ -1880,10 +1933,14 @@
 
             if (res.ok) {
                 loadChatInactivityRequests();
-                if (window.showToast) window.showToast('Solicitação excluída.', 'success');
+                Swal.fire('Excluído!', 'A solicitação foi removida.', 'success');
+            } else {
+                const err = await res.json();
+                Swal.fire('Erro!', err.error || 'Não foi possível excluir.', 'error');
             }
         } catch (e) {
             console.error(e);
+            Swal.fire('Erro!', 'Erro de conexão ao excluir.', 'error');
         }
     }
 

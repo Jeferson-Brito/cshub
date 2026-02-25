@@ -47,7 +47,7 @@ def api_notify_franchisee(request, issue_id):
     return JsonResponse({
         'success': True,
         'issue': {
-            'id': issue.id,
+            'id': str(issue.id),
             'store_code': issue.store.code if issue.store else 'Desconhecida',
             'created_at': issue.created_at.strftime('%d/%m/%Y %H:%M'),
             'irregular_items': irregular_items
@@ -104,7 +104,7 @@ def api_start_whatsapp_notification(request, issue_id):
             'success': True,
             'message': f'Notificação via WhatsApp iniciada. Prazo: {deadline_hours}h',
             'issue': {
-                'id': issue.id,
+                'id': str(issue.id),
                 'status': issue.status,
                 'deadline_datetime': issue.deadline_datetime.isoformat(),
                 'time_remaining_seconds': issue.get_time_remaining()
@@ -248,7 +248,7 @@ def api_get_timer_status(request, issue_id):
     
     return JsonResponse({
         'success': True,
-        'issue_id': issue.id,
+        'issue_id': str(issue.id),
         'status': issue.status,
         'time_remaining_seconds': time_remaining,
         'progress_percentage': progress_percentage,
@@ -373,7 +373,7 @@ def api_get_analyst_assignments(request):
     for assignment in assignments:
         progress = assignment.get_weekly_progress()
         result.append({
-            'store_id': assignment.store.id,
+            'store_id': str(assignment.store.id),
             'store_code': assignment.store.code,
             'store_city': assignment.store.city,
             'weekly_target': assignment.weekly_target,
@@ -398,7 +398,7 @@ def api_get_all_assignments(request):
     for assignment in assignments:
         progress = assignment.get_weekly_progress()
         result.append({
-            'id': assignment.id,
+            'id': str(assignment.id),
             'analyst_name': assignment.analyst.get_full_name() or assignment.analyst.username,
             'store_code': assignment.store.code,
             'store_city': assignment.store.city,
@@ -517,7 +517,8 @@ def api_get_available_stores(request):
                     }, status=400)
                 
                 # Seleção aleatória
-                selected_stores = random.sample(list(available_stores.values('id', 'code', 'city')), qty)
+                raw_stores = random.sample(list(available_stores.values('id', 'code', 'city')), qty)
+                selected_stores = [{'id': str(s['id']), 'code': s['code'], 'city': s['city']} for s in raw_stores]
                 
             except ValueError:
                 return JsonResponse({
@@ -526,7 +527,7 @@ def api_get_available_stores(request):
                 }, status=400)
         else:
             # Retornar todas as disponíveis
-            selected_stores = list(available_stores.values('id', 'code', 'city'))
+            selected_stores = [{'id': str(s['id']), 'code': s['code'], 'city': s['city']} for s in available_stores.values('id', 'code', 'city')]
         
         return JsonResponse({
             'success': True,
@@ -850,7 +851,7 @@ def api_get_analyst_dashboard(request):
     return JsonResponse({
         'success': True,
         'analyst': {
-            'id': analyst.id,
+            'id': str(analyst.id),
             'name': analyst.get_full_name() or analyst.username
         },
         'metrics': {
@@ -946,8 +947,8 @@ def api_get_analysts_overview(request):
                 
                 # Status da loja para o detalhe
                 assigned_stores_list.append({
-                    'id': ass.store.id,
-                    'assignment_id': ass.id,
+                    'id': str(ass.store.id),
+                    'assignment_id': str(ass.id),
                     'code': ass.store.code,
                     'city': ass.store.city,
                     'last_audit': ass.store.last_audit_date.strftime('%d/%m/%Y %H:%M') if ass.store.last_audit_date else 'Nunca',
@@ -975,7 +976,7 @@ def api_get_analysts_overview(request):
             assigned_stores_list.sort(key=lambda x: x['code'])
             
             overview_data.append({
-                'id': analyst.id,
+                'id': str(analyst.id),
                 'name': analyst.get_full_name() or analyst.username or f"Analista {analyst.id}",
                 'photo_url': analyst.profile_photo.url if analyst.profile_photo else None,
                 'stats': {
@@ -1275,7 +1276,7 @@ def api_get_monthly_kpi(request):
         return JsonResponse({
             'success': True,
             'analyst': {
-                'id': analyst.id,
+                'id': str(analyst.id),
                 'name': analyst.get_full_name() or analyst.username
             },
             'weeks': weeks_data,
@@ -1412,7 +1413,7 @@ def api_get_all_analysts_monthly_kpi(request):
         
         all_analysts_data.append({
             'analyst': {
-                'id': analyst.id,
+                'id': str(analyst.id),
                 'name': analyst.get_full_name() or analyst.username,
                 'last_audit_date': last_audit_dt.strftime('%d/%m/%Y %H:%M') if last_audit_dt else None
             },

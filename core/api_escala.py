@@ -38,7 +38,7 @@ def api_turnos_list(request):
     """Lista todos os turnos"""
     turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
     data = [{
-        'id': t.id,
+        'id': str(t.id),
         'nome': t.nome,
         'horario': t.horario,
         'cor': t.cor,
@@ -61,7 +61,7 @@ def api_turno_create(request):
             ordem=data.get('ordem', 0)
         )
         return JsonResponse({
-            'id': turno.id,
+            'id': str(turno.id),
             'nome': turno.nome,
             'horario': turno.horario,
             'cor': turno.cor,
@@ -87,7 +87,7 @@ def api_turno_detail(request, pk):
             turno.ordem = data.get('ordem', turno.ordem)
             turno.save()
             return JsonResponse({
-                'id': turno.id,
+                'id': str(turno.id),
                 'nome': turno.nome,
                 'horario': turno.horario,
                 'cor': turno.cor,
@@ -114,10 +114,10 @@ def api_analistas_list(request):
         
     analistas = queryset.order_by('turno__ordem', 'ordem', 'nome')
     data = [{
-        'id': a.id,
+        'id': str(a.id),
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
-        'turno_id': a.turno.id if a.turno else None,
+        'turno_id': str(a.turno.id) if a.turno else None,
         'pausa': a.pausa,
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
         'ordem': a.ordem
@@ -150,10 +150,10 @@ def api_analista_create(request):
             ordem=data.get('ordem', 0)
         )
         return JsonResponse({
-            'id': analista.id,
+            'id': str(analista.id),
             'nome': analista.nome,
             'turno': analista.turno.nome if analista.turno else None,
-            'turno_id': analista.turno.id if analista.turno else None,
+            'turno_id': str(analista.turno.id) if analista.turno else None,
             'pausa': analista.pausa,
             'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
             'ordem': analista.ordem
@@ -186,10 +186,10 @@ def api_analista_detail(request, pk):
             
             analista.save()
             return JsonResponse({
-                'id': analista.id,
+                'id': str(analista.id),
                 'nome': analista.nome,
                 'turno': analista.turno.nome if analista.turno else None,
-                'turno_id': analista.turno.id if analista.turno else None,
+                'turno_id': str(analista.turno.id) if analista.turno else None,
                 'pausa': analista.pausa,
                 'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
                 'ordem': analista.ordem
@@ -220,7 +220,7 @@ def api_folgas_list(request):
     for f in folgas:
         key = f"{f.analista.id}-{f.data.year}-{f.data.month}-{f.data.day}"
         data[key] = {
-            'id': f.id,
+            'id': str(f.id),
             'tipo': f.tipo,
             'motivo': f.motivo
         }
@@ -252,8 +252,8 @@ def api_folga_save(request):
         )
         
         return JsonResponse({
-            'id': folga.id,
-            'analista_id': analista.id,
+            'id': str(folga.id),
+            'analista_id': str(analista.id),
             'data': folga.data.isoformat(),
             'tipo': folga.tipo,
             'motivo': folga.motivo,

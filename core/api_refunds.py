@@ -127,9 +127,9 @@ def api_refund_list(request):
     data = []
     for r in refunds:
         data.append({
-            'id': r.id,
+            'id': str(r.id),
             'analyst_name': r.analyst.get_full_name() or r.analyst.username,
-            'analyst_id': r.analyst.id,
+            'analyst_id': str(r.analyst.id),
             'store_code': r.store_code,
             'customer_name': r.customer_name,
             'customer_cpf': r.customer_cpf,
@@ -194,9 +194,9 @@ def api_refund_detail(request, pk):
         )
         
         data = {
-            'id': refund.id,
+            'id': str(refund.id),
             'analyst_name': refund.analyst.get_full_name() or refund.analyst.username,
-            'analyst_id': refund.analyst.id,
+            'analyst_id': str(refund.analyst.id),
             'store_code': refund.store_code,
             'customer_name': refund.customer_name,
             'customer_cpf': refund.customer_cpf,
@@ -501,7 +501,7 @@ def api_nrs_analysts(request):
         data = []
         for u in analysts:
             data.append({
-                'id': u.id,
+                'id': str(u.id),
                 'name': u.get_full_name() or u.username
             })
         
