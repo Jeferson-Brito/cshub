@@ -2148,6 +2148,8 @@ def performance_view(request):
     
     # Obter departamento (prioridade: 'NRS Suporte', senão o do usuário, senão o primeiro disponível)
     nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+    if not nrs_dept:
+        nrs_dept = Department.objects.filter(slug='nrs-suporte').first()
     if not nrs_dept and user.department:
         nrs_dept = user.department
     if not nrs_dept:
@@ -2162,12 +2164,15 @@ def performance_view(request):
         page_title = "Meu Desempenho"
     else:
         page_title = "Desempenho do Time"
-    
+
     # Lista de analistas (para dropdown do gestor)
     if can_edit and nrs_dept:
-        analistas = User.objects.filter(
-            department=nrs_dept
-        ).order_by('first_name', 'username')
+        # Pega analistas que pertencem ao departamento OU que possuem KPIs registrados nele
+        analistas_query = User.objects.filter(
+            models.Q(department=nrs_dept) | 
+            models.Q(indicadores_desempenho__department=nrs_dept)
+        ).distinct().order_by('first_name', 'username')
+        analistas = analistas_query
     else:
         analistas = []
     

@@ -7,8 +7,10 @@ from .models import IndicadorDesempenho, User, Department, MetaMensalGlobal
 
 
 def get_nrs_department(user=None):
-    """Obtém o departamento com fallback robusto (NRS Suporte -> Dept do Usuário -> Primeiro Dept)"""
+    """Obtém o departamento com fallback robusto (NRS Suporte -> Dept do Usuário -> Primeiro Dept) Ratio"""
     dept = Department.objects.filter(name='NRS Suporte').first()
+    if not dept:
+        dept = Department.objects.filter(slug='nrs-suporte').first()
     if not dept and user and hasattr(user, 'department') and user.department:
         dept = user.department
     if not dept:
