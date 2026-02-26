@@ -2169,8 +2169,8 @@ def performance_view(request):
     if can_edit and nrs_dept:
         # Pega analistas que pertencem ao departamento OU que possuem KPIs registrados nele
         analistas_query = User.objects.filter(
-            models.Q(department=nrs_dept) | 
-            models.Q(indicadores_desempenho__department=nrs_dept)
+            Q(department=nrs_dept) | 
+            Q(indicadores_desempenho__department=nrs_dept)
         ).distinct().order_by('first_name', 'username')
         analistas = analistas_query
     else:
