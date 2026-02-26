@@ -18,6 +18,19 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
+
+def parse_decimal(value):
+    """Auxiliar para converter valores decimais que podem vir com vírgula da UI"""
+    if not value:
+        return None
+    try:
+        # Resolve problema de locale: 3120,00 -> 3120.00
+        if isinstance(value, str):
+            value = value.replace('.', '').replace(',', '.')
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
 @login_required
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
@@ -147,7 +160,7 @@ def api_save_colaborador(request):
             colaborador.data_admissao = data.get('data_admissao')
             colaborador.cargo_atual = data.get('cargo')
             colaborador.department_id = data.get('department_id')
-            colaborador.salario_atual = data.get('salario_atual')
+            colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
             colaborador.status = data.get('status', 'ativo')
             colaborador.tipo_contrato = data.get('tipo_contrato', 'clt')
             colaborador.email_pessoal = data.get('email_pessoal', '')
@@ -214,8 +227,8 @@ def api_save_historico(request):
                 tipo_evento=data.get('tipo_evento'),
                 cargo_anterior=data.get('cargo_anterior'),
                 cargo_novo=data.get('cargo_novo'),
-                salario_anterior=data.get('salario_anterior') or None,
-                salario_novo=data.get('salario_novo') or None,
+                salario_anterior=parse_decimal(data.get('salario_anterior')),
+                salario_novo=parse_decimal(data.get('salario_novo')),
                 observacoes=data.get('observacoes', '')
             )
 

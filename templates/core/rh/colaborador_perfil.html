@@ -365,6 +365,13 @@
         if (formColab) {
             formColab.addEventListener('submit', function (e) {
                 e.preventDefault();
+
+                // Pré-processar campos numéricos para evitar erro de decimal (vírgula vs ponto)
+                const salarioInput = this.querySelector('[name="salario_atual"]');
+                if (salarioInput.value) {
+                    salarioInput.value = salarioInput.value.replace(',', '.');
+                }
+
                 const formData = new FormData(this);
                 fetch('/api/rh/colaboradores/save/', {
                     method: 'POST',
@@ -378,6 +385,10 @@
                         } else {
                             alert('Erro ao salvar: ' + data.error);
                         }
+                    })
+                    .catch(err => {
+                        console.error('Erro:', err);
+                        alert('Erro de conexão ao salvar.');
                     });
             });
         }
@@ -385,6 +396,13 @@
 
     function saveHistorico() {
         const form = document.getElementById('formHistorico');
+
+        // Pré-processar salário se houver
+        const salInput = form.querySelector('[name="salario_novo"]');
+        if (salInput && salInput.value) {
+            salInput.value = salInput.value.replace(',', '.');
+        }
+
         const formData = new FormData(form);
         formData.append('colaborador_id', '{{ colaborador.id }}');
 
