@@ -34,7 +34,7 @@ def api_colaboradores_list(request):
         colaboradores = colaboradores.filter(department_id=dept_filter)
         
     data = []
-    for c in colaboradores.select_related('cargo_atual', 'department'):
+    for c in colaboradores.select_related('department'):
         data.append({
             'id': c.id,
             'nome': c.nome_completo,
@@ -53,7 +53,7 @@ def api_colaboradores_list(request):
 @require_http_methods(["GET"])
 def api_colaborador_detail(request, pk):
     """Retorna detalhes completos de um colaborador (Dossiê)"""
-    colaborador = get_object_or_404(Colaborador.objects.select_related('cargo_atual', 'department', 'user'), pk=pk)
+    colaborador = get_object_or_404(Colaborador.objects.select_related('department', 'user'), pk=pk)
     
     # Histórico Profissional
     historico = []
