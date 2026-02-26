@@ -110,10 +110,15 @@
                             <label class="form-label small fw-bold">Departamento</label>
                             <select name="department_id" id="formDept" class="form-select" required></select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Cargo</label>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Cargo Atual</label>
                             <input type="text" name="cargo" id="formCargo" class="form-control"
                                 placeholder="Ex: Analista de RH" required>
+                        </div>
+                        <div class="col-md-6" id="divCargoInicial">
+                            <label class="form-label small fw-bold">Cargo Inicial (Admissão)</label>
+                            <input type="text" name="cargo_inicial" class="form-control"
+                                placeholder="Igual ao atual se vazio">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Salário Atual</label>
@@ -249,6 +254,8 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/rh/colaboradores/${c.id}/">Ver Dossiê</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="editColaborador('${c.id}')">Editar</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteColaborador('${c.id}', '${c.nome}')">Excluir</a></li>
                             </ul>
                         </div>
                         
@@ -364,11 +371,41 @@
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
                     form.querySelector('[name="status"]').value = c.status;
 
+                    document.getElementById('divCargoInicial').style.display = 'none';
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
                     document.getElementById('modalTitle').innerText = 'Editar Colaborador';
                     new bootstrap.Modal(document.getElementById('modalColaborador')).show();
                 }
             });
+    }
+
+    window.deleteColaborador = function (id, nome) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: `Deseja realmente excluir o colaborador ${nome}? Esta ação não pode ser desfeita.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/rh/colaboradores/${id}/delete/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Excluído!', data.message, 'success');
+                            location.reload();
+                        } else {
+                            Swal.fire('Erro!', data.error, 'error');
+                        }
+                    });
+            }
+        });
     }
 </script>
 {% endblock %}

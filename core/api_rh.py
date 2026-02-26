@@ -280,6 +280,19 @@ def api_save_historico(request):
 
 @login_required
 @require_http_methods(["POST"])
+def api_delete_colaborador(request, pk):
+    """Exclui um colaborador e seus dados relacionados"""
+    try:
+        colaborador = get_object_or_404(Colaborador, pk=pk)
+        colaborador.delete()
+        return JsonResponse({'success': True, 'message': 'Colaborador excluído com sucesso'})
+    except Exception as e:
+        logger.error(f"Erro ao excluir colaborador: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
 def api_save_performance(request):
     """Registra um novo feedback/performance para o colaborador"""
     try:

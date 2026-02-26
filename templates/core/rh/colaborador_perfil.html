@@ -41,6 +41,10 @@
                             onclick="editColaborador('{{ colaborador.id }}')">
                             <i class="bi bi-pencil-square"></i> Editar Dados
                         </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="deleteColaborador('{{ colaborador.id }}', '{{ colaborador.nome_completo }}')">
+                            <i class="bi bi-trash"></i> Excluir
+                        </button>
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm" data-bs-toggle="dropdown">
                                 <i class="bi bi-three-dots"></i>
@@ -119,7 +123,7 @@
                             </div>
 
                             <div class="timeline-container">
-                                {% for h in colaborador.historico.all.reversed %}
+                                {% for h in colaborador.historico.all reversed %}
                                 <div class="timeline-item d-flex gap-4 mb-4">
                                     <div class="timeline-date text-end" style="min-width: 100px;">
                                         <span class="small fw-bold text-muted">{{ h.data_evento|date:"d/m/Y" }}</span>
@@ -264,6 +268,29 @@
 {% include 'core/rh/modais_colaborador.html' %}
 
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Carregar dados auxiliares
+        fetch('/api/rh/auxiliar/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const selectDept = document.getElementById('formDept');
+                    const selectStatus = document.getElementById('formStatus');
+                    const selectTipo = document.getElementById('formTipoContrato');
+
+                    if (selectDept) {
+                        selectDept.innerHTML = data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+                    }
+                    if (selectStatus) {
+                        selectStatus.innerHTML = Object.entries(data.status_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                    }
+                    if (selectTipo) {
+                        selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                    }
+                }
+            });
+    });
+
     function openCreateModal() {
         const form = document.getElementById('formColaborador');
         form.reset();
@@ -287,7 +314,10 @@
                     form.querySelector('[name="rg"]').value = c.rg;
                     form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
                     form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
-                    form.querySelector('[name="department_id"]').value = c.department_id;
+
+                    const selectDept = form.querySelector('[name="department_id"]');
+                    if (selectDept) selectDept.value = c.department_id;
+
                     form.querySelector('[name="cargo"]').value = c.cargo_atual;
                     document.getElementById('divCargoInicial').style.display = 'none';
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
@@ -301,6 +331,23 @@
                     new bootstrap.Modal(document.getElementById('modalColaborador')).show();
                 }
             });
+    }
+
+    function deleteColaborador(id, nome) {
+        if (confirm(`Deseja realmente excluir o colaborador ${nome}? Esta ação não pode ser desfeita.`)) {
+            fetch(`/api/rh/colaboradores/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/rh/colaboradores/';
+                    } else {
+                        alert('Erro ao excluir: ' + data.error);
+                    }
+                });
+        }
     }
 
     function openModalDocumentos() {

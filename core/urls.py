@@ -266,9 +266,11 @@ urlpatterns = [
     path('api/chat-inactivity/<pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
 
     # API RH - Colaboradores
+    path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
     path('api/rh/colaboradores/', api_rh.api_colaboradores_list, name='api_rh_colaboradores_list'),
     path('api/rh/colaboradores/save/', api_rh.api_save_colaborador, name='api_rh_save_colaborador'),
     path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
+    path('api/rh/colaboradores/<int:pk>/delete/', api_rh.api_delete_colaborador, name='api_rh_delete_colaborador'),
     path('api/rh/colaboradores/historico/save/', api_rh.api_save_historico, name='api_rh_save_historico'),
     path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
     path('api/rh/colaboradores/documentos/upload/', api_rh.api_upload_documento, name='api_rh_upload_documento'),
