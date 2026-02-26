@@ -13,7 +13,7 @@ import logging
 
 from .models import (
     Colaborador, Cargo, Department, HistoricoProfissional, 
-    PerformanceRH, User
+    PerformanceRH, User, DocumentoColaborador
 )
 
 logger = logging.getLogger(__name__)
@@ -83,6 +83,17 @@ def api_colaborador_detail(request, pk):
             'nota': float(p.nota_quantitativa) if p.nota_quantitativa else None
         })
         
+    # Documentos
+    documentos = []
+    for d in colaborador.documentos.all():
+        documentos.append({
+            'id': d.id,
+            'nome': d.nome,
+            'url': d.arquivo.url,
+            'data': d.data_upload.strftime('%d/%m/%Y %H:%M'),
+            'extensao': d.arquivo.name.split('.')[-1].lower() if '.' in d.arquivo.name else ''
+        })
+        
     return JsonResponse({
         'success': True,
         'colaborador': {
@@ -106,7 +117,8 @@ def api_colaborador_detail(request, pk):
             'tempo_empresa': colaborador.tempo_empresa,
             'foto_url': colaborador.foto.url if colaborador.foto else None,
             'historico': historico,
-            'performance': performance
+            'performance': performance,
+            'documentos': documentos
         }
     })
 
@@ -138,6 +150,9 @@ def api_save_colaborador(request):
             colaborador.salario_atual = data.get('salario_atual')
             colaborador.status = data.get('status', 'ativo')
             colaborador.tipo_contrato = data.get('tipo_contrato', 'clt')
+            colaborador.email_pessoal = data.get('email_pessoal', '')
+            colaborador.telefone = data.get('telefone', '')
+            colaborador.endereco = data.get('endereco', '')
             
             if 'foto' in request.FILES:
                 colaborador.foto = request.FILES['foto']
@@ -245,4 +260,44 @@ def api_save_performance(request):
         return JsonResponse({'success': True, 'message': 'Feedback registrado com sucesso'})
     except Exception as e:
         logger.error(f"Erro ao salvar performance: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_upload_documento(request):
+    """Realiza upload de um novo documento para o colaborador"""
+    try:
+        colaborador_id = request.POST.get('colaborador_id')
+        colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
+        
+        if 'arquivo' not in request.FILES:
+            return JsonResponse({'success': False, 'error': 'Nenhum arquivo enviado'}, status=400)
+            
+        arquivo = request.FILES['arquivo']
+        nome = request.POST.get('nome', arquivo.name)
+        
+        DocumentoColaborador.objects.create(
+            colaborador=colaborador,
+            nome=nome,
+            arquivo=arquivo,
+            uploaded_by=request.user
+        )
+        
+        return JsonResponse({'success': True, 'message': 'Documento enviado com sucesso'})
+    except Exception as e:
+        logger.error(f"Erro ao upload documento: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_delete_documento(request, pk):
+    """Remove um documento do colaborador"""
+    try:
+        doc = get_object_or_404(DocumentoColaborador, pk=pk)
+        doc.delete()
+        return JsonResponse({'success': True, 'message': 'Documento removido com sucesso'})
+    except Exception as e:
+        logger.error(f"Erro ao deletar documento: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

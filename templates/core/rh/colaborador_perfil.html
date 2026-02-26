@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static humanize %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -80,10 +80,11 @@
                     </div>
                     <div class="mb-3 border-bottom pb-2">
                         <label class="text-muted small d-block">SALÁRIO ATUAL</label>
-                        <span class="fw-bold">R$ {{ colaborador.salario_atual|floatformat:2 }}</span>
+                        <span class="fw-bold">R$ {{ colaborador.salario_atual|floatformat:2|intcomma }}</span>
                     </div>
                     <div class="mb-0 text-center">
-                        <a href="#" class="text-primary small text-decoration-none fw-bold">Ver documentos anexos</a>
+                        <a href="javascript:void(0)" onclick="openModalDocumentos()"
+                            class="text-primary small text-decoration-none fw-bold">Ver documentos anexos</a>
                     </div>
                 </div>
             </div>
@@ -138,7 +139,7 @@
                                             {% endif %}
                                             {% if h.salario_novo %}
                                             <p class="mb-1 small text-success">Novo Salário: R$ {{
-                                                h.salario_novo|floatformat:2 }}</p>
+                                                h.salario_novo|floatformat:2|intcomma }}</p>
                                             {% endif %}
                                             <p class="mb-0 text-muted italic small">{{ h.observacoes }}</p>
                                         </div>
@@ -280,10 +281,81 @@
                     form.querySelector('[name="cargo"]').value = c.cargo_atual;
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
                     form.querySelector('[name="status"]').value = c.status;
+                    form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
+                    form.querySelector('[name="telefone"]').value = c.telefone;
+                    form.querySelector('[name="endereco"]').value = c.endereco;
 
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
                     document.getElementById('modalTitle').innerText = 'Editar Colaborador';
                     new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+                }
+            });
+    }
+
+    function openModalDocumentos() {
+        const modal = new bootstrap.Modal(document.getElementById('modalDocumentos'));
+        loadDocumentos();
+        modal.show();
+    }
+
+    function loadDocumentos() {
+        fetch(`/api/rh/colaboradores/{{ colaborador.id }}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const lista = document.getElementById('listaDocumentos');
+                    lista.innerHTML = '';
+                    data.colaborador.documentos.forEach(doc => {
+                        lista.innerHTML += `
+                            <tr>
+                                <td class="small">${doc.nome}</td>
+                                <td class="small text-center text-muted">${doc.data}</td>
+                                <td class="text-end">
+                                    <a href="${doc.url}" target="_blank" class="btn btn-sm btn-light p-1" title="Ver"><i class="bi bi-eye"></i></a>
+                                    <button onclick="deleteDocumento(${doc.id})" class="btn btn-sm btn-light text-danger p-1" title="Excluir"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    if (data.colaborador.documentos.length === 0) {
+                        lista.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3 small">Nenhum documento anexado.</td></tr>';
+                    }
+                }
+            });
+    }
+
+    function uploadDocumento() {
+        const form = document.getElementById('formUploadDocumento');
+        const formData = new FormData(form);
+        formData.append('colaborador_id', '{{ colaborador.id }}');
+
+        fetch('/api/rh/colaboradores/documentos/upload/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    form.reset();
+                    loadDocumentos();
+                } else {
+                    alert('Erro ao enviar documento');
+                }
+            });
+    }
+
+    function deleteDocumento(id) {
+        if (!confirm('Tem certeza que deseja remover este documento?')) return;
+
+        fetch(`/api/rh/colaboradores/documentos/${id}/delete/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadDocumentos();
                 }
             });
     }

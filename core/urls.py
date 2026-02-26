@@ -271,6 +271,8 @@ urlpatterns = [
     path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
     path('api/rh/colaboradores/historico/save/', api_rh.api_save_historico, name='api_rh_save_historico'),
     path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
+    path('api/rh/colaboradores/documentos/upload/', api_rh.api_upload_documento, name='api_rh_upload_documento'),
+    path('api/rh/colaboradores/documentos/<int:pk>/delete/', api_rh.api_delete_documento, name='api_rh_delete_documento'),
     path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
 ]
 

@@ -2147,3 +2147,20 @@ class PerformanceRH(models.Model):
 
     def __str__(self):
         return f"{self.colaborador.nome_completo} - {self.get_tipo_display()} ({self.data_registro})"
+
+
+class DocumentoColaborador(models.Model):
+    """Documentos anexos ao dossiê do colaborador"""
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='documentos')
+    nome = models.CharField(max_length=255)
+    arquivo = models.FileField(upload_to='colaboradores_documentos/')
+    data_upload = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name = "Documento do Colaborador"
+        verbose_name_plural = "Documentos dos Colaboradores"
+        ordering = ['-data_upload']
+
+    def __str__(self):
+        return f"{self.nome} - {self.colaborador.nome_completo}"

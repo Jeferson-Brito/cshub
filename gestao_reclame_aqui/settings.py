@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "django_filters",
     "import_export",
+    "django.contrib.humanize",
 
     # apps locais
     "core",
