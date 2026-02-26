@@ -36,7 +36,7 @@ def api_colaboradores_list(request):
     data = []
     for c in colaboradores.select_related('department'):
         data.append({
-            'id': c.id,
+            'id': str(c.id),
             'nome': c.nome_completo,
             'cargo': c.cargo_atual,
             'department': c.department.name,
@@ -59,7 +59,7 @@ def api_colaborador_detail(request, pk):
     historico = []
     for h in colaborador.historico.all():
         historico.append({
-            'id': h.id,
+            'id': str(h.id),
             'data': h.data_evento.strftime('%d/%m/%Y'),
             'tipo': h.get_tipo_evento_display(),
             'cargo_anterior': h.cargo_anterior,
@@ -73,7 +73,7 @@ def api_colaborador_detail(request, pk):
     performance = []
     for p in colaborador.performance.all().select_related('avaliador'):
         performance.append({
-            'id': p.id,
+            'id': str(p.id),
             'data': p.data_registro.strftime('%d/%m/%Y'),
             'tipo': p.get_tipo_display(),
             'titulo': p.titulo,
@@ -86,7 +86,7 @@ def api_colaborador_detail(request, pk):
     return JsonResponse({
         'success': True,
         'colaborador': {
-            'id': colaborador.id,
+            'id': str(colaborador.id),
             'nome_completo': colaborador.nome_completo,
             'cpf': colaborador.cpf,
             'rg': colaborador.rg,
@@ -98,7 +98,7 @@ def api_colaborador_detail(request, pk):
             'data_desligamento': colaborador.data_desligamento.strftime('%d/%m/%Y') if colaborador.data_desligamento else None,
             'cargo_atual': colaborador.cargo_atual,
             'department': colaborador.department.name,
-            'department_id': colaborador.department.id,
+            'department_id': str(colaborador.department.id),
             'salario_atual': float(colaborador.salario_atual),
             'tipo_contrato': colaborador.get_tipo_contrato_display(),
             'jornada': colaborador.jornada_trabalho,
@@ -154,7 +154,7 @@ def api_save_colaborador(request):
                     observacoes="Registro inicial de admissão"
                 )
                 
-            return JsonResponse({'success': True, 'id': colaborador.id, 'message': 'Dados salvos com sucesso'})
+            return JsonResponse({'success': True, 'id': str(colaborador.id), 'message': 'Dados salvos com sucesso'})
             
     except Exception as e:
         logger.error(f"Erro ao salvar colaborador: {str(e)}")
@@ -166,7 +166,11 @@ def api_save_colaborador(request):
 def api_rh_auxiliar_data(request):
     """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
     cargos = list(Cargo.objects.all().values('id', 'nome', 'department__name'))
+    for cargo in cargos:
+        cargo['id'] = str(cargo['id'])
     depts = list(Department.objects.all().values('id', 'name'))
+    for dept in depts:
+        dept['id'] = str(dept['id'])
     
     return JsonResponse({
         'success': True,
