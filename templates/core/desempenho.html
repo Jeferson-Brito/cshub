@@ -1,4 +1,4 @@
-Ôªø{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{{ page_title }} - Nexus{% endblock %}
@@ -598,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period=='6' %}selected{% endif %}>√öltimos 6 meses</option>
-                <option value="12" {% if current_period=='12' %}selected{% endif %}>√öltimos 12 meses</option>
-                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o hist√≥rico</option>
+                <option value="6" {% if current_period == '6' %}selected{% endif %}>⁄ltimos 6 meses</option>
+                <option value="12" {% if current_period == '12' %}selected{% endif %}>⁄ltimos 12 meses</option>
+                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histÛrico</option>
             </select>
             {% endif %}
 
@@ -616,13 +616,13 @@
         </div>
     </div>
 
-    <!-- Gr√°ficos -->
+    <!-- Gr·ficos -->
     <div class="charts-grid">
         <div class="chart-card">
             <div class="chart-header">
                 <h3 class="chart-title tme">
                     <i class="bi bi-clock-history"></i>
-                    TME - Tempo M√©dio de Espera
+                    TME - Tempo MÈdio de Espera
                 </h3>
             </div>
             <div class="chart-container">
@@ -634,7 +634,7 @@
             <div class="chart-header">
                 <h3 class="chart-title nps">
                     <i class="bi bi-star-fill"></i>
-                    NPS - Avalia√ß√£o
+                    NPS - AvaliaÁ„o
                 </h3>
             </div>
             <div class="chart-container">
@@ -655,16 +655,16 @@
         </div>
     </div>
 
-    <!-- P√≥dio dos Melhores (Top 3) -->
+    <!-- PÛdio dos Melhores (Top 3) -->
     <div class="kpi-table-section" style="margin-top: 25px;">
         <div class="kpi-table-header">
-            <h3 class="kpi-table-title"><i class="bi bi-trophy-fill" style="color: #ffd700;"></i> P√≥dio dos Melhores
+            <h3 class="kpi-table-title"><i class="bi bi-trophy-fill" style="color: #ffd700;"></i> PÛdio dos Melhores
             </h3>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="podiumMonth" class="select-analista" style="min-width: 120px;" onchange="loadPodium()">
                     <option value="1">Janeiro</option>
                     <option value="2">Fevereiro</option>
-                    <option value="3">Mar√ßo</option>
+                    <option value="3">MarÁo</option>
                     <option value="4">Abril</option>
                     <option value="5">Maio</option>
                     <option value="6">Junho</option>
@@ -684,7 +684,7 @@
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
             <div class="empty-state" style="padding: 40px; grid-column: 1 / -1;">
                 <i class="bi bi-hourglass-split"></i>
-                <p>Selecione um m√™s e ano para ver o p√≥dio</p>
+                <p>Selecione um mÍs e ano para ver o pÛdio</p>
             </div>
         </div>
     </div>
@@ -693,7 +693,7 @@
 
     <div class="kpi-table-section">
         <div class="kpi-table-header">
-            <h3 class="kpi-table-title">Hist√≥rico de KPIs</h3>
+            <h3 class="kpi-table-title">HistÛrico de KPIs</h3>
         </div>
 
         <div id="kpiTableContainer">
@@ -702,7 +702,7 @@
     </div>
 
     {% if can_edit %}
-    <!-- Se√ß√£o de Ranking (apenas gestores/admin) -->
+    <!-- SeÁ„o de Ranking (apenas gestores/admin) -->
     <div class="kpi-table-section" style="margin-top: 25px;">
         <div class="kpi-table-header">
             <h3 class="kpi-table-title"><i class="bi bi-trophy" style="color: #f59e0b;"></i> Ranking de Analistas</h3>
@@ -710,7 +710,7 @@
                 <select id="rankingMonth" class="select-analista" style="min-width: 120px;" onchange="loadRanking()">
                     <option value="1">Janeiro</option>
                     <option value="2">Fevereiro</option>
-                    <option value="3">Mar√ßo</option>
+                    <option value="3">MarÁo</option>
                     <option value="4">Abril</option>
                     <option value="5">Maio</option>
                     <option value="6">Junho</option>
@@ -729,7 +729,7 @@
         <div id="rankingTableContainer">
             <div class="empty-state" style="padding: 40px;">
                 <i class="bi bi-hourglass-split"></i>
-                <p>Selecione um m√™s e ano para ver o ranking</p>
+                <p>Selecione um mÍs e ano para ver o ranking</p>
             </div>
         </div>
     </div>
@@ -747,7 +747,7 @@
             <form id="kpiForm">
                 <input type="hidden" id="kpiId">
                 <div class="form-group">
-                    <label for="kpiMes">M√™s/Ano</label>
+                    <label for="kpiMes">MÍs/Ano</label>
                     <input type="month" id="kpiMes" required>
                 </div>
 
@@ -785,7 +785,7 @@
         <div class="modal-body-desempenho">
             <form id="globalMetaForm">
                 <div class="form-group">
-                    <label for="globalMetaMes">M√™s/Ano</label>
+                    <label for="globalMetaMes">MÍs/Ano</label>
                     <input type="month" id="globalMetaMes" required>
                 </div>
                 <div class="form-group">
@@ -805,11 +805,11 @@
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
 
             <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">
-                <i class="bi bi-clock-history"></i> Hist√≥rico de Metas Globais
+                <i class="bi bi-clock-history"></i> HistÛrico de Metas Globais
             </h4>
             <div id="globalMetaHistoryContainer"
                 style="max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <!-- Tabela de hist√≥rico ser√° carregada aqui -->
+                <!-- Tabela de histÛrico ser· carregada aqui -->
             </div>
         </div>
         <div class="modal-footer-desempenho">
@@ -893,7 +893,7 @@
         const npsValues = kpisData.map(k => k.nps);
         const chatsValues = kpisData.map(k => k.chats);
 
-        // Gera arrays de meta din√É¬¢micos vindos do banco de dados
+        // Gera arrays de meta din√¢micos vindos do banco de dados
         const tmeMetaValues = kpisData.map(k => k.meta_tme);
         const npsMetaValues = kpisData.map(k => k.meta_nps);
         const chatsMetaValues = kpisData.map(k => k.meta_chats);
@@ -1159,11 +1159,11 @@
             <table class="kpi-table">
                 <thead>
                     <tr>
-                        <th>M√™s/Ano</th>
+                        <th>MÍs/Ano</th>
                         <th>TME</th>
                         <th>NPS</th>
                         <th>Chats</th>
-                        ${canEdit ? '<th>A√ß√µes</th>' : ''}
+                        ${canEdit ? '<th>AÁıes</th>' : ''}
                     </tr>
                 </thead>
                 <tbody>
@@ -1230,7 +1230,7 @@
     async function saveKpi() {
         const mesInput = document.getElementById('kpiMes').value;
         if (!mesInput) {
-            alert('Selecione o m√™s/ano');
+            alert('Selecione o mÍs/ano');
             return;
         }
 
@@ -1313,7 +1313,7 @@
 
     async function loadGlobalMetaHistory() {
         const container = document.getElementById('globalMetaHistoryContainer');
-        container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="bi bi-arrow-repeat spin"></i> Carregando hist√≥rico...</div>';
+        container.innerHTML = '<div style="padding: 20px; text-align: center;"><i class="bi bi-arrow-repeat spin"></i> Carregando histÛrico...</div>';
 
         try {
             const response = await fetch('/api/desempenho/metas/global/');
@@ -1328,11 +1328,11 @@
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                     <thead style="background: #f8fafc; position: sticky; top: 0;">
                         <tr>
-                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">M√™s/Ano</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">MÍs/Ano</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">TME</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">NPS</th>
                             <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">Chats</th>
-                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">A√ß√µes</th>
+                            <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">AÁıes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1356,7 +1356,7 @@
             html += '</tbody></table>';
             container.innerHTML = html;
         } catch (error) {
-            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar hist√≥rico.</div>';
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar histÛrico.</div>';
         }
     }
 
@@ -1370,11 +1370,11 @@
     }
 
     async function deleteGlobalMeta(id) {
-        if (!confirm('Tem certeza que deseja excluir esta meta global? Isso afetar√°¬° os gr√É¬°ficos de todos os analistas para este m√™s.')) return;
+        if (!confirm('Tem certeza que deseja excluir esta meta global? Isso afetar·° os gr√°ficos de todos os analistas para este mÍs.')) return;
 
         try {
-            // Reaproveitar o roteamento de exclus√£o se poss√É¬≠vel, ou criar um novo. 
-            // Como ainda n√£o criei o endpoint de DELETE para metas globais, vou precisar dele.
+            // Reaproveitar o roteamento de exclus„o se poss√≠vel, ou criar um novo. 
+            // Como ainda n„o criei o endpoint de DELETE para metas globais, vou precisar dele.
             const response = await fetch(`/api/desempenho/metas/global/${id}/delete/`, {
                 method: 'DELETE',
                 headers: { 'X-CSRFToken': csrfToken }
@@ -1382,7 +1382,7 @@
 
             if (response.ok) {
                 loadGlobalMetaHistory();
-                window.location.reload(); // Para atualizar os gr√É¬°ficos
+                window.location.reload(); // Para atualizar os gr√°ficos
             } else {
                 alert('Erro ao excluir meta global');
             }
@@ -1398,7 +1398,7 @@
     async function saveGlobalMeta() {
         const mesInput = document.getElementById('globalMetaMes').value;
         if (!mesInput) {
-            alert('Selecione o m√™s/ano');
+            alert('Selecione o mÍs/ano');
             return;
         }
 
@@ -1493,7 +1493,7 @@
             }
         } catch (e) {
             console.error(e);
-            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-wifi-off"></i><p>Erro de conex√£o</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-wifi-off"></i><p>Erro de conex„o</p></div>';
         }
     }
 
@@ -1501,19 +1501,19 @@
         const container = document.getElementById('rankingTableContainer');
 
         if (!data.ranking || data.ranking.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este m√™s</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este mÍs</p></div>';
             return;
         }
 
         const meta = data.meta_global;
         const metaInfo = meta.tme || meta.nps || meta.chats ?
             `<div class="alert alert-info py-2 mb-3" style="font-size: 13px;">
-                <strong>Metas do M√™s:</strong> 
-                TME ‚â§ ${meta.tme ? secondsToHms(meta.tme) : '-'} | 
-                NPS ‚â• ${meta.nps ? meta.nps.toFixed(2) : '-'} | 
-                Chats ‚â• ${meta.chats || '-'}
+                <strong>Metas do MÍs:</strong> 
+                TME = ${meta.tme ? secondsToHms(meta.tme) : '-'} | 
+                NPS = ${meta.nps ? meta.nps.toFixed(2) : '-'} | 
+                Chats = ${meta.chats || '-'}
             </div>` :
-            '<div class="alert alert-warning py-2 mb-3">‚ö†Ô∏è Metas globais n√£o definidas para este m√™s</div>';
+            '<div class="alert alert-warning py-2 mb-3">?? Metas globais n„o definidas para este mÍs</div>';
 
         let html = metaInfo + `
             <table class="kpi-table">
@@ -1531,11 +1531,11 @@
         `;
 
         data.ranking.forEach(item => {
-            const tmeIcon = item.tme_ok === true ? 'üü¢' : (item.tme_ok === false ? 'üî¥' : '‚ö™');
-            const npsIcon = item.nps_ok === true ? 'üü¢' : (item.nps_ok === false ? 'üî¥' : '‚ö™');
-            const chatsIcon = item.chats_ok === true ? 'üü¢' : (item.chats_ok === false ? 'üî¥' : '‚ö™');
+            const tmeIcon = item.tme_ok === true ? '??' : (item.tme_ok === false ? '??' : '?');
+            const npsIcon = item.nps_ok === true ? '??' : (item.nps_ok === false ? '??' : '?');
+            const chatsIcon = item.chats_ok === true ? '??' : (item.chats_ok === false ? '??' : '?');
 
-            // Cores do ranking: ouro, prata, bronze para top 3, vermelho para o √∫ltimo (pior)
+            // Cores do ranking: ouro, prata, bronze para top 3, vermelho para o ˙ltimo (pior)
             let rankBadge = '';
             if (item.posicao === 1) {
                 rankBadge = 'background: linear-gradient(135deg, #ffd700, #ffec8b); color: #7c5a00; box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);'; // Ouro
@@ -1549,7 +1549,7 @@
 
             html += `
                 <tr>
-                    <td style="text-align: center;"><span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; ${rankBadge}">${item.posicao}¬∫</span></td>
+                    <td style="text-align: center;"><span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 700; ${rankBadge}">${item.posicao}∫</span></td>
                     <td><strong>${item.analista_nome}</strong></td>
                     <td style="text-align: center;">${tmeIcon} ${item.tme ? secondsToHms(item.tme) : '-'}</td>
                     <td style="text-align: center;">${npsIcon} ${item.nps ? item.nps.toFixed(2) : '-'}</td>
@@ -1560,7 +1560,7 @@
         });
 
         html += '</tbody></table>';
-        html += '<p class="text-muted mt-3" style="font-size: 12px;"><strong>Legenda:</strong> üü¢ Meta atingida | üî¥ Meta n√£o atingida | ‚ö™ Sem dados</p>';
+        html += '<p class="text-muted mt-3" style="font-size: 12px;"><strong>Legenda:</strong> ?? Meta atingida | ?? Meta n„o atingida | ? Sem dados</p>';
 
         container.innerHTML = html;
     }
@@ -1617,11 +1617,11 @@
                 renderPodium(data);
             } else {
                 const err = await response.json();
-                container.innerHTML = `<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-exclamation-circle"></i><p>${err.error || 'Erro ao carregar p√≥dio'}</p></div>`;
+                container.innerHTML = `<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-exclamation-circle"></i><p>${err.error || 'Erro ao carregar pÛdio'}</p></div>`;
             }
         } catch (e) {
             console.error(e);
-            container.innerHTML = '<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-wifi-off"></i><p>Erro de conex√£o</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-wifi-off"></i><p>Erro de conex„o</p></div>';
         }
     }
 
@@ -1631,17 +1631,17 @@
         if ((!data.tme_top3 || data.tme_top3.length === 0) &&
             (!data.nps_top3 || data.nps_top3.length === 0) &&
             (!data.chats_top3 || data.chats_top3.length === 0)) {
-            container.innerHTML = '<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este m√™s</p></div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 40px; grid-column: 1 / -1;"><i class="bi bi-inbox"></i><p>Nenhum dado encontrado para este mÍs</p></div>';
             return;
         }
 
         let html = '';
 
         // TME Podium
-        html += renderPodiumCard('TME - Tempo M√©dio de Espera', data.tme_top3, 'tme', 'bi-clock-history', '#f59e0b');
+        html += renderPodiumCard('TME - Tempo MÈdio de Espera', data.tme_top3, 'tme', 'bi-clock-history', '#f59e0b');
 
         // NPS Podium
-        html += renderPodiumCard('NPS - Avalia√ß√£o', data.nps_top3, 'nps', 'bi-star-fill', '#10b981');
+        html += renderPodiumCard('NPS - AvaliaÁ„o', data.nps_top3, 'nps', 'bi-star-fill', '#10b981');
 
         // Chats Podium
         html += renderPodiumCard('Quantidade de Chats', data.chats_top3, 'chats', 'bi-chat-dots-fill', '#8b5cf6');
@@ -1658,19 +1658,19 @@
                         <h4>${title}</h4>
                     </div>
                     <div class="podium-empty">
-                        Sem dados dispon√≠veis
+                        Sem dados disponÌveis
                     </div>
                 </div>
             `;
         }
 
         const positionClasses = ['first', 'second', 'third'];
-        const medals = ['ü•á', 'ü•à', 'ü•â'];
+        const medals = ['??', '??', '??'];
 
         let stepsHtml = '';
         topList.forEach((item, index) => {
             const positionClass = positionClasses[index] || '';
-            const medal = medals[index] || `${index + 1}¬∫`;
+            const medal = medals[index] || `${index + 1}∫`;
 
             let valueDisplay = '';
             if (metricType === 'tme') {
