@@ -225,6 +225,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
+                        window.allColaboradores = data.colaboradores; // Sincroniza variável global
                         renderGrid(data.colaboradores);
                     }
                 });
@@ -312,11 +313,22 @@
                 .then(data => {
                     if (data.success) {
                         bootstrap.Modal.getInstance(document.getElementById('modalColaborador')).hide();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: data.message || 'Cadastro realizado com sucesso.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
                         loadColaboradores();
                         form.reset();
                         previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
                     } else {
-                        alert('Erro: ' + data.error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: data.error
+                        });
                     }
                 });
         });
