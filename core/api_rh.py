@@ -38,7 +38,7 @@ def api_colaboradores_list(request):
         data.append({
             'id': c.id,
             'nome': c.nome_completo,
-            'cargo': c.cargo_atual.nome,
+            'cargo': c.cargo_atual,
             'department': c.department.name,
             'status': c.status,
             'data_admissao': c.data_admissao.strftime('%d/%m/%Y'),
@@ -57,13 +57,13 @@ def api_colaborador_detail(request, pk):
     
     # Histórico Profissional
     historico = []
-    for h in colaborador.historico.all().select_related('cargo_anterior', 'cargo_novo'):
+    for h in colaborador.historico.all():
         historico.append({
             'id': h.id,
             'data': h.data_evento.strftime('%d/%m/%Y'),
             'tipo': h.get_tipo_evento_display(),
-            'cargo_anterior': h.cargo_anterior.nome if h.cargo_anterior else None,
-            'cargo_novo': h.cargo_novo.nome if h.cargo_novo else None,
+            'cargo_anterior': h.cargo_anterior,
+            'cargo_novo': h.cargo_novo,
             'salario_anterior': float(h.salario_anterior) if h.salario_anterior else None,
             'salario_novo': float(h.salario_novo) if h.salario_novo else None,
             'observacoes': h.observacoes
@@ -96,8 +96,7 @@ def api_colaborador_detail(request, pk):
             'email_pessoal': colaborador.email_pessoal,
             'data_admissao': colaborador.data_admissao.strftime('%d/%m/%Y'),
             'data_desligamento': colaborador.data_desligamento.strftime('%d/%m/%Y') if colaborador.data_desligamento else None,
-            'cargo_atual': colaborador.cargo_atual.nome,
-            'cargo_id': colaborador.cargo_atual.id,
+            'cargo_atual': colaborador.cargo_atual,
             'department': colaborador.department.name,
             'department_id': colaborador.department.id,
             'salario_atual': float(colaborador.salario_atual),
@@ -134,7 +133,7 @@ def api_save_colaborador(request):
             colaborador.rg = data.get('rg', '')
             colaborador.data_nascimento = data.get('data_nascimento')
             colaborador.data_admissao = data.get('data_admissao')
-            colaborador.cargo_atual_id = data.get('cargo_id')
+            colaborador.cargo_atual = data.get('cargo')
             colaborador.department_id = data.get('department_id')
             colaborador.salario_atual = data.get('salario_atual')
             colaborador.status = data.get('status', 'ativo')
@@ -150,7 +149,7 @@ def api_save_colaborador(request):
                 HistoricoProfissional.objects.create(
                     colaborador=colaborador,
                     tipo_evento='admissao',
-                    cargo_novo_id=colaborador.cargo_atual_id,
+                    cargo_novo=colaborador.cargo_atual,
                     salario_novo=colaborador.salario_atual,
                     observacoes="Registro inicial de admissão"
                 )

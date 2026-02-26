@@ -2052,7 +2052,7 @@ class Colaborador(models.Model):
     # Dados Contratuais
     data_admissao = models.DateField()
     data_desligamento = models.DateField(null=True, blank=True)
-    cargo_atual = models.ForeignKey(Cargo, on_delete=models.PROTECT, related_name='colaboradores')
+    cargo_atual = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='colaboradores_rh')
     salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
@@ -2099,8 +2099,8 @@ class HistoricoProfissional(models.Model):
     data_evento = models.DateField(default=timezone.now)
     tipo_evento = models.CharField(max_length=30, choices=TIPO_EVENTO_CHOICES)
     
-    cargo_anterior = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='historico_anterior')
-    cargo_novo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='historico_novo')
+    cargo_anterior = models.CharField(max_length=100, blank=True, null=True)
+    cargo_novo = models.CharField(max_length=100, blank=True, null=True)
     
     salario_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     salario_novo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

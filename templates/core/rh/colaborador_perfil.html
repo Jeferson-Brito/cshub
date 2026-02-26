@@ -32,7 +32,7 @@
                     <div class="mb-3 flex-grow-1">
                         <h3 class="fw-bold mb-0 text-dark">{{ colaborador.nome_completo }}</h3>
                         <p class="text-muted mb-0">
-                            <span class="fw-bold text-primary">{{ colaborador.cargo_atual.nome }}</span> •
+                            <span class="fw-bold text-primary">{{ colaborador.cargo_atual }}</span> •
                             {{ colaborador.department.name }}
                         </p>
                     </div>
@@ -132,8 +132,8 @@
                                         <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
                                             <h6 class="fw-bold mb-1">{{ h.get_tipo_evento_display }}</h6>
                                             {% if h.cargo_novo %}
-                                            <p class="mb-1 small">De <strong>{{ h.cargo_anterior.nome|default:"-"
-                                                    }}</strong> para <strong>{{ h.cargo_novo.nome }}</strong></p>
+                                            <p class="mb-1 small">De <strong>{{ h.cargo_anterior|default:"-"
+                                                    }}</strong> para <strong>{{ h.cargo_novo }}</strong></p>
                                             {% endif %}
                                             {% if h.salario_novo %}
                                             <p class="mb-1 small text-success">Novo Salário: R$ {{ h.salario_novo }}</p>
