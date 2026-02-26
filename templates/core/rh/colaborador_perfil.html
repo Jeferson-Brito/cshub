@@ -22,7 +22,7 @@
             <div class="px-4 pb-4" style="margin-top: -60px;">
                 <div class="d-flex align-items-end gap-4 flex-wrap">
                     <div class="position-relative">
-                        <img src="{{ colaborador.foto.url|default:'/static/img/avatar_placeholder.png' }}"
+                        <img src="{% if colaborador.foto %}{{ colaborador.foto.url }}{% else %}{% static 'img/avatar_placeholder.png' %}{% endif %}"
                             class="rounded-circle border border-4 border-white shadow"
                             style="width: 140px; height: 140px; object-fit: cover; background: white;">
                         <span
