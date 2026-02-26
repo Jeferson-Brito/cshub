@@ -54,9 +54,15 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Cargo</label>
+                        <div class="col-md-6" id="divCargo">
+                            <label class="form-label small fw-bold">Cargo Atual</label>
                             <input type="text" name="cargo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6" id="divCargoInicial">
+                            <label class="form-label small fw-bold">Cargo Inicial (Admissão)</label>
+                            <input type="text" name="cargo_inicial" class="form-control">
+                            <small class="text-muted" style="font-size: 0.7rem;">Deixe vazio se for igual ao
+                                atual</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Salário Atual</label>
@@ -140,7 +146,8 @@
                 </div>
                 <div class="modal-footer border-0 p-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary px-4">Salvar Alterações</button>
+                    <button type="button" id="btnSalvarColaborador" class="btn btn-primary px-4">Salvar
+                        Alterações</button>
                 </div>
             </form>
         </div>

@@ -173,14 +173,42 @@ def api_save_colaborador(request):
             colaborador.save()
             
             # Se for novo, criar histórico de admissão
+            # Se for novo, criar histórico de admissão
             if created:
+                cargo_cadastrado = data.get('cargo')
+                cargo_inicial = data.get('cargo_inicial') or cargo_cadastrado
+                data_admissao = data.get('data_admissao', timezone.now().date())
+                
                 HistoricoProfissional.objects.create(
                     colaborador=colaborador,
+                    data_evento=data_admissao,
                     tipo_evento='admissao',
-                    cargo_novo=colaborador.cargo_atual,
+                    cargo_anterior=None,
+                    cargo_novo=cargo_inicial,
                     salario_novo=colaborador.salario_atual,
                     observacoes="Registro inicial de admissão"
                 )
+                
+                # Se o cargo atual for diferente do inicial, registramos a promoção/mudança imediata
+                if cargo_inicial != cargo_cadastrado:
+                    HistoricoProfissional.objects.create(
+                        colaborador=colaborador,
+                        data_evento=data_admissao,
+                        tipo_evento='mudanca_funcao',
+                        cargo_anterior=cargo_inicial,
+                        cargo_novo=cargo_cadastrado,
+                        salario_novo=colaborador.salario_atual,
+                        observacoes="Cargo atual no momento do cadastro"
+                    )
+                
+                # Se o cargo inicial for diferente do cargo atual cadastrado, 
+                # significa que houve uma evolução não registrada ou o usuário quer 
+                # que o cargo atual seja o que ele preencheu no campo 'Cargo'
+                if cargo_inicial != cargo_cadastrado:
+                    # O cargo_atual já foi salvo como 'cargo' do form. 
+                    # Se o inicial for diferente, talvez devêssemos criar uma promoção?
+                    # Por enquanto, apenas garantimos que a admissão use o 'cargo_inicial'.
+                    pass
                 
             return JsonResponse({'success': True, 'id': str(colaborador.id), 'message': 'Dados salvos com sucesso'})
             

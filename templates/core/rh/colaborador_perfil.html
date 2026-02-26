@@ -37,7 +37,7 @@
                         </p>
                     </div>
                     <div class="mb-3 d-flex gap-2">
-                        <button class="btn btn-outline-primary btn-sm"
+                        <button type="button" class="btn btn-outline-primary btn-sm"
                             onclick="editColaborador('{{ colaborador.id }}')">
                             <i class="bi bi-pencil-square"></i> Editar Dados
                         </button>
@@ -119,7 +119,7 @@
                             </div>
 
                             <div class="timeline-container">
-                                {% for h in colaborador.historico.all %}
+                                {% for h in colaborador.historico.all.reversed %}
                                 <div class="timeline-item d-flex gap-4 mb-4">
                                     <div class="timeline-date text-end" style="min-width: 100px;">
                                         <span class="small fw-bold text-muted">{{ h.data_evento|date:"d/m/Y" }}</span>
@@ -264,6 +264,16 @@
 {% include 'core/rh/modais_colaborador.html' %}
 
 <script>
+    function openCreateModal() {
+        const form = document.getElementById('formColaborador');
+        form.reset();
+        form.querySelector('[name="id"]').value = '';
+        document.getElementById('divCargoInicial').style.display = 'block';
+        document.getElementById('previewFoto').src = "{% static 'img/avatar_placeholder.png' %}";
+        document.getElementById('modalTitle').innerText = 'Novo Colaborador';
+        new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+    }
+
     function editColaborador(id) {
         fetch(`/api/rh/colaboradores/${id}/`)
             .then(res => res.json())
@@ -279,6 +289,7 @@
                     form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
                     form.querySelector('[name="department_id"]').value = c.department_id;
                     form.querySelector('[name="cargo"]').value = c.cargo_atual;
+                    document.getElementById('divCargoInicial').style.display = 'none';
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
                     form.querySelector('[name="status"]').value = c.status;
                     form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
@@ -361,18 +372,21 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        const btnSalvar = document.getElementById('btnSalvarColaborador');
         const formColab = document.getElementById('formColaborador');
-        if (formColab) {
-            formColab.addEventListener('submit', function (e) {
-                e.preventDefault();
 
-                // Pré-processar campos numéricos para evitar erro de decimal (vírgula vs ponto)
-                const salarioInput = this.querySelector('[name="salario_atual"]');
+        if (btnSalvar && formColab) {
+            btnSalvar.addEventListener('click', function () {
+                // Forçar verificação de validade do HTML5
+                if (!formColab.reportValidity()) return;
+
+                // Pré-processar campos numéricos
+                const salarioInput = formColab.querySelector('[name="salario_atual"]');
                 if (salarioInput.value) {
                     salarioInput.value = salarioInput.value.replace(',', '.');
                 }
 
-                const formData = new FormData(this);
+                const formData = new FormData(formColab);
                 fetch('/api/rh/colaboradores/save/', {
                     method: 'POST',
                     body: formData,
