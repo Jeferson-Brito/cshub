@@ -181,3 +181,68 @@ def api_rh_auxiliar_data(request):
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
         'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES)
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_historico(request):
+    """Registra uma nova evolução no histórico do colaborador"""
+    try:
+        data = request.POST
+        colaborador_id = data.get('colaborador_id')
+        colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
+
+        with transaction.atomic():
+            HistoricoProfissional.objects.create(
+                colaborador=colaborador,
+                data_evento=data.get('data_evento', timezone.now().date()),
+                tipo_evento=data.get('tipo_evento'),
+                cargo_anterior=data.get('cargo_anterior'),
+                cargo_novo=data.get('cargo_novo'),
+                salario_anterior=data.get('salario_anterior') or None,
+                salario_novo=data.get('salario_novo') or None,
+                observacoes=data.get('observacoes', '')
+            )
+
+            # Atualizar dados atuais do colaborador se necessário
+            save_colab = False
+            if data.get('cargo_novo'):
+                colaborador.cargo_atual = data.get('cargo_novo')
+                save_colab = True
+            if data.get('salario_novo'):
+                colaborador.salario_atual = data.get('salario_novo')
+                save_colab = True
+            
+            if save_colab:
+                colaborador.save()
+
+        return JsonResponse({'success': True, 'message': 'Histórico registrado com sucesso'})
+    except Exception as e:
+        logger.error(f"Erro ao salvar historico: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_performance(request):
+    """Registra um novo feedback/performance para o colaborador"""
+    try:
+        data = request.POST
+        colaborador_id = data.get('colaborador_id')
+        colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
+
+        PerformanceRH.objects.create(
+            colaborador=colaborador,
+            avaliador=request.user,
+            data_registro=data.get('data_registro', timezone.now().date()),
+            tipo=data.get('tipo'),
+            titulo=data.get('titulo'),
+            comentarios=data.get('comentarios'),
+            proximos_passos=data.get('proximos_passos', ''),
+            nota_quantitativa=data.get('nota') or None
+        )
+
+        return JsonResponse({'success': True, 'message': 'Feedback registrado com sucesso'})
+    except Exception as e:
+        logger.error(f"Erro ao salvar performance: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

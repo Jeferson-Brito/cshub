@@ -269,6 +269,8 @@ urlpatterns = [
     path('api/rh/colaboradores/', api_rh.api_colaboradores_list, name='api_rh_colaboradores_list'),
     path('api/rh/colaboradores/save/', api_rh.api_save_colaborador, name='api_rh_save_colaborador'),
     path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
+    path('api/rh/colaboradores/historico/save/', api_rh.api_save_historico, name='api_rh_save_historico'),
+    path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
     path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
 ]
 
