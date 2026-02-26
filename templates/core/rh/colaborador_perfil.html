@@ -258,4 +258,97 @@
         padding-left: 10px;
     }
 </style>
+
+<!-- Modais -->
+{% include 'core/rh/modais_colaborador.html' %}
+
+<script>
+    function editColaborador(id) {
+        fetch(`/api/rh/colaboradores/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const c = data.colaborador;
+                    const form = document.getElementById('formColaborador');
+                    form.querySelector('[name="id"]').value = c.id;
+                    form.querySelector('[name="nome_completo"]').value = c.nome_completo;
+                    form.querySelector('[name="cpf"]').value = c.cpf;
+                    form.querySelector('[name="rg"]').value = c.rg;
+                    form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
+                    form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
+                    form.querySelector('[name="department_id"]').value = c.department_id;
+                    form.querySelector('[name="cargo"]').value = c.cargo_atual;
+                    form.querySelector('[name="salario_atual"]').value = c.salario_atual;
+                    form.querySelector('[name="status"]').value = c.status;
+
+                    document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
+                    document.getElementById('modalTitle').innerText = 'Editar Colaborador';
+                    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+                }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const formColab = document.getElementById('formColaborador');
+        if (formColab) {
+            formColab.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                fetch('/api/rh/colaboradores/save/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro ao salvar: ' + data.error);
+                        }
+                    });
+            });
+        }
+    });
+
+    function saveHistorico() {
+        const form = document.getElementById('formHistorico');
+        const formData = new FormData(form);
+        formData.append('colaborador_id', '{{ colaborador.id }}');
+
+        fetch('/api/rh/colaboradores/historico/save/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            });
+    }
+
+    function savePerformance() {
+        const form = document.getElementById('formPerformance');
+        const formData = new FormData(form);
+        formData.append('colaborador_id', '{{ colaborador.id }}');
+
+        fetch('/api/rh/colaboradores/performance/save/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            });
+    }
+</script>
 {% endblock %}
