@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">Gestão de Colaboradores</h2>
+            <p class="text-muted small mb-0">Gerencie o ciclo de vida e performance do time RH</p>
+        </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal"
+            data-bs-target="#modalColaborador">
+            <i class="bi bi-person-plus-fill"></i>
+            Novo Colaborador
+        </button>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchColaborador" class="form-control border-start-0"
+                            placeholder="Buscar por nome ou CPF...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterDept" class="form-select">
+                        <option value="">Todos Departamentos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="filterStatus" class="form-select">
+                        <option value="ativo">Ativos</option>
+                        <option value="ferias">Em Férias</option>
+                        <option value="afastado">Afastados</option>
+                        <option value="desligado">Desligados</option>
+                        <option value="todos">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button class="btn btn-light" id="btnRefresh" title="Recarregar">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Colaboradores -->
+    <div class="row g-4" id="colaboradoresGrid">
+        <!-- Renderizado via JS -->
+    </div>
+</div>
+
+<!-- Modal Cadastro/Edição -->
+<div class="modal fade" id="modalColaborador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Cadastrar Colaborador</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form id="formColaborador" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" id="colaboradorId">
+
+                    <div class="row g-3">
+                        <div class="col-md-12 text-center mb-3">
+                            <div class="position-relative d-inline-block">
+                                <img id="previewFoto" src="{% static 'img/avatar_placeholder.png' %}"
+                                    class="rounded-circle border"
+                                    style="width: 120px; height: 120px; object-fit: cover;">
+                                <label for="inputFoto"
+                                    class="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle p-1">
+                                    <i class="bi bi-camera-fill"></i>
+                                </label>
+                                <input type="file" id="inputFoto" name="foto" class="d-none" accept="image/*">
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold border-bottom pb-2">Dados Pessoais</h6>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Nome Completo</label>
+                            <input type="text" name="nome_completo" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">CPF</label>
+                            <input type="text" name="cpf" class="form-control" placeholder="000.000.000-00" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Data de Nascimento</label>
+                            <input type="date" name="data_nascimento" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">RG</label>
+                            <input type="text" name="rg" class="form-control">
+                        </div>
+
+                        <h6 class="fw-bold border-bottom pb-2 mt-4">Dados Contratuais</h6>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Data de Admissão</label>
+                            <input type="date" name="data_admissao" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Departamento</label>
+                            <select name="department_id" id="formDept" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Cargo</label>
+                            <select name="cargo_id" id="formCargo" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Salário Atual</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-end-0 bg-light">R$</span>
+                                <input type="number" step="0.01" name="salario_atual" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tipo Contrato</label>
+                            <select name="tipo_contrato" id="formTipoContrato" class="form-select"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Status Inicial</label>
+                            <select name="status" id="formStatus" class="form-select"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Salvar Cadastro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .colaborador-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .colaborador-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-ativo {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-ferias {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-afastado {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-desligado {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const grid = document.getElementById('colaboradoresGrid');
+        const searchInput = document.getElementById('searchColaborador');
+        const filterDept = document.getElementById('filterDept');
+        const filterStatus = document.getElementById('filterStatus');
+        const form = document.getElementById('formColaborador');
+        const inputFoto = document.getElementById('inputFoto');
+        const previewFoto = document.getElementById('previewFoto');
+
+        // Carregar dados auxiliares
+        fetch('/api/rh/auxiliar/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Preencher selects
+                    data.departments.forEach(dept => {
+                        const opt = `<option value="${dept.id}">${dept.name}</option>`;
+                        filterDept.innerHTML += opt;
+                        document.getElementById('formDept').innerHTML += opt;
+                    });
+                    data.cargos.forEach(cargo => {
+                        document.getElementById('formCargo').innerHTML += `<option value="${cargo.id}">${cargo.nome}</option>`;
+                    });
+
+                    Object.entries(data.status_choices).forEach(([val, label]) => {
+                        document.getElementById('formStatus').innerHTML += `<option value="${val}">${label}</option>`;
+                    });
+                    Object.entries(data.tipo_contrato_choices).forEach(([val, label]) => {
+                        document.getElementById('formTipoContrato').innerHTML += `<option value="${val}">${label}</option>`;
+                    });
+                }
+            });
+
+        function loadColaboradores() {
+            const params = new URLSearchParams({
+                status: filterStatus.value,
+                department: filterDept.value
+            });
+
+            fetch(`/api/rh/colaboradores/?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderGrid(data.colaboradores);
+                    }
+                });
+        }
+
+        function renderGrid(colaboradores) {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filtered = colaboradores.filter(c =>
+                c.nome.toLowerCase().includes(searchTerm) ||
+                c.cargo.toLowerCase().includes(searchTerm)
+            );
+
+            grid.innerHTML = filtered.map(c => `
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="card colaborador-card shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="dropdown position-absolute top-0 end-0 m-2">
+                            <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/rh/colaboradores/${c.id}/">Ver Dossiê</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="editColaborador(${c.id})">Editar</a></li>
+                            </ul>
+                        </div>
+                        
+                        <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}" 
+                             class="rounded-circle mb-3 border p-1" 
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                        
+                        <h6 class="fw-bold mb-0">${c.nome}</h6>
+                        <p class="text-muted small mb-2">${c.cargo}</p>
+                        
+                        <div class="mb-3">
+                            <span class="status-badge badge-${c.status}">${c.status}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center bg-light rounded p-2 small">
+                            <div class="text-start">
+                                <span class="text-muted d-block" style="font-size: 0.65rem;">DEPARTAMENTO</span>
+                                <span class="fw-bold">${c.department}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-muted d-block" style="font-size: 0.65rem;">TEMPO</span>
+                                <span class="fw-bold text-primary">${c.tempo_empresa}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 p-0">
+                        <a href="/rh/colaboradores/${c.id}/" class="btn btn-light w-100 rounded-0 border-top py-2 small fw-bold">
+                            Ver Perfil Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum colaborador encontrado.</p></div>';
+            }
+        }
+
+        // Handlers
+        filterStatus.addEventListener('change', loadColaboradores);
+        filterDept.addEventListener('change', loadColaboradores);
+        searchInput.addEventListener('input', () => renderGrid(window.allColaboradores || []));
+        document.getElementById('btnRefresh').addEventListener('click', loadColaboradores);
+
+        inputFoto.addEventListener('change', function (e) {
+            if (e.target.files[0]) {
+                previewFoto.src = URL.createObjectURL(e.target.files[0]);
+            }
+        });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/api/rh/colaboradores/save/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('modalColaborador')).hide();
+                        loadColaboradores();
+                        form.reset();
+                        previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
+                    } else {
+                        alert('Erro: ' + data.error);
+                    }
+                });
+        });
+
+        // Initial Load
+        fetch('/api/rh/colaboradores/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.allColaboradores = data.colaboradores;
+                    renderGrid(data.colaboradores);
+                }
+            });
+    });
+
+    window.editColaborador = function (id) {
+        // Implementar busca de dados e abertura do modal
+        fetch(`/api/rh/colaboradores/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const c = data.colaborador;
+                    const form = document.getElementById('formColaborador');
+                    form.querySelector('[name="id"]').value = c.id;
+                    form.querySelector('[name="nome_completo"]').value = c.nome_completo;
+                    form.querySelector('[name="cpf"]').value = c.cpf;
+                    form.querySelector('[name="rg"]').value = c.rg;
+                    // Formatar datas YYYY-MM-DD para o input date
+                    form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
+                    form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
+                    form.querySelector('[name="department_id"]').value = c.department_id;
+                    form.querySelector('[name="cargo_id"]').value = c.cargo_id;
+                    form.querySelector('[name="salario_atual"]').value = c.salario_atual;
+                    form.querySelector('[name="status"]').value = c.status;
+
+                    document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
+                    document.getElementById('modalTitle').innerText = 'Editar Colaborador';
+                    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+                }
+            });
+    }
+</script>
+{% endblock %}

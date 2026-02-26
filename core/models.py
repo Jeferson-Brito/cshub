@@ -1997,3 +1997,153 @@ class AuditoriaAtendimento(models.Model):
     
     def __str__(self):
         return f"Auditoria #{self.id} - {self.analista_auditado.username} - {self.data_atendimento} (Nota: {self.nota})"
+
+
+# ==================================================
+# Modelos para Gestão de RH e Colaboradores
+# ==================================================
+
+class Cargo(models.Model):
+    """Modelo para representar cargos na empresa"""
+    nome = models.CharField(max_length=100)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='cargos')
+    salario_base = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    descricao = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Cargo"
+        verbose_name_plural = "Cargos"
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.department.name})"
+
+
+class Colaborador(models.Model):
+    """Modelo central do RH para gestão de informações do funcionário"""
+    STATUS_CHOICES = [
+        ('ativo', 'Ativo'),
+        ('ferias', 'Férias'),
+        ('afastado', 'Afastado'),
+        ('desligado', 'Desligado'),
+    ]
+    
+    TIPO_CONTRATO_CHOICES = [
+        ('clt', 'CLT'),
+        ('pj', 'PJ'),
+        ('estagio', 'Estágio'),
+        ('temporario', 'Temporário'),
+    ]
+
+    # Relacionamento opcional com User (caso o colaborador tenha acesso ao sistema)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='colaborador_perfil')
+    
+    # Dados Pessoais
+    nome_completo = models.CharField(max_length=255)
+    cpf = models.CharField(max_length=14, unique=True)
+    rg = models.CharField(max_length=20, blank=True)
+    data_nascimento = models.DateField()
+    endereco = models.TextField(blank=True)
+    telefone = models.CharField(max_length=20, blank=True)
+    email_pessoal = models.EmailField(blank=True)
+    foto = models.ImageField(upload_to='colaboradores_fotos/', null=True, blank=True)
+    
+    # Dados Contratuais
+    data_admissao = models.DateField()
+    data_desligamento = models.DateField(null=True, blank=True)
+    cargo_atual = models.ForeignKey(Cargo, on_delete=models.PROTECT, related_name='colaboradores')
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='colaboradores_rh')
+    salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
+    tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
+    jornada_trabalho = models.CharField(max_length=100, blank=True, help_text="Ex: 44h semanais, 10h às 19h")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Colaborador"
+        verbose_name_plural = "Colaboradores"
+        ordering = ['nome_completo']
+
+    @property
+    def tempo_empresa(self):
+        """Calcula o tempo de empresa em anos e meses"""
+        fim = self.data_desligamento or timezone.now().date()
+        delta = fim - self.data_admissao
+        anos = delta.days // 365
+        meses = (delta.days % 365) // 30
+        
+        if anos > 0:
+            return f"{anos} ano{'s' if anos > 1 else ''} e {meses} { 'mês' if meses == 1 else 'meses'}"
+        return f"{meses} { 'mês' if meses == 1 else 'meses'}"
+
+    def __str__(self):
+        return self.nome_completo
+
+
+class HistoricoProfissional(models.Model):
+    """Registro de evolução e mudanças na carreira do colaborador"""
+    TIPO_EVENTO_CHOICES = [
+        ('admissao', 'Admissão'),
+        ('promocao', 'Promoção'),
+        ('aumento_salarial', 'Alteração Salarial'),
+        ('mudanca_funcao', 'Mudança de Função'),
+        ('mudanca_departamento', 'Mudança de Departamento'),
+        ('desligamento', 'Desligamento'),
+    ]
+
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='historico')
+    data_evento = models.DateField(default=timezone.now)
+    tipo_evento = models.CharField(max_length=30, choices=TIPO_EVENTO_CHOICES)
+    
+    cargo_anterior = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='historico_anterior')
+    cargo_novo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, related_name='historico_novo')
+    
+    salario_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    salario_novo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    observacoes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Histórico Profissional"
+        verbose_name_plural = "Históricos Profissionais"
+        ordering = ['-data_evento']
+
+    def __str__(self):
+        return f"{self.colaborador.nome_completo} - {self.get_tipo_evento_display()} em {self.data_evento}"
+
+
+class PerformanceRH(models.Model):
+    """Avaliações de desempenho, feedbacks e PDI"""
+    TIPO_CHOICES = [
+        ('feedback', 'Feedback'),
+        ('pdi', 'Plano de Desenvolvimento (PDI)'),
+        ('treinamento', 'Treinamento Realizado'),
+        ('avaliacao_anual', 'Avaliação de Desempenho'),
+    ]
+
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='performance')
+    avaliador = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avaliacoes_feitas')
+    data_registro = models.DateField(default=timezone.now)
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
+    
+    titulo = models.CharField(max_length=200)
+    comentarios = models.TextField()
+    proximos_passos = models.TextField(blank=True, verbose_name="Plano de Ação / Próximos Passos")
+    
+    # Para avaliações quantitativas (NPS, Meta, Nota)
+    nota_quantitativa = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Registro de Performance"
+        verbose_name_plural = "Registros de Performance"
+        ordering = ['-data_registro']
+
+    def __str__(self):
+        return f"{self.colaborador.nome_completo} - {self.get_tipo_display()} ({self.data_registro})"

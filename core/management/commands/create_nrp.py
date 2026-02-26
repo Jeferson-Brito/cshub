@@ -2,14 +2,14 @@ from django.core.management.base import BaseCommand
 from core.models import Department
 
 class Command(BaseCommand):
-    help = 'Cria o departamento Concierge'
+    help = 'Cria o departamento NRP'
 
     def handle(self, *args, **options):
         dept, created = Department.objects.get_or_create(
-            slug='concierge',
+            slug='nrp',
             defaults={
-                'name': 'Concierge',
-                'description': 'Departamento de Concierge'
+                'name': 'NRP',
+                'description': 'Departamento de NRP'
             }
         )
         if created:

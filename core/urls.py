@@ -14,6 +14,7 @@ from . import api_kanban
 from . import api_store_verification
 from . import api_auditoria
 from . import api_chat_inactivity
+from . import api_rh
 from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
@@ -109,10 +110,8 @@ urlpatterns = [
         'page_name': 'Dashboard de Absenteísmo',
         'description': 'Indicadores automáticos de taxas de falta e rotatividade (turnover) baseados nos registros de escala e frequência.'
     }, name='rh_absenteismo'),
-    path('rh/dossie-colaborador/', views.under_development, {
-        'page_name': 'Dossiê do Colaborador',
-        'description': 'Centralização de documentos, histórico de feedbacks e evolução de desempenho de cada membro do time.'
-    }, name='rh_dossie_colaborador'),
+    path('rh/colaboradores/', views.rh_colaboradores_view, name='rh_colaboradores'),
+    path('rh/colaboradores/<int:pk>/', views.rh_colaborador_perfil_view, name='rh_colaborador_perfil'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
@@ -265,5 +264,11 @@ urlpatterns = [
     path('api/chat-inactivity/create/', api_chat_inactivity.api_chat_inactivity_create, name='api_chat_inactivity_create'),
     path('api/chat-inactivity/<pk>/delete/', api_chat_inactivity.api_chat_inactivity_delete, name='api_chat_inactivity_delete'),
     path('api/chat-inactivity/<pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
+
+    # API RH - Colaboradores
+    path('api/rh/colaboradores/', api_rh.api_colaboradores_list, name='api_rh_colaboradores_list'),
+    path('api/rh/colaboradores/save/', api_rh.api_save_colaborador, name='api_rh_save_colaborador'),
+    path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
+    path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
 ]
 

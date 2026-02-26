@@ -17,7 +17,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH
 from .forms import ComplaintForm, StoreForm
 
 
@@ -89,7 +89,7 @@ def change_department(request, dept_id):
     messages.success(request, f"Departamento alterado para: {dept.name}")
     
     # Redirecionar para a página principal de cada departamento
-    if dept.name == 'NRS Suporte' or dept.name == 'RH':
+    if dept.name == 'NRS Suporte' or dept.name == 'RH' or dept.name == 'NRP':
         return redirect('escala')
     elif dept.name == 'CS Clientes':
         return redirect('dashboard')
@@ -104,16 +104,16 @@ def dashboard(request):
     selected_dept_id = request.session.get('selected_department_id')
     
     if not request.user.is_administrador():
-        # Redirecionar usuários do NRS Suporte e RH para a escala (página operacional principal deles)
-        if request.user.department and request.user.department.name in ['NRS Suporte', 'RH']:
+        # Redirecionar usuários do NRS Suporte, RH e NRP para a escala
+        if request.user.department and request.user.department.name in ['NRS Suporte', 'RH', 'NRP']:
             return redirect('escala')
         queryset = Complaint.objects.filter(department=request.user.department)
     else:
-        # Se houver depto na sessão, verificar se é o NRS Suporte para redirecionar
+        # Se houver depto na sessão, verificar se é o NRS Suporte, RH ou NRP para redirecionar
         if selected_dept_id:
             from .models import Department
             current_dept = Department.objects.filter(id=selected_dept_id).first()
-            if current_dept and current_dept.name in ['NRS Suporte', 'RH']:
+            if current_dept and current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
                 return redirect('escala')
             queryset = Complaint.objects.filter(department_id=selected_dept_id)
         else:
@@ -2996,3 +2996,20 @@ def api_get_system_notifications(request):
         })
         
     return JsonResponse({'notifications': data})
+
+
+# ==================================================
+# Views do Módulo de RH - Colaboradores
+# ==================================================
+
+@login_required
+def rh_colaboradores_view(request):
+    """Página de listagem geral de colaboradores (Cards)"""
+    return render(request, 'core/rh/colaboradores.html')
+
+
+@login_required
+def rh_colaborador_perfil_view(request, pk):
+    """Página de perfil detalhado do colaborador (Dossiê)"""
+    colaborador = get_object_or_404(Colaborador, pk=pk)
+    return render(request, 'core/rh/colaborador_perfil.html', {'colaborador': colaborador})

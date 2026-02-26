@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb & Back -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{% url 'rh_colaboradores' %}"
+                    class="text-decoration-none">Colaboradores</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dossiê do Colaborador</li>
+        </ol>
+        <a href="{% url 'rh_colaboradores' %}" class="text-muted small text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Voltar para listagem
+        </a>
+    </nav>
+
+    <!-- Profile Header -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="bg-primary p-4 text-white" style="height: 120px;"></div>
+            <div class="px-4 pb-4" style="margin-top: -60px;">
+                <div class="d-flex align-items-end gap-4 flex-wrap">
+                    <div class="position-relative">
+                        <img src="{{ colaborador.foto.url|default:'/static/img/avatar_placeholder.png' }}"
+                            class="rounded-circle border border-4 border-white shadow"
+                            style="width: 140px; height: 140px; object-fit: cover; background: white;">
+                        <span
+                            class="position-absolute bottom-0 end-0 p-2 bg-success border border-white rounded-circle shadow-sm"
+                            title="Ativo" style="width: 20px; height: 20px;"></span>
+                    </div>
+                    <div class="mb-3 flex-grow-1">
+                        <h3 class="fw-bold mb-0 text-dark">{{ colaborador.nome_completo }}</h3>
+                        <p class="text-muted mb-0">
+                            <span class="fw-bold text-primary">{{ colaborador.cargo_atual.nome }}</span> •
+                            {{ colaborador.department.name }}
+                        </p>
+                    </div>
+                    <div class="mb-3 d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editColaborador({{ colaborador.id }})">
+                            <i class="bi bi-pencil-square"></i> Editar Dados
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                        data-bs-target="#modalHistorico">Registrar Promoção/Aumento</a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                        data-bs-target="#modalPerformance">Registrar Feedback/Performance</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Tabs -->
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Resumo Rápido -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-3">Informações de Contrato</h6>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">STATUS</label>
+                        <span class="badge bg-light text-success text-uppercase">{{ colaborador.get_status_display
+                            }}</span>
+                    </div>
+                    <div class="mb-3 border-bottom pb-2">
+                        <label class="text-muted small d-block">ADMISSÃO</label>
+                        <span class="fw-bold">{{ colaborador.data_admissao|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="mb-3 border-bottom pb-2">
+                        <label class="text-muted small d-block">TEMPO DE CASA</label>
+                        <span class="fw-bold text-primary">{{ colaborador.tempo_empresa }}</span>
+                    </div>
+                    <div class="mb-3 border-bottom pb-2">
+                        <label class="text-muted small d-block">SALÁRIO ATUAL</label>
+                        <span class="fw-bold">R$ {{ colaborador.salario_atual }}</span>
+                    </div>
+                    <div class="mb-0 text-center">
+                        <a href="#" class="text-primary small text-decoration-none fw-bold">Ver documentos anexos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-pills mb-3 gap-2" id="profileTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active rounded-pill px-4" id="carreira-tab" data-bs-toggle="pill"
+                        data-bs-target="#tab-carreira">Histórico de Carreira</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-4" id="performance-tab" data-bs-toggle="pill"
+                        data-bs-target="#tab-performance">Performance e PDI</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-4" id="pessoais-tab" data-bs-toggle="pill"
+                        data-bs-target="#tab-pessoais">Dados Pessoais</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Aba Carreira -->
+                <div class="tab-pane fade show active" id="tab-carreira">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h6 class="fw-bold mb-0">Linha do Tempo Profissional</h6>
+                                <button class="btn btn-sm btn-light text-primary" data-bs-toggle="modal"
+                                    data-bs-target="#modalHistorico">+ Registrar Evolução</button>
+                            </div>
+
+                            <div class="timeline-container">
+                                {% for h in colaborador.historico.all %}
+                                <div class="timeline-item d-flex gap-4 mb-4">
+                                    <div class="timeline-date text-end" style="min-width: 100px;">
+                                        <span class="small fw-bold text-muted">{{ h.data_evento|date:"d/m/Y" }}</span>
+                                    </div>
+                                    <div class="timeline-marker position-relative">
+                                        <div class="bg-primary rounded-circle"
+                                            style="width: 12px; height: 12px; z-index: 2;"></div>
+                                        <div class="bg-light position-absolute"
+                                            style="width: 2px; height: 100%; left: 5px; top: 0; z-index: 1;"></div>
+                                    </div>
+                                    <div class="timeline-content flex-grow-1">
+                                        <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
+                                            <h6 class="fw-bold mb-1">{{ h.get_tipo_evento_display }}</h6>
+                                            {% if h.cargo_novo %}
+                                            <p class="mb-1 small">De <strong>{{ h.cargo_anterior.nome|default:"-"
+                                                    }}</strong> para <strong>{{ h.cargo_novo.nome }}</strong></p>
+                                            {% endif %}
+                                            {% if h.salario_novo %}
+                                            <p class="mb-1 small text-success">Novo Salário: R$ {{ h.salario_novo }}</p>
+                                            {% endif %}
+                                            <p class="mb-0 text-muted italic small">{{ h.observacoes }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center py-4">
+                                    <p class="text-muted small">Nenhum histórico registrado além da admissão.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Performance -->
+                <div class="tab-pane fade" id="tab-performance">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h6 class="fw-bold mb-0">Desenvolvimento e Indicadores</h6>
+                                <button class="btn btn-sm btn-light text-primary" data-bs-toggle="modal"
+                                    data-bs-target="#modalPerformance">+ Registrar Feedback</button>
+                            </div>
+
+                            <div class="row g-3">
+                                {% for p in colaborador.performance.all %}
+                                <div class="col-md-12">
+                                    <div class="border rounded-3 p-3 mb-2">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-soft-primary text-primary text-uppercase"
+                                                style="font-size: 0.6rem;">{{ p.get_tipo_display }}</span>
+                                            <small class="text-muted">{{ p.data_registro|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <h6 class="fw-bold mb-1">{{ p.titulo }}</h6>
+                                        <p class="small text-dark mb-2">{{ p.comentarios }}</p>
+                                        {% if p.proximos_passos %}
+                                        <div class="bg-light p-2 rounded small">
+                                            <strong>Próximos Passos:</strong> {{ p.proximos_passos }}
+                                        </div>
+                                        {% endif %}
+                                        <div class="mt-2 text-end small">
+                                            <span class="text-muted">Avaliador: {{
+                                                p.avaliador.get_full_name|default:p.avaliador.username }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12 text-center py-5">
+                                    <i class="bi bi-journal-check fs-1 text-light"></i>
+                                    <p class="text-muted mt-2">Nenhum feedback ou plano registrado.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba Pessoais -->
+                <div class="tab-pane fade" id="tab-pessoais">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-4">Dados de Identificação</h6>
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">CPF</label>
+                                    <span class="fw-bold">{{ colaborador.cpf }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">RG</label>
+                                    <span class="fw-bold">{{ colaborador.rg|default:"Não informado" }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">NASCIMENTO</label>
+                                    <span class="fw-bold">{{ colaborador.data_nascimento|date:"d/m/Y" }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">TELEFONE</label>
+                                    <span class="fw-bold">{{ colaborador.telefone|default:"Não informado" }}</span>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="text-muted small d-block">EMAIL PESSOAL</label>
+                                    <span class="fw-bold">{{ colaborador.email_pessoal|default:"Não informado" }}</span>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="text-muted small d-block">ENDEREÇO</label>
+                                    <span class="fw-bold">{{ colaborador.endereco|default:"Não informado" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-soft-primary {
+        background: rgba(var(--bs-primary-rgb), 0.1);
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: var(--bs-primary);
+        font-weight: bold;
+    }
+
+    .nav-pills .nav-link {
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+        background: white;
+    }
+
+    .timeline-container {
+        position: relative;
+        padding-left: 10px;
+    }
+</style>
+{% endblock %}
