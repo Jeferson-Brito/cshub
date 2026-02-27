@@ -2415,43 +2415,56 @@ def verificacao_lojas(request):
         has_audit=Exists(has_audit)
     ).order_by('code')
 
-    # 2. Status Calculation (Aggregate counts in a single query)
-    # OTIMIZAÇÃO: Calcular todos os contadores principais em menos queries e respeitando o escopo se necessário
-    # Para o dashboard global, mantemos a contagem total, mas para a visão do analista, os números devem refletir suas lojas.
+    # 2. Status Calculation with Caching
+    from django.core.cache import cache
     
-    base_stats_query = Store.objects.filter(active=True)
-    if scope == 'my_stores':
-        base_stats_query = base_stats_query.filter(id__in=my_ids)
+    # Cache key depends on scope and user
+    cache_key = f'auditoria_stats_{scope}_{request.user.id}'
+    cached_stats = cache.get(cache_key)
+    
+    if cached_stats:
+        total_active = cached_stats['total_active']
+        irregular_count = cached_stats['irregular_count']
+        ok_count = cached_stats['ok_count']
+        suspended_count = cached_stats['suspended_count']
+        irregular_store_ids = cached_stats['irregular_store_ids']
+    else:
+        # Calculate stats if not cached
+        base_stats_query = Store.objects.filter(active=True)
+        if scope == 'my_stores' and request.user.is_authenticated:
+            base_stats_query = base_stats_query.filter(id__in=my_ids)
 
-    stats = base_stats_query.aggregate(
-        total_active=Count('id'),
-    )
-    
-    total_active = stats['total_active']
-    
-    # Lojas irregulares (com pendência aberta)
-    irregular_qs = StoreAuditIssue.objects.filter(status='aberta')
-    if scope == 'my_stores' and request.user.is_authenticated:
-        irregular_qs = irregular_qs.filter(store_id__in=my_ids)
-    
-    irregular_store_ids = set(irregular_qs.values_list('store_id', flat=True).distinct())
-    irregular_count = len(irregular_store_ids)
+        total_active = base_stats_query.count()
+        
+        # Lojas irregulares (com pendência aberta)
+        irregular_qs = StoreAuditIssue.objects.filter(status='aberta')
+        if scope == 'my_stores' and request.user.is_authenticated:
+            irregular_qs = irregular_qs.filter(store_id__in=my_ids)
+        
+        irregular_store_ids = set(irregular_qs.values_list('store_id', flat=True).distinct())
+        irregular_count = len(irregular_store_ids)
 
-    # Lojas verificadas este mês (Conforme): Auditoria existe AND sem pendência aberta
-    # OTIMIZAÇÃO: Usar count() direto com os filtros necessários
-    verified_count = base_stats_query.annotate(
-        _has_issue=Exists(StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')),
-        _has_audit=Exists(StoreAudit.objects.filter(store=OuterRef('pk')))
-    ).filter(_has_audit=True, _has_issue=False).count()
-    
-    ok_count = verified_count
+        # Lojas verificadas este mês (Conforme)
+        ok_count = base_stats_query.annotate(
+            _has_issue=Exists(StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')),
+            _has_audit=Exists(StoreAudit.objects.filter(store=OuterRef('pk')))
+        ).filter(_has_audit=True, _has_issue=False).count()
+        
+        # Contagem de suspensos
+        suspended_query = Store.objects.filter(active=False)
+        if scope == 'my_stores' and request.user.is_authenticated:
+             suspended_query = suspended_query.filter(id__in=my_ids)
+        suspended_count = suspended_query.count()
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, {
+            'total_active': total_active,
+            'irregular_count': irregular_count,
+            'ok_count': ok_count,
+            'suspended_count': suspended_count,
+            'irregular_store_ids': irregular_store_ids
+        }, 300)
 
-    # Contagem de suspensos (Sempre global ou por escopo)
-    suspended_query = Store.objects.filter(active=False)
-    if scope == 'my_stores' and request.user.is_authenticated:
-         suspended_query = suspended_query.filter(id__in=my_ids)
-    suspended_count = suspended_query.count()
-    
     # 3. Apply Filters
     if search_query:
         stores_queryset = stores_queryset.filter(
@@ -2468,11 +2481,17 @@ def verificacao_lojas(request):
     else:
         stores_queryset = stores_queryset.filter(active=True)
 
-    # Scope Filter already applied to base queries if needed
+    # Scope Filter
     if scope == 'my_stores' and request.user.is_authenticated:
         stores_queryset = stores_queryset.filter(id__in=my_ids)
 
-    # 4. Pagination
+    # 4. Pagination & Data Loading
+    history = []
+    stores = []
+    pending_issues = []
+    pending_issues_page = None
+    pending_issues_count = 0
+
     if tab == 'history':
         history_qs = StoreAudit.objects.select_related('store', 'analyst').order_by('-created_at')
         if scope == 'my_stores' and request.user.is_authenticated:
@@ -2480,23 +2499,30 @@ def verificacao_lojas(request):
         
         paginator = Paginator(history_qs, 50)
         page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        history = page_obj
-        stores = [] # Empty stores list for history tab
+        history = paginator.get_page(page_number)
+    elif tab == 'management':
+        # Management tab data is largely handled by API calls in the template
+        pass
+    elif tab == 'irregular' and request.user.role in ['gestor', 'administrador']:
+        # Fetch pending issues ONLY when on irregular tab or if needed for dashboard
+        pending_issues_queryset = StoreAuditIssue.objects.filter(
+            status='aberta'
+        ).select_related('store').order_by('-created_at')
+        
+        pending_paginator = Paginator(pending_issues_queryset, 25)
+        pending_page_number = request.GET.get('pending_page', 1)
+        pending_issues_page = pending_paginator.get_page(pending_page_number)
+        pending_issues = pending_issues_page.object_list
+        pending_issues_count = pending_paginator.count
     else:
+        # Store listing tabs
         paginator = Paginator(stores_queryset, 25)
         page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        history = []
-        stores = page_obj
+        stores = paginator.get_page(page_number)
     
-    # 5. Eager Load Latest Audits for CURRENT PAGE only (if in stores tab)
-    page_store_ids = [store.id for store in stores]
-    monthly_counts_map = {}
-    latest_audits = {}
-
+    # 5. Eager Load Latest Audits for CURRENT PAGE only
     if stores:
-        # Calculate Monthly Counts
+        page_store_ids = [store.id for store in stores]
         from django.utils import timezone
         now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -2509,6 +2535,7 @@ def verificacao_lojas(request):
         monthly_counts_map = {item['store_id']: item['count'] for item in monthly_counts}
         
         # Fetch latest audits (optimized)
+        latest_audits = {}
         audits_qs = StoreAudit.objects.filter(
             store_id__in=page_store_ids
         ).select_related('analyst').order_by('store', '-created_at')
@@ -2517,7 +2544,6 @@ def verificacao_lojas(request):
             if audit.store_id not in latest_audits:
                 latest_audits[audit.store_id] = audit
         
-        # Attach data and Determine UI Status
         for store in stores:
             store.latest_audit = latest_audits.get(store.id)
             store.audits_this_month_count = monthly_counts_map.get(store.id, 0)
@@ -2531,22 +2557,37 @@ def verificacao_lojas(request):
             else:
                 store.ui_status = 'pending'
 
-    # 6. Dashboard Counters (Pending Issues)
-    pending_issues = []
-    pending_issues_page = None
-    pending_issues_count = 0
+    # 6. Weekly Metrics for new Dashboard Cards
+    from datetime import timedelta
+    start_of_week = now - timedelta(days=now.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
     
-    if request.user.role in ['gestor', 'administrador']:
-        # Optimized with select_related
-        pending_issues_queryset = StoreAuditIssue.objects.filter(
-            status='aberta'
-        ).select_related('store').order_by('-created_at')
-        
-        pending_paginator = Paginator(pending_issues_queryset, 25)
-        pending_page_number = request.GET.get('pending_page', 1)
-        pending_issues_page = pending_paginator.get_page(pending_page_number)
-        pending_issues = pending_issues_page.object_list
-        pending_issues_count = pending_paginator.count
+    weekly_audits_count = StoreAudit.objects.filter(created_at__gte=start_of_week)
+    if scope == 'my_stores' and request.user.is_authenticated:
+        weekly_audits_count = weekly_audits_count.filter(analyst=request.user)
+    weekly_audits_count = weekly_audits_count.count()
+    
+    # Weekly Irregularities (items marked as non-compliant this week)
+    weekly_irregularities = StoreAuditItem.objects.filter(
+        audit__created_at__gte=start_of_week,
+        is_compliant=False
+    )
+    if scope == 'my_stores' and request.user.is_authenticated:
+        weekly_irregularities = weekly_irregularities.filter(audit__analyst=request.user)
+    weekly_irregularities_count = weekly_irregularities.count()
+    
+    # Weekly Compliance Rate
+    weekly_total_items = StoreAuditItem.objects.filter(
+        audit__created_at__gte=start_of_week
+    )
+    if scope == 'my_stores' and request.user.is_authenticated:
+        weekly_total_items = weekly_total_items.filter(audit__analyst=request.user)
+    
+    weekly_total_items_count = weekly_total_items.count()
+    compliance_rate = 100
+    if weekly_total_items_count > 0:
+        compliant_items_count = weekly_total_items.filter(is_compliant=True).count()
+        compliance_rate = (compliant_items_count / weekly_total_items_count) * 100
 
     context = {
         'title': 'Auditoria de Lojas',
@@ -2555,7 +2596,7 @@ def verificacao_lojas(request):
         'total_stores': total_active,
         'scope': scope,
         'tab': tab,
-        'verified_count': verified_count,
+        'verified_count': ok_count,
         'ok_count': ok_count,
         'irregular_count': irregular_count,
         'suspended_count': suspended_count,
@@ -2565,6 +2606,10 @@ def verificacao_lojas(request):
         'play_sound': request.session.pop('play_irregularity_sound', False),
         'search_query': search_query,
         'pending_issues_count': pending_issues_count,
+        # New Metrics
+        'weekly_audits_count': weekly_audits_count,
+        'weekly_irregularities_count': weekly_irregularities_count,
+        'compliance_rate': round(compliance_rate, 1),
     }
     return render(request, 'core/verificacao_lojas.html', context)
 

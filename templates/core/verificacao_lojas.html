@@ -101,48 +101,8 @@
     <!-- Tab Navigation Menu -->
     <!-- Stat Cards Navigation -->
     <div class="nav-pills-stats mb-4">
-        {% if tab == 'management' %}
-        <!-- Gestão/Metas Tab - Active in Management sub-menu -->
-        <a class="nav-link-stat stat-cyan active" href="?tab=management{% if scope %}&scope={{ scope }}{% endif %}">
-            <div class="d-flex justify-content-between w-100">
-                <div class="stat-icon">
-                    {% if user.is_gestor or user.is_administrador %}
-                    <i class="bi bi-people"></i>
-                    {% else %}
-                    <i class="bi bi-trophy"></i>
-                    {% endif %}
-                </div>
-            </div>
-            <div>
-                <div class="stat-title">
-                    {% if user.is_gestor or user.is_administrador %}
-                    Gestão de Analistas
-                    {% else %}
-                    Minhas Metas
-                    {% endif %}
-                </div>
-                <div class="stat-value" style="font-size: 1rem; opacity: 0.9;">
-                    <i class="bi bi-arrow-right-circle"></i> Acessar
-                </div>
-            </div>
-        </a>
-        {% elif tab == 'history' %}
-        <!-- History Tab - Active in History sub-menu -->
-        <a class="nav-link-stat stat-blue active" href="?tab=history{% if scope %}&scope={{ scope }}{% endif %}">
-            <div class="d-flex justify-content-between w-100">
-                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-            </div>
-            <div>
-                <div class="stat-title">Histórico de Auditorias</div>
-                <div class="stat-value" style="font-size: 1rem; opacity: 0.9;">
-                    <i class="bi bi-list-ul"></i> Visualizar Registros
-                </div>
-            </div>
-        </a>
-        {% else %}
-        <!-- Lojas Tab Cards (Subaba 1) -->
-        <!-- Active Stores Tab -->
-        <a class="nav-link-stat stat-blue {% if not tab or tab == 'all' or tab == 'lojas' %}active{% endif %}"
+        <!-- Lojas Ativas -->
+        <a class="nav-link-stat stat-blue {% if not tab or tab == 'lojas' %}active{% endif %}"
             href="?tab=lojas{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
                 <div class="stat-icon"><i class="bi bi-shop"></i></div>
@@ -153,31 +113,44 @@
             </div>
         </a>
 
-        <!-- Irregular Tab -->
-        <a class="nav-link-stat stat-orange {% if tab == 'irregular' %}active{% endif %}"
-            href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}">
+        <!-- Auditorias esta Semana -->
+        <div class="nav-link-stat stat-cyan">
             <div class="d-flex justify-content-between w-100">
-                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+                <span class="badge bg-white bg-opacity-25 rounded-pill small">Semana</span>
             </div>
             <div>
-                <div class="stat-title">Pendentes</div>
-                <div class="stat-value">{{ irregular_count }}</div>
+                <div class="stat-title">Auditorias / Semana</div>
+                <div class="stat-value">{{ weekly_audits_count }}</div>
             </div>
-        </a>
+        </div>
 
-        <!-- Verified Tab -->
-        <a class="nav-link-stat stat-green {% if tab == 'verified' %}active{% endif %}"
-            href="?tab=verified{% if scope %}&scope={{ scope }}{% endif %}">
+        <!-- Irregularidades esta Semana -->
+        <div class="nav-link-stat stat-orange">
             <div class="d-flex justify-content-between w-100">
-                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
             </div>
             <div>
-                <div class="stat-title">Resolvidas</div>
-                <div class="stat-value">{{ ok_count }}</div>
+                <div class="stat-title">Irregularidades / Semana</div>
+                <div class="stat-value">{{ weekly_irregularities_count }}</div>
             </div>
-        </a>
+        </div>
 
-        <!-- Suspended Tab -->
+        <!-- Taxa de Conformidade -->
+        <div class="nav-link-stat stat-green">
+            <div class="d-flex justify-content-between w-100">
+                <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+                <div class="stat-value" style="font-size: 1.2rem;">{{ compliance_rate }}%</div>
+            </div>
+            <div>
+                <div class="stat-title">Taxa de Conformidade</div>
+                <div class="progress mt-2" style="height: 6px; background: rgba(255,255,255,0.2);">
+                    <div class="progress-bar bg-white" role="progressbar" style="width: {{ compliance_rate }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lojas Suspensas (Opcional: Apenas se quiser manter um contador de inativas) -->
         <a class="nav-link-stat stat-gray {% if tab == 'suspended' %}active{% endif %}"
             href="?tab=suspended{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
@@ -188,7 +161,6 @@
                 <div class="stat-value">{{ suspended_count|default:0 }}</div>
             </div>
         </a>
-        {% endif %}
     </div>
 
     <!-- Tab Content -->
