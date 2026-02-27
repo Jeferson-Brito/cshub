@@ -288,26 +288,78 @@
 {% include 'core/rh/modais_colaborador.html' %}
 
 <script>
-    // Carregar dados auxiliares
-    fetch('/api/rh/auxiliar/')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                const selectDept = document.getElementById('formDept');
-                const selectStatus = document.getElementById('formStatus');
-                const selectTipo = document.getElementById('formTipoContrato');
+    document.addEventListener('DOMContentLoaded', function () {
+        // Carregar dados auxiliares
+        fetch('/api/rh/auxiliar/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const selectDept = document.getElementById('formDept');
+                    const selectStatus = document.getElementById('formStatus');
+                    const selectTipo = document.getElementById('formTipoContrato');
 
-                if (selectDept) {
-                    selectDept.innerHTML = data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+                    if (selectDept) {
+                        selectDept.innerHTML = data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+                    }
+                    if (selectStatus) {
+                        selectStatus.innerHTML = Object.entries(data.status_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                    }
+                    if (selectTipo) {
+                        selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                    }
                 }
-                if (selectStatus) {
-                    selectStatus.innerHTML = Object.entries(data.status_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-                }
-                if (selectTipo) {
-                    selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-                }
+            });
+
+        // Event delegation para botões de edição de histórico (para garantir que funcione se re-renderizado via JS no futuro)
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-edit-hist');
+            if (btn) {
+                const d = btn.dataset;
+                const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+                const form = document.getElementById('formHistorico');
+                form.reset();
+
+                form.querySelector('[name="id"]').value = d.id;
+                form.querySelector('[name="data_evento"]').value = d.data;
+                form.querySelector('[name="tipo_evento"]').value = d.tipo;
+                form.querySelector('[name="cargo_anterior"]').value = d.cargoAnt;
+                form.querySelector('[name="cargo_novo"]').value = d.cargoNov;
+                form.querySelector('[name="salario_anterior"]').value = d.salAnt.replace(',', '.');
+                form.querySelector('[name="salario_novo"]').value = d.salNov.replace(',', '.');
+                form.querySelector('[name="observacoes"]').value = d.obs;
+
+                modal.show();
             }
         });
+
+        const btnSalvar = document.getElementById('btnSalvarColaborador');
+        const formColab = document.getElementById('formColaborador');
+
+        if (btnSalvar && formColab) {
+            btnSalvar.addEventListener('click', function () {
+                if (!formColab.reportValidity()) return;
+                const salarioInput = formColab.querySelector('[name="salario_atual"]');
+                if (salarioInput && salarioInput.value) {
+                    salarioInput.value = salarioInput.value.replace(',', '.');
+                }
+                const formData = new FormData(formColab);
+                fetch('/api/rh/colaboradores/save/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) location.reload();
+                        else alert('Erro ao salvar: ' + data.error);
+                    })
+                    .catch(err => {
+                        console.error('Erro:', err);
+                        alert('Erro de conexão ao salvar.');
+                    });
+            });
+        }
+    });
 
     function openCreateModal() {
         const modal = new bootstrap.Modal(document.getElementById('modalColaborador'));
@@ -331,8 +383,8 @@
                     form.querySelector('[name="cpf"]').value = c.cpf;
                     form.querySelector('[name="rg"]').value = c.rg;
 
-                    form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
-                    form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
+                    if (c.data_nascimento) form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
+                    if (c.data_admissao) form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
 
                     const selectDept = form.querySelector('[name="department_id"]');
                     if (selectDept) selectDept.value = c.department_id;
@@ -341,7 +393,7 @@
                     document.getElementById('divCargoInicial').style.display = 'none';
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
                     form.querySelector('[name="status"]').value = c.status;
-                    form.querySelector('[name="tipo_contrato"]').value = c.tipo_contrato;
+                    if (form.querySelector('[name="tipo_contrato"]')) form.querySelector('[name="tipo_contrato"]').value = c.tipo_contrato;
                     form.querySelector('[name="telefone"]').value = c.telefone;
                     form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
                     form.querySelector('[name="endereco"]').value = c.endereco;
@@ -352,26 +404,6 @@
                 }
             });
     }
-
-    document.querySelectorAll('.btn-edit-hist').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const d = this.dataset;
-            const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
-            const form = document.getElementById('formHistorico');
-            form.reset();
-
-            form.querySelector('[name="id"]').value = d.id;
-            form.querySelector('[name="data_evento"]').value = d.data;
-            form.querySelector('[name="tipo_evento"]').value = d.tipo;
-            form.querySelector('[name="cargo_anterior"]').value = d.cargoAnt;
-            form.querySelector('[name="cargo_novo"]').value = d.cargoNov;
-            form.querySelector('[name="salario_anterior"]').value = d.salAnt.replace(',', '.');
-            form.querySelector('[name="salario_novo"]').value = d.salNov.replace(',', '.');
-            form.querySelector('[name="observacoes"]').value = d.obs;
-
-            modal.show();
-        });
-    });
 
     function deleteHistorico(id) {
         if (confirm('Deseja realmente excluir este registro?')) {
@@ -395,19 +427,18 @@
             })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        window.location.href = '/rh/colaboradores/';
-                    } else {
-                        alert('Erro ao excluir: ' + data.error);
-                    }
+                    if (data.success) window.location.href = '/rh/colaboradores/';
+                    else alert('Erro ao excluir: ' + data.error);
                 });
         }
     }
 
     function openModalDocumentos() {
-        const modal = new bootstrap.Modal(document.getElementById('modalDocumentos'));
-        loadDocumentos();
-        modal.show();
+        const modalElement = document.getElementById('modalDocumentos');
+        if (modalElement) {
+            new bootstrap.Modal(modalElement).show();
+            loadDocumentos();
+        }
     }
 
     function loadDocumentos() {
@@ -416,6 +447,7 @@
             .then(data => {
                 if (data.success) {
                     const lista = document.getElementById('listaDocumentos');
+                    if (!lista) return;
                     lista.innerHTML = '';
                     data.colaborador.documentos.forEach(doc => {
                         lista.innerHTML += `
@@ -459,64 +491,22 @@
 
     function deleteDocumento(id) {
         if (!confirm('Tem certeza que deseja remover este documento?')) return;
-
         fetch(`/api/rh/colaboradores/documentos/${id}/delete/`, {
             method: 'POST',
             headers: { 'X-CSRFToken': '{{ csrf_token }}' }
         })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    loadDocumentos();
-                }
+                if (data.success) loadDocumentos();
             });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const btnSalvar = document.getElementById('btnSalvarColaborador');
-        const formColab = document.getElementById('formColaborador');
-
-        if (btnSalvar && formColab) {
-            btnSalvar.addEventListener('click', function () {
-                // Forçar verificação de validade do HTML5
-                if (!formColab.reportValidity()) return;
-
-                // Pré-processar campos numéricos
-                const salarioInput = formColab.querySelector('[name="salario_atual"]');
-                if (salarioInput.value) {
-                    salarioInput.value = salarioInput.value.replace(',', '.');
-                }
-
-                const formData = new FormData(formColab);
-                fetch('/api/rh/colaboradores/save/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert('Erro ao salvar: ' + data.error);
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Erro:', err);
-                        alert('Erro de conexão ao salvar.');
-                    });
-            });
-        }
-    });
-
     function saveHistorico() {
         const form = document.getElementById('formHistorico');
-
-        // Pré-processar salário se houver
-        const salInput = form.querySelector('[name="salario_novo"]');
-        if (salInput && salInput.value) {
-            salInput.value = salInput.value.replace(',', '.');
-        }
+        const salNovoInput = form.querySelector('[name="salario_novo"]');
+        if (salNovoInput && salNovoInput.value) salNovoInput.value = salNovoInput.value.replace(',', '.');
+        const salAntInput = form.querySelector('[name="salario_anterior"]');
+        if (salAntInput && salAntInput.value) salAntInput.value = salAntInput.value.replace(',', '.');
 
         const formData = new FormData(form);
         formData.append('colaborador_id', '{{ colaborador.id }}');
@@ -528,11 +518,8 @@
         })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Erro: ' + data.error);
-                }
+                if (data.success) location.reload();
+                else alert('Erro: ' + data.error);
             });
     }
 
@@ -540,7 +527,6 @@
         const form = document.getElementById('formPerformance');
         const formData = new FormData(form);
         formData.append('colaborador_id', '{{ colaborador.id }}');
-
         fetch('/api/rh/colaboradores/performance/save/', {
             method: 'POST',
             body: formData,
@@ -548,11 +534,8 @@
         })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Erro: ' + data.error);
-                }
+                if (data.success) location.reload();
+                else alert('Erro: ' + data.error);
             });
     }
 </script>
