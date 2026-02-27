@@ -2395,7 +2395,9 @@ def verificacao_lojas(request):
     from .models import Store, StoreAudit, StoreAuditIssue
 
     # 1. Base QuerySet and status annotations (Prevents N+1)
-    tab = request.GET.get('tab', 'all')
+    tab = request.GET.get('tab', 'lojas')
+    if tab == 'all':
+        tab = 'lojas'
     scope = request.GET.get('scope', 'all')
     search_query = request.GET.get('q', '')
     
@@ -2471,48 +2473,63 @@ def verificacao_lojas(request):
         stores_queryset = stores_queryset.filter(id__in=my_ids)
 
     # 4. Pagination
-    paginator = Paginator(stores_queryset, 25)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # 5. Eager Load Latest Audits for CURRENT PAGE only
-    page_store_ids = [store.id for store in page_obj]
-    
-    # Calculate Monthly Counts
-    from django.utils import timezone
-    now = timezone.now()
-    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    monthly_counts = StoreAudit.objects.filter(
-        store_id__in=page_store_ids,
-        created_at__gte=start_of_month
-    ).values('store_id').annotate(count=Count('id'))
-    
-    monthly_counts_map = {item['store_id']: item['count'] for item in monthly_counts}
-    
-    # Fetch latest audits (optimized)
-    audits_qs = StoreAudit.objects.filter(
-        store_id__in=page_store_ids
-    ).select_related('analyst').order_by('store', '-created_at')
-    
-    latest_audits = {}
-    for audit in audits_qs:
-        if audit.store_id not in latest_audits:
-            latest_audits[audit.store_id] = audit
-    
-    # Attach data and Determine UI Status
-    for store in page_obj:
-        store.latest_audit = latest_audits.get(store.id)
-        store.audits_this_month_count = monthly_counts_map.get(store.id, 0)
+    if tab == 'history':
+        history_qs = StoreAudit.objects.select_related('store', 'analyst').order_by('-created_at')
+        if scope == 'my_stores' and request.user.is_authenticated:
+            history_qs = history_qs.filter(analyst=request.user)
         
-        if not store.active:
-            store.ui_status = 'suspended'
-        elif store.has_open_issue:
-            store.ui_status = 'irregular'
-        elif store.has_audit:
-            store.ui_status = 'compliant'
-        else:
-            store.ui_status = 'pending'
+        paginator = Paginator(history_qs, 50)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        history = page_obj
+        stores = [] # Empty stores list for history tab
+    else:
+        paginator = Paginator(stores_queryset, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        history = []
+        stores = page_obj
+    
+    # 5. Eager Load Latest Audits for CURRENT PAGE only (if in stores tab)
+    page_store_ids = [store.id for store in stores]
+    monthly_counts_map = {}
+    latest_audits = {}
+
+    if stores:
+        # Calculate Monthly Counts
+        from django.utils import timezone
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        monthly_counts = StoreAudit.objects.filter(
+            store_id__in=page_store_ids,
+            created_at__gte=start_of_month
+        ).values('store_id').annotate(count=Count('id'))
+        
+        monthly_counts_map = {item['store_id']: item['count'] for item in monthly_counts}
+        
+        # Fetch latest audits (optimized)
+        audits_qs = StoreAudit.objects.filter(
+            store_id__in=page_store_ids
+        ).select_related('analyst').order_by('store', '-created_at')
+        
+        for audit in audits_qs:
+            if audit.store_id not in latest_audits:
+                latest_audits[audit.store_id] = audit
+        
+        # Attach data and Determine UI Status
+        for store in stores:
+            store.latest_audit = latest_audits.get(store.id)
+            store.audits_this_month_count = monthly_counts_map.get(store.id, 0)
+            
+            if not store.active:
+                store.ui_status = 'suspended'
+            elif store.has_open_issue:
+                store.ui_status = 'irregular'
+            elif store.has_audit:
+                store.ui_status = 'compliant'
+            else:
+                store.ui_status = 'pending'
 
     # 6. Dashboard Counters (Pending Issues)
     pending_issues = []
@@ -2532,8 +2549,9 @@ def verificacao_lojas(request):
         pending_issues_count = pending_paginator.count
 
     context = {
-        'title': 'Verificação de Lojas',
-        'stores': page_obj,
+        'title': 'Auditoria de Lojas',
+        'stores': stores,
+        'history': history,
         'total_stores': total_active,
         'scope': scope,
         'tab': tab,

@@ -234,11 +234,44 @@
                 <i class="bi bi-list-check"></i>
                 <span class="link-text">Tarefas</span>
             </a>
-            <a href="{% url 'verificacao_lojas' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'verificacao_lojas' %}active{% endif %}">
+            <a href="#auditoriaLojasSubmenu"
+                class="nav-link dropdown-toggle-custom {% if 'verificacao_lojas' in request.resolver_match.url_name %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if 'verificacao_lojas' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                aria-controls="auditoriaLojasSubmenu">
                 <i class="bi bi-shield-check"></i>
-                <span class="link-text">Verificação de Lojas</span>
+                <span class="link-text">Auditoria de Lojas</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container {% if 'verificacao_lojas' in request.resolver_match.url_name %}show{% endif %}"
+                id="auditoriaLojasSubmenu">
+                <div class="nav-submenu">
+                    <a href="{% url 'verificacao_lojas' %}?tab=lojas"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'verificacao_lojas' and request.GET.tab == 'lojas' or request.resolver_match.url_name == 'verificacao_lojas' and not request.GET.tab %}active{% endif %}"
+                        title="Lojas">
+                        <i class="bi bi-shop"></i>
+                        <span class="link-text">Lojas</span>
+                    </a>
+                    <a href="{% url 'verificacao_lojas' %}?tab=management"
+                        class="nav-link sub-link {% if request.GET.tab == 'management' %}active{% endif %}"
+                        title="Gestão de Analistas">
+                        <i class="bi bi-people"></i>
+                        <span class="link-text">
+                            {% if user.is_gestor or user.is_administrador %}
+                            Gestão de Analistas
+                            {% else %}
+                            Minhas Metas
+                            {% endif %}
+                        </span>
+                    </a>
+                    <a href="{% url 'verificacao_lojas' %}?tab=history"
+                        class="nav-link sub-link {% if request.GET.tab == 'history' %}active{% endif %}"
+                        title="Histórico de Auditorias">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="link-text">Histórico de Auditorias</span>
+                    </a>
+                </div>
+            </div>
 
 
             <div class="nav-group-title">Informação</div>
@@ -612,7 +645,8 @@
             const submenuConfigs = [
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') },
-                { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') }
+                { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') },
+                { toggle: document.querySelector('a[href="#auditoriaLojasSubmenu"]'), submenu: document.getElementById('auditoriaLojasSubmenu') }
             ];
 
             submenuConfigs.forEach(config => {
@@ -663,7 +697,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
+        const currentUserId = {% if user.id %}{ { user.id | unlocalize } } {% else %} 0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
