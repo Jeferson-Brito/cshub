@@ -2521,10 +2521,11 @@ def verificacao_lojas(request):
         stores = paginator.get_page(page_number)
     
     # 5. Eager Load Latest Audits for CURRENT PAGE only
+    from django.utils import timezone
+    now = timezone.now()
+    
     if stores:
         page_store_ids = [store.id for store in stores]
-        from django.utils import timezone
-        now = timezone.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         monthly_counts = StoreAudit.objects.filter(

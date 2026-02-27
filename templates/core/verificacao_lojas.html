@@ -125,16 +125,17 @@
             </div>
         </div>
 
-        <!-- Irregularidades esta Semana -->
-        <div class="nav-link-stat stat-orange">
+        <!-- Lojas com Irregularidades -->
+        <a class="nav-link-stat stat-orange {% if tab == 'irregular' %}active{% endif %}"
+            href="?tab=irregular{% if scope %}&scope={{ scope }}{% endif %}">
             <div class="d-flex justify-content-between w-100">
                 <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
             </div>
             <div>
-                <div class="stat-title">Irregularidades / Semana</div>
-                <div class="stat-value">{{ weekly_irregularities_count }}</div>
+                <div class="stat-title">Irregularidades (Total)</div>
+                <div class="stat-value">{{ irregular_count }}</div>
             </div>
-        </div>
+        </a>
 
         <!-- Taxa de Conformidade -->
         <div class="nav-link-stat stat-green">
