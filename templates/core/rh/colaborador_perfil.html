@@ -2,7 +2,7 @@
 {% load static humanize l10n %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 notranslate">
     <!-- Breadcrumb & Back -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb mb-1">
@@ -310,7 +310,7 @@
                 }
             });
 
-        // Event delegation para botões de edição de histórico (para garantir que funcione se re-renderizado via JS no futuro)
+        // Event delegation para botões de edição de histórico
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-edit-hist');
             if (btn) {
@@ -332,8 +332,8 @@
             }
         });
 
-        const btnSalvar = document.getElementById('btnSalvarcolaborador');
-        const formColab = document.getElementById('formcolaborador');
+        const btnSalvar = document.getElementById('btnSalvarColaborador');
+        const formColab = document.getElementById('formColaborador');
 
         if (btnSalvar && formColab) {
             btnSalvar.addEventListener('click', function () {
@@ -361,21 +361,13 @@
         }
     });
 
-    function openCreateModal() {
-        const modal = new bootstrap.Modal(document.getElementById('modalcolaborador'));
-        document.getElementById('formcolaborador').reset();
-        document.getElementById('modalTitle').innerText = 'Novo colaborador';
-        document.getElementById('divCargoInicial').style.display = 'block';
-        modal.show();
-    }
-
     window.editcolaborador = function (id) {
         fetch(`/api/rh/colaboradores/${id}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     const c = data.colaborador;
-                    const form = document.getElementById('formcolaborador');
+                    const form = document.getElementById('formColaborador');
                     form.reset();
 
                     form.querySelector('[name="id"]').value = c.id;
@@ -400,7 +392,7 @@
 
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
                     document.getElementById('modalTitle').innerText = 'Editar colaborador';
-                    new bootstrap.Modal(document.getElementById('modalcolaborador')).show();
+                    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
                 }
             });
     }
