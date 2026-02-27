@@ -242,39 +242,52 @@ def api_rh_auxiliar_data(request):
 @login_required
 @require_http_methods(["POST"])
 def api_save_historico(request):
-    """Registra uma nova evolução no histórico do colaborador"""
+    """Cria ou atualiza uma evolução no histórico do colaborador"""
     try:
         data = request.POST
+        historico_id = data.get('id')
         colaborador_id = data.get('colaborador_id')
         colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
 
         with transaction.atomic():
-            HistoricoProfissional.objects.create(
-                colaborador=colaborador,
-                data_evento=data.get('data_evento', timezone.now().date()),
-                tipo_evento=data.get('tipo_evento'),
-                cargo_anterior=data.get('cargo_anterior'),
-                cargo_novo=data.get('cargo_novo'),
-                salario_anterior=parse_decimal(data.get('salario_anterior')),
-                salario_novo=parse_decimal(data.get('salario_novo')),
-                observacoes=data.get('observacoes', '')
-            )
+            if historico_id:
+                h = get_object_or_404(HistoricoProfissional, pk=historico_id)
+            else:
+                h = HistoricoProfissional(colaborador=colaborador)
 
-            # Atualizar dados atuais do colaborador se necessário
-            save_colab = False
+            h.data_evento = data.get('data_evento', timezone.now().date())
+            h.tipo_evento = data.get('tipo_evento')
+            h.cargo_anterior = data.get('cargo_anterior')
+            h.cargo_novo = data.get('cargo_novo')
+            h.salario_anterior = parse_decimal(data.get('salario_anterior'))
+            h.salario_novo = parse_decimal(data.get('salario_novo'))
+            h.observacoes = data.get('observacoes', '')
+            h.save()
+
+            # Atualizar dados atuais do colaborador se for a entrada mais recente
+            # (Simplificado: se o cargo_novo foi preenchido, assume atualização do perfil)
             if data.get('cargo_novo'):
                 colaborador.cargo_atual = data.get('cargo_novo')
-                save_colab = True
             if data.get('salario_novo'):
-                colaborador.salario_atual = data.get('salario_novo')
-                save_colab = True
+                colaborador.salario_atual = parse_decimal(data.get('salario_novo'))
             
-            if save_colab:
-                colaborador.save()
+            colaborador.save()
 
-        return JsonResponse({'success': True, 'message': 'Histórico registrado com sucesso'})
+        return JsonResponse({'success': True, 'message': 'Histórico salvo com sucesso'})
     except Exception as e:
         logger.error(f"Erro ao salvar historico: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_delete_historico(request, pk):
+    """Exclui uma entrada específica do histórico"""
+    try:
+        h = get_object_or_404(HistoricoProfissional, pk=pk)
+        h.delete()
+        return JsonResponse({'success': True, 'message': 'Histórico removido com sucesso'})
+    except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 

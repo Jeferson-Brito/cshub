@@ -136,7 +136,27 @@
                                     </div>
                                     <div class="timeline-content flex-grow-1">
                                         <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
-                                            <h6 class="fw-bold mb-1">{{ h.get_tipo_evento_display }}</h6>
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h6 class="fw-bold mb-0">{{ h.get_tipo_evento_display }}</h6>
+                                                <div class="history-actions">
+                                                    <button
+                                                        class="btn btn-link btn-sm p-0 text-muted me-2 btn-edit-hist"
+                                                        data-id="{{ h.id }}"
+                                                        data-data="{{ h.data_evento|date:'Y-m-d' }}"
+                                                        data-tipo="{{ h.tipo_evento }}"
+                                                        data-cargo-ant="{{ h.cargo_anterior|default:'' }}"
+                                                        data-cargo-nov="{{ h.cargo_novo|default:'' }}"
+                                                        data-sal-ant="{{ h.salario_anterior|floatformat:2 }}"
+                                                        data-sal-nov="{{ h.salario_novo|floatformat:2 }}"
+                                                        data-obs="{{ h.observacoes|escapejs }}">
+                                                        <i class="bi bi-pencil small"></i>
+                                                    </button>
+                                                    <button class="btn btn-link btn-sm p-0 text-danger"
+                                                        onclick="deleteHistorico('{{ h.id }}')">
+                                                        <i class="bi bi-trash small"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                             {% if h.cargo_novo %}
                                             <p class="mb-1 small">De <strong>{{ h.cargo_anterior|default:"-" }}</strong>
                                                 para <strong>{{ h.cargo_novo }}</strong></p>
@@ -268,50 +288,49 @@
 {% include 'core/rh/modais_colaborador.html' %}
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Carregar dados auxiliares
-        fetch('/api/rh/auxiliar/')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const selectDept = document.getElementById('formDept');
-                    const selectStatus = document.getElementById('formStatus');
-                    const selectTipo = document.getElementById('formTipoContrato');
+    // Carregar dados auxiliares
+    fetch('/api/rh/auxiliar/')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const selectDept = document.getElementById('formDept');
+                const selectStatus = document.getElementById('formStatus');
+                const selectTipo = document.getElementById('formTipoContrato');
 
-                    if (selectDept) {
-                        selectDept.innerHTML = data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-                    }
-                    if (selectStatus) {
-                        selectStatus.innerHTML = Object.entries(data.status_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-                    }
-                    if (selectTipo) {
-                        selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-                    }
+                if (selectDept) {
+                    selectDept.innerHTML = data.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
                 }
-            });
-    });
+                if (selectStatus) {
+                    selectStatus.innerHTML = Object.entries(data.status_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                }
+                if (selectTipo) {
+                    selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+                }
+            }
+        });
 
     function openCreateModal() {
-        const form = document.getElementById('formColaborador');
-        form.reset();
-        form.querySelector('[name="id"]').value = '';
-        document.getElementById('divCargoInicial').style.display = 'block';
-        document.getElementById('previewFoto').src = "{% static 'img/avatar_placeholder.png' %}";
+        const modal = new bootstrap.Modal(document.getElementById('modalColaborador'));
+        document.getElementById('formColaborador').reset();
         document.getElementById('modalTitle').innerText = 'Novo Colaborador';
-        new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+        document.getElementById('divCargoInicial').style.display = 'block';
+        modal.show();
     }
 
-    function editColaborador(id) {
+    window.editColaborador = function (id) {
         fetch(`/api/rh/colaboradores/${id}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     const c = data.colaborador;
                     const form = document.getElementById('formColaborador');
+                    form.reset();
+
                     form.querySelector('[name="id"]').value = c.id;
                     form.querySelector('[name="nome_completo"]').value = c.nome_completo;
                     form.querySelector('[name="cpf"]').value = c.cpf;
                     form.querySelector('[name="rg"]').value = c.rg;
+
                     form.querySelector('[name="data_nascimento"]').value = c.data_nascimento.split('/').reverse().join('-');
                     form.querySelector('[name="data_admissao"]').value = c.data_admissao.split('/').reverse().join('-');
 
@@ -322,8 +341,9 @@
                     document.getElementById('divCargoInicial').style.display = 'none';
                     form.querySelector('[name="salario_atual"]').value = c.salario_atual;
                     form.querySelector('[name="status"]').value = c.status;
-                    form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
+                    form.querySelector('[name="tipo_contrato"]').value = c.tipo_contrato;
                     form.querySelector('[name="telefone"]').value = c.telefone;
+                    form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
                     form.querySelector('[name="endereco"]').value = c.endereco;
 
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
@@ -331,6 +351,40 @@
                     new bootstrap.Modal(document.getElementById('modalColaborador')).show();
                 }
             });
+    }
+
+    document.querySelectorAll('.btn-edit-hist').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const d = this.dataset;
+            const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+            const form = document.getElementById('formHistorico');
+            form.reset();
+
+            form.querySelector('[name="id"]').value = d.id;
+            form.querySelector('[name="data_evento"]').value = d.data;
+            form.querySelector('[name="tipo_evento"]').value = d.tipo;
+            form.querySelector('[name="cargo_anterior"]').value = d.cargoAnt;
+            form.querySelector('[name="cargo_novo"]').value = d.cargoNov;
+            form.querySelector('[name="salario_anterior"]').value = d.salAnt.replace(',', '.');
+            form.querySelector('[name="salario_novo"]').value = d.salNov.replace(',', '.');
+            form.querySelector('[name="observacoes"]').value = d.obs;
+
+            modal.show();
+        });
+    });
+
+    function deleteHistorico(id) {
+        if (confirm('Deseja realmente excluir este registro?')) {
+            fetch(`/api/rh/colaboradores/historico/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Erro: ' + data.error);
+                });
+        }
     }
 
     function deleteColaborador(id, nome) {

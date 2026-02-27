@@ -48,7 +48,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Departamento</label>
-                            <select name="department_id" class="form-select" required>
+                            <select name="department_id" id="formDept" class="form-select" required>
                                 {% for d in departments_all %}
                                 <option value="{{ d.id }}">{{ d.name }}</option>
                                 {% endfor %}
@@ -109,46 +109,21 @@
                                         <div class="col-md-5">
                                             <input type="text" name="nome" class="form-control form-control-sm"
                                                 placeholder="Nome do documento (Ex: RG, Contrato)" required>
-                                        </div>
-                                        <div class="col-md-5">
-                                            <input type="file" name="arquivo" class="form-control form-control-sm"
-                                                required>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <button type="button" class="btn btn-sm btn-primary w-100"
-                                                onclick="uploadDocumento()">Upload</button>
+                                            </table>
                                         </div>
                                     </div>
-                                </form>
-
-                                <!-- Listagem -->
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover align-middle">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th class="small py-2">Nome</th>
-                                                <th class="small py-2 text-center">Data</th>
-                                                <th class="small py-2 text-end">Ação</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="listaDocumentos">
-                                            <!-- Preenchido via JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="modal-footer border-0 p-3">
-                                <button type="button" class="btn btn-sm btn-light"
-                                    data-bs-dismiss="modal">Fechar</button>
+                                    <div class="modal-footer border-0 p-3">
+                                        <button type="button" class="btn btn-sm btn-light"
+                                            data-bs-dismiss="modal">Fechar</button>
+                                    </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer border-0 p-4">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" id="btnSalvarColaborador" class="btn btn-primary px-4">Salvar
-                        Alterações</button>
-                </div>
+                    <div class="modal-footer border-0 p-4">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" id="btnSalvarColaborador" class="btn btn-primary px-4">Salvar
+                            Alterações</button>
+                    </div>
             </form>
         </div>
     </div>
@@ -165,6 +140,8 @@
             </div>
             <form id="formHistorico">
                 <div class="modal-body p-4">
+                    <input type="hidden" name="id">
+                    <input type="hidden" name="colaborador_id" value="{{ colaborador.id }}">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-bold">Tipo de Evento</label>
