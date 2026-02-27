@@ -172,7 +172,8 @@
             <form id="formHistorico">
                 <div class="modal-body p-4">
                     <input type="hidden" name="id">
-                    <input type="hidden" name="colaborador_id" value="{% l10n off %}{{ colaborador.id }}{% endl10n %}">
+                    <input type="hidden" name="colaborador_id"
+                        value="{% localize off %}{{ colaborador.id }}{% endlocalize %}">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-bold">Tipo de Evento</label>
@@ -267,5 +268,3 @@
         </div>
     </div>
 </div>
-
-

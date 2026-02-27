@@ -38,11 +38,11 @@
                     </div>
                     <div class="mb-3 d-flex gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm"
-                            onclick="editcolaborador('{% l10n off %}{{ colaborador.id }}{% endl10n %}')">
+                            onclick="editcolaborador('{% localize off %}{{ colaborador.id }}{% endlocalize %}')">
                             <i class="bi bi-pencil-square"></i> Editar Dados
                         </button>
                         <button type="button" class="btn btn-outline-danger btn-sm"
-                            onclick="deletecolaborador('{% l10n off %}{{ colaborador.id }}{% endl10n %}', '{{ colaborador.nome_completo }}')">
+                            onclick="deletecolaborador('{% localize off %}{{ colaborador.id }}{% endlocalize %}', '{{ colaborador.nome_completo }}')">
                             <i class="bi bi-trash"></i> Excluir
                         </button>
                         <div class="dropdown">
@@ -72,7 +72,7 @@
                     <div class="mb-3">
                         <label class="text-muted small d-block">STATUS</label>
                         <span class="badge bg-light text-success text-uppercase">{{ colaborador.get_status_display
- }}</span>
+                            }}</span>
                     </div>
                     <div class="mb-3 border-bottom pb-2">
                         <label class="text-muted small d-block">ADMISSÃO</label>
@@ -141,7 +141,7 @@
                                                 <div class="history-actions">
                                                     <button
                                                         class="btn btn-link btn-sm p-0 text-muted me-2 btn-edit-hist"
-                                                        data-id="{% l10n off %}{{ h.id }}{% endl10n %}"
+                                                        data-id="{% localize off %}{{ h.id }}{% endlocalize %}"
                                                         data-data="{{ h.data_evento|date:'Y-m-d' }}"
                                                         data-tipo="{{ h.tipo_evento }}"
                                                         data-cargo-ant="{{ h.cargo_anterior|default:'' }}"
@@ -152,7 +152,7 @@
                                                         <i class="bi bi-pencil small"></i>
                                                     </button>
                                                     <button class="btn btn-link btn-sm p-0 text-danger"
-                                                        onclick="deleteHistorico('{% l10n off %}{{ h.id }}{% endl10n %}')">
+                                                        onclick="deleteHistorico('{% localize off %}{{ h.id }}{% endlocalize %}')">
                                                         <i class="bi bi-trash small"></i>
                                                     </button>
                                                 </div>
@@ -162,7 +162,8 @@
                                                 para <strong>{{ h.cargo_novo }}</strong></p>
                                             {% endif %}
                                             {% if h.salario_novo %}
-                                            <p class="mb-1 small text-success">Novo Salário: R$ {{ h.salario_novo|floatformat:2|intcomma }}</p>
+                                            <p class="mb-1 small text-success">Novo Salário: R$ {{
+                                                h.salario_novo|floatformat:2|intcomma }}</p>
                                             {% endif %}
                                             <p class="mb-0 text-muted italic small">{{ h.observacoes }}</p>
                                         </div>
@@ -205,7 +206,7 @@
                                         </div>
                                         {% endif %}
                                         <div class="mt-2 text-end small">
-                                            <span class="text-muted">Avaliador: {{ 
+                                            <span class="text-muted">Avaliador: {{
                                                 p.avaliador.get_full_name|default:p.avaliador.username }}</span>
                                         </div>
                                     </div>
@@ -441,7 +442,7 @@
     }
 
     function loadDocumentos() {
-        fetch(`/api/rh/colaboradores/{% l10n off %}{{ colaborador.id }}{% endl10n %}/`)
+        fetch(`/api/rh/colaboradores/{% localize off %}{{ colaborador.id }}{% endlocalize %}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -470,7 +471,7 @@
     function uploadDocumento() {
         const form = document.getElementById('formUploadDocumento');
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
+        formData.append('colaborador_id', '{% localize off %}{{ colaborador.id }}{% endlocalize %}');
 
         fetch('/api/rh/colaboradores/documentos/upload/', {
             method: 'POST',
@@ -508,7 +509,7 @@
         if (salAntInput && salAntInput.value) salAntInput.value = salAntInput.value.replace(',', '.');
 
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
+        formData.append('colaborador_id', '{% localize off %}{{ colaborador.id }}{% endlocalize %}');
 
         fetch('/api/rh/colaboradores/historico/save/', {
             method: 'POST',
@@ -525,7 +526,7 @@
     function savePerformance() {
         const form = document.getElementById('formPerformance');
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
+        formData.append('colaborador_id', '{% localize off %}{{ colaborador.id }}{% endlocalize %}');
         fetch('/api/rh/colaboradores/performance/save/', {
             method: 'POST',
             body: formData,
@@ -539,8 +540,3 @@
     }
 </script>
 {% endblock %}
-
-
-
-
-
