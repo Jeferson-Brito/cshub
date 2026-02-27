@@ -7,8 +7,8 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb mb-1">
             <li class="breadcrumb-item"><a href="{% url 'rh_colaboradores' %}"
-                    class="text-decoration-none">Colaboradores</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Dossiê do Colaborador</li>
+                    class="text-decoration-none">colaboradores</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Dossiê do colaborador</li>
         </ol>
         <a href="{% url 'rh_colaboradores' %}" class="text-muted small text-decoration-none">
             <i class="bi bi-arrow-left"></i> Voltar para listagem
@@ -38,11 +38,11 @@
                     </div>
                     <div class="mb-3 d-flex gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm"
-                            onclick="editColaborador('{{ colaborador.id }}')">
+                            onclick="editcolaborador('{% l10n off %}{{ colaborador.id }}{% endl10n %}')">
                             <i class="bi bi-pencil-square"></i> Editar Dados
                         </button>
                         <button type="button" class="btn btn-outline-danger btn-sm"
-                            onclick="deleteColaborador('{{ colaborador.id }}', '{{ colaborador.nome_completo }}')">
+                            onclick="deletecolaborador('{% l10n off %}{{ colaborador.id }}{% endl10n %}', '{{ colaborador.nome_completo }}')">
                             <i class="bi bi-trash"></i> Excluir
                         </button>
                         <div class="dropdown">
@@ -141,7 +141,7 @@
                                                 <div class="history-actions">
                                                     <button
                                                         class="btn btn-link btn-sm p-0 text-muted me-2 btn-edit-hist"
-                                                        data-id="{{ h.id }}"
+                                                        data-id="{% l10n off %}{{ h.id }}{% endl10n %}"
                                                         data-data="{{ h.data_evento|date:'Y-m-d' }}"
                                                         data-tipo="{{ h.tipo_evento }}"
                                                         data-cargo-ant="{{ h.cargo_anterior|default:'' }}"
@@ -152,7 +152,7 @@
                                                         <i class="bi bi-pencil small"></i>
                                                     </button>
                                                     <button class="btn btn-link btn-sm p-0 text-danger"
-                                                        onclick="deleteHistorico('{{ h.id }}')">
+                                                        onclick="deleteHistorico('{% l10n off %}{{ h.id }}{% endl10n %}')">
                                                         <i class="bi bi-trash small"></i>
                                                     </button>
                                                 </div>
@@ -331,8 +331,8 @@
             }
         });
 
-        const btnSalvar = document.getElementById('btnSalvarColaborador');
-        const formColab = document.getElementById('formColaborador');
+        const btnSalvar = document.getElementById('btnSalvarcolaborador');
+        const formColab = document.getElementById('formcolaborador');
 
         if (btnSalvar && formColab) {
             btnSalvar.addEventListener('click', function () {
@@ -361,20 +361,20 @@
     });
 
     function openCreateModal() {
-        const modal = new bootstrap.Modal(document.getElementById('modalColaborador'));
-        document.getElementById('formColaborador').reset();
-        document.getElementById('modalTitle').innerText = 'Novo Colaborador';
+        const modal = new bootstrap.Modal(document.getElementById('modalcolaborador'));
+        document.getElementById('formcolaborador').reset();
+        document.getElementById('modalTitle').innerText = 'Novo colaborador';
         document.getElementById('divCargoInicial').style.display = 'block';
         modal.show();
     }
 
-    window.editColaborador = function (id) {
+    window.editcolaborador = function (id) {
         fetch(`/api/rh/colaboradores/${id}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     const c = data.colaborador;
-                    const form = document.getElementById('formColaborador');
+                    const form = document.getElementById('formcolaborador');
                     form.reset();
 
                     form.querySelector('[name="id"]').value = c.id;
@@ -398,8 +398,8 @@
                     form.querySelector('[name="endereco"]').value = c.endereco;
 
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
-                    document.getElementById('modalTitle').innerText = 'Editar Colaborador';
-                    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+                    document.getElementById('modalTitle').innerText = 'Editar colaborador';
+                    new bootstrap.Modal(document.getElementById('modalcolaborador')).show();
                 }
             });
     }
@@ -418,7 +418,7 @@
         }
     }
 
-    function deleteColaborador(id, nome) {
+    function deletecolaborador(id, nome) {
         if (confirm(`Deseja realmente excluir o colaborador ${nome}? Esta ação não pode ser desfeita.`)) {
             fetch(`/api/rh/colaboradores/${id}/delete/`, {
                 method: 'POST',
@@ -441,7 +441,7 @@
     }
 
     function loadDocumentos() {
-        fetch(`/api/rh/colaboradores/{{ colaborador.id }}/`)
+        fetch(`/api/rh/colaboradores/{% l10n off %}{{ colaborador.id }}{% endl10n %}/`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -470,7 +470,7 @@
     function uploadDocumento() {
         const form = document.getElementById('formUploadDocumento');
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{{ colaborador.id }}');
+        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
 
         fetch('/api/rh/colaboradores/documentos/upload/', {
             method: 'POST',
@@ -508,7 +508,7 @@
         if (salAntInput && salAntInput.value) salAntInput.value = salAntInput.value.replace(',', '.');
 
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{{ colaborador.id }}');
+        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
 
         fetch('/api/rh/colaboradores/historico/save/', {
             method: 'POST',
@@ -525,7 +525,7 @@
     function savePerformance() {
         const form = document.getElementById('formPerformance');
         const formData = new FormData(form);
-        formData.append('colaborador_id', '{{ colaborador.id }}');
+        formData.append('colaborador_id', '{% l10n off %}{{ colaborador.id }}{% endl10n %}');
         fetch('/api/rh/colaboradores/performance/save/', {
             method: 'POST',
             body: formData,
@@ -539,5 +539,6 @@
     }
 </script>
 {% endblock %}
+
 
 
