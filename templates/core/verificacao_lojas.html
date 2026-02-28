@@ -809,18 +809,16 @@
                 </div>
 
                 {% if history.has_other_pages %}
-                <div class="card-footer bg-white py-3">
+                <div class="card-footer bg-white py-3 notranslate">
                     <nav aria-label="Navegação de histórico">
                         <ul class="pagination justify-content-center mb-0">
                             {% if history.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link border-0"
+                            <li class="page-item"><a class="page-link border-0"
                                     href="?page={{ history.previous_page_number }}&tab=history{% if scope %}&scope={{ scope }}{% endif %}">&laquo;</a>
                             </li>
                             {% else %}
                             <li class="page-item disabled"><span class="page-link border-0">&laquo;</span></li>
                             {% endif %}
-
                             {% for page_num in history.paginator.page_range %}
                             {% if history.number == page_num %}
                             <li class="page-item active"><span class="page-link border-0 rounded-circle fw-bold mx-1">{{
@@ -831,16 +829,16 @@
                                     page_num }}</a></li>
                                 {% endif %}
                                 {% endfor %}
-
                                 {% if history.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link border-0"
+                                <li class="page-item"><a class="page-link border-0"
                                         href="?page={{ history.next_page_number }}&tab=history{% if scope %}&scope={{ scope }}{% endif %}">&raquo;</a>
                                 </li>
                                 {% else %}
                                 <li class="page-item disabled"><span class="page-link border-0">&raquo;</span></li>
                                 {% endif %}
                         </ul>
+                        <div class="text-center text-muted small mt-2">Página {{ history.number }} de {{
+                            history.paginator.num_pages }}</div>
                     </nav>
                 </div>
                 {% endif %}
