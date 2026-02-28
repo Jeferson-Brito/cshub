@@ -51,15 +51,28 @@ def api_colaboradores_list(request):
         data.append({
             'id': str(c.id),
             'nome': c.nome_completo,
+            'nome_completo': c.nome_completo,  # alias para edição
             'cargo': c.cargo_atual,
+            'cargo_atual': c.cargo_atual,
+            'cpf': c.cpf or '',
             'department': c.department.name,
+            'department_id': c.department_id,
             'status': c.status,
+            'status_display': c.get_status_display(),
             'data_admissao': c.data_admissao.strftime('%d/%m/%Y'),
             'tempo_empresa': c.tempo_empresa,
             'foto_url': c.foto.url if c.foto else None
         })
-        
-    return JsonResponse({'success': True, 'colaboradores': data})
+    
+    # Estatísticas para o header
+    total = Colaborador.objects.count()
+    ativos = Colaborador.objects.filter(status='ativo').count()
+    
+    return JsonResponse({
+        'success': True,
+        'colaboradores': data,
+        'stats': {'total': total, 'ativos': ativos}
+    })
 
 
 @login_required
@@ -124,7 +137,7 @@ def api_colaborador_detail(request, pk):
             'department': colaborador.department.name,
             'department_id': str(colaborador.department.id),
             'salario_atual': float(colaborador.salario_atual),
-            'tipo_contrato': colaborador.get_tipo_contrato_display(),
+            'tipo_contrato': colaborador.tipo_contrato,
             'jornada': colaborador.jornada_trabalho,
             'status': colaborador.status,
             'tempo_empresa': colaborador.tempo_empresa,
