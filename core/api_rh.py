@@ -34,24 +34,23 @@ def parse_decimal(value):
 @login_required
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
-    """Retorna listagem de colaboradores com filtros básicos"""
+    """Retorna listagem de colaboradores + usuários Nexus que ainda não têm ficha RH"""
     status_filter = request.GET.get('status', 'ativo')
     dept_filter = request.GET.get('department')
-    
+
     colaboradores = Colaborador.objects.all()
-    
     if status_filter != 'todos':
         colaboradores = colaboradores.filter(status=status_filter)
-    
     if dept_filter:
         colaboradores = colaboradores.filter(department_id=dept_filter)
-        
+
     data = []
     for c in colaboradores.select_related('department'):
         data.append({
+            'tipo': 'colaborador',
             'id': str(c.id),
             'nome': c.nome_completo,
-            'nome_completo': c.nome_completo,  # alias para edição
+            'nome_completo': c.nome_completo,
             'cargo': c.cargo_atual,
             'cargo_atual': c.cargo_atual,
             'cpf': c.cpf or '',
@@ -63,15 +62,36 @@ def api_colaboradores_list(request):
             'tempo_empresa': c.tempo_empresa,
             'foto_url': c.foto.url if c.foto else None
         })
-    
-    # Estatísticas para o header
-    total = Colaborador.objects.count()
-    ativos = Colaborador.objects.filter(status='ativo').count()
-    
+
+    # Usuários do Nexus que ainda não têm ficha de colaborador (podem aparecer como cards para "Criar ficha")
+    users_sem_ficha = User.objects.filter(ativo=True).filter(colaborador_perfil__isnull=True).select_related('department')
+    if dept_filter:
+        users_sem_ficha = users_sem_ficha.filter(department_id=dept_filter)
+
+    usuarios_sem_ficha = []
+    for u in users_sem_ficha:
+        nome = (u.get_full_name() or u.username or '').strip() or u.username
+        usuarios_sem_ficha.append({
+            'tipo': 'usuario_sem_ficha',
+            'user_id': str(u.id),
+            'id': 'user_' + str(u.id),
+            'nome': nome,
+            'cargo': u.get_role_display() if hasattr(u, 'get_role_display') else 'Usuário Nexus',
+            'department': u.department.name if u.department else '—',
+            'department_id': str(u.department_id) if u.department_id else '',
+            'username': u.username,
+            'email': u.email or '',
+            'foto_url': u.profile_photo.url if u.profile_photo else None
+        })
+
+    total_colab = Colaborador.objects.count()
+    ativos_colab = Colaborador.objects.filter(status='ativo').count()
+
     return JsonResponse({
         'success': True,
         'colaboradores': data,
-        'stats': {'total': total, 'ativos': ativos}
+        'usuarios_sem_ficha': usuarios_sem_ficha,
+        'stats': {'total': total_colab, 'ativos': ativos_colab}
     })
 
 
@@ -165,7 +185,15 @@ def api_save_colaborador(request):
             else:
                 colaborador = Colaborador()
                 created = True
-                
+                # Vincular a um usuário Nexus (opcional): RH pode criar ficha a partir do card "usuário sem ficha"
+                user_id = data.get('user_id')
+                if user_id:
+                    try:
+                        user = User.objects.get(pk=user_id)
+                        colaborador.user = user
+                    except User.DoesNotExist:
+                        pass
+
             colaborador.nome_completo = data.get('nome_completo')
             colaborador.cpf = data.get('cpf')
             colaborador.rg = data.get('rg', '')

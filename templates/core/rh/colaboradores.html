@@ -69,6 +69,7 @@
             <form id="formColaborador" enctype="multipart/form-data">
                 <div class="modal-body p-4">
                     <input type="hidden" name="id" id="colaboradorId">
+                    <input type="hidden" name="user_id" id="colaboradorUserId" value="">
 
                     <div class="row g-3">
                         <div class="col-md-12 text-center mb-3">
@@ -174,6 +175,8 @@
     .badge-ferias { background: #dbeafe; color: #1e40af; }
     .badge-afastado { background: #fef3c7; color: #92400e; }
     .badge-desligado { background: #fee2e2; color: #991b1b; }
+    .card-usuario-sem-ficha { border: 1px dashed #dee2e6; background: #fafbfc; }
+    .card-usuario-sem-ficha:hover { border-color: #0d6efd; }
 </style>
 
 <script>
@@ -216,8 +219,11 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        window.allColaboradores = data.colaboradores || [];
-                        renderGrid(data.colaboradores);
+                        const colab = data.colaboradores || [];
+                        const semFicha = data.usuarios_sem_ficha || [];
+                        const mostraUsuariosSemFicha = (filterStatus.value === 'ativo' || filterStatus.value === 'todos');
+                        window.allColaboradores = colab.concat(mostraUsuariosSemFicha ? semFicha : []);
+                        renderGrid(window.allColaboradores);
                     }
                 });
         }
@@ -231,15 +237,44 @@
                 const matchNome = (c.nome || '').toLowerCase().includes(searchTerm);
                 const matchCargo = (c.cargo || '').toLowerCase().includes(searchTerm);
                 const matchCpf = searchDigits.length >= 6 && (c.cpf || '').replace(/\D/g, '').includes(searchDigits);
-                return matchNome || matchCargo || matchCpf;
+                const matchEmail = (c.email || '').toLowerCase().includes(searchTerm);
+                const matchUsername = (c.username || '').toLowerCase().includes(searchTerm);
+                return matchNome || matchCargo || matchCpf || matchEmail || matchUsername;
             });
 
-            const statusDisplay = (c) => c.status_display || c.status;
-
+            const statusDisplay = (c) => c.status_display || c.status || '—';
             const countEl = document.getElementById('resultCount');
             if (countEl) countEl.textContent = filtered.length + ' de ' + colaboradores.length;
 
-            grid.innerHTML = filtered.map(c => `
+            grid.innerHTML = filtered.map(c => {
+                if (c.tipo === 'usuario_sem_ficha') {
+                    return `
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="card colaborador-card card-usuario-sem-ficha h-100">
+                        <div class="card-body text-center p-4">
+                            <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}"
+                                 class="rounded-circle mb-3 border p-1"
+                                 style="width: 80px; height: 80px; object-fit: cover;">
+                            <h6 class="fw-bold mb-0">${c.nome || '—'}</h6>
+                            <p class="text-muted small mb-2">${c.cargo || 'Usuário Nexus'}</p>
+                            <div class="mb-3">
+                                <span class="badge bg-secondary">Sem ficha RH</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center bg-light rounded p-2 small mb-3">
+                                <div class="text-start">
+                                    <span class="text-muted d-block" style="font-size: 0.65rem;">DEPARTAMENTO</span>
+                                    <span class="fw-bold">${c.department || '—'}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm w-100" onclick="criarFichaParaUsuario('${(c.user_id || '').toString().replace(/'/g, "\\'")}')">
+                                <i class="bi bi-person-plus me-1"></i> Criar ficha de colaborador
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                    `;
+                }
+                return `
                 <div class="col-xl-3 col-lg-4 col-md-6">
                     <div class="card colaborador-card shadow-sm h-100">
                         <div class="card-body text-center p-4">
@@ -280,13 +315,29 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             if (filtered.length === 0) {
                 if (countEl) countEl.textContent = '0 de ' + colaboradores.length;
-                grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum colaborador encontrado.</p></div>';
+                grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum colaborador ou usuário encontrado.</p></div>';
             }
         }
+
+        window.criarFichaParaUsuario = function(userId) {
+            const userObj = (window.allColaboradores || []).find(function(x) { return x.tipo === 'usuario_sem_ficha' && x.user_id === userId; });
+            if (!userObj) return;
+            document.getElementById('colaboradorId').value = '';
+            document.getElementById('colaboradorUserId').value = userObj.user_id || '';
+            form.reset();
+            document.querySelector('[name="nome_completo"]').value = userObj.nome || '';
+            document.querySelector('[name="department_id"]').value = userObj.department_id || '';
+            document.getElementById('colaboradorUserId').value = userObj.user_id || '';
+            document.getElementById('divCargoInicial').style.display = 'none';
+            document.getElementById('modalTitle').textContent = 'Criar ficha RH para ' + (userObj.nome || 'usuário');
+            document.getElementById('previewFoto').src = userObj.foto_url || "{% static 'img/avatar_placeholder.png' %}";
+            new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+        };
 
         filterStatus.addEventListener('change', loadColaboradores);
         filterDept.addEventListener('change', loadColaboradores);
@@ -322,8 +373,11 @@
 
         document.querySelectorAll('[data-bs-target="#modalColaborador"]').forEach(btn => {
             btn.addEventListener('click', function() {
+                document.getElementById('colaboradorUserId').value = '';
+                document.getElementById('colaboradorId').value = '';
                 document.getElementById('divCargoInicial').style.display = '';
                 form.reset();
+                document.getElementById('colaboradorUserId').value = '';
                 previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
                 document.getElementById('modalTitle').textContent = 'Cadastrar Colaborador';
             });
