@@ -3076,4 +3076,8 @@ def rh_colaboradores_view(request):
 def rh_colaborador_perfil_view(request, pk):
     """Página de perfil detalhado do colaborador (Dossiê)"""
     colaborador = get_object_or_404(Colaborador, pk=pk)
-    return render(request, 'core/rh/colaborador_perfil.html', {'colaborador': colaborador})
+    departments_all = Department.objects.all().order_by('name')
+    return render(request, 'core/rh/colaborador_perfil.html', {
+        'colaborador': colaborador,
+        'departments_all': departments_all,
+    })

@@ -71,8 +71,7 @@
                     <h6 class="fw-bold mb-3">Informações de Contrato</h6>
                     <div class="mb-3">
                         <label class="text-muted small d-block">STATUS</label>
-                        <span class="badge bg-light text-success text-uppercase">{{ colaborador.get_status_display
-                            }}</span>
+                        <span class="badge status-badge-perfil status-{{ colaborador.status }}">{{ colaborador.get_status_display }}</span>
                     </div>
                     <div class="mb-3 border-bottom pb-2">
                         <label class="text-muted small d-block">ADMISSÃO</label>
@@ -162,8 +161,7 @@
                                                 para <strong>{{ h.cargo_novo }}</strong></p>
                                             {% endif %}
                                             {% if h.salario_novo %}
-                                            <p class="mb-1 small text-success">Novo Salário: R$ {{
-                                                h.salario_novo|floatformat:2|intcomma }}</p>
+                                            <p class="mb-1 small text-success">Novo Salário: R$ {{ h.salario_novo|floatformat:2|intcomma }}</p>
                                             {% endif %}
                                             <p class="mb-0 text-muted italic small">{{ h.observacoes }}</p>
                                         </div>
@@ -206,8 +204,7 @@
                                         </div>
                                         {% endif %}
                                         <div class="mt-2 text-end small">
-                                            <span class="text-muted">Avaliador: {{
-                                                p.avaliador.get_full_name|default:p.avaliador.username }}</span>
+                                            <span class="text-muted">Avaliador: {% if p.avaliador %}{{ p.avaliador.get_full_name|default:p.avaliador.username }}{% else %}—{% endif %}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -282,6 +279,18 @@
         position: relative;
         padding-left: 10px;
     }
+
+    .status-badge-perfil {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-badge-perfil.status-ativo { background: #d1fae5; color: #065f46; }
+    .status-badge-perfil.status-ferias { background: #dbeafe; color: #1e40af; }
+    .status-badge-perfil.status-afastado { background: #fef3c7; color: #92400e; }
+    .status-badge-perfil.status-desligado { background: #fee2e2; color: #991b1b; }
 </style>
 
 <!-- Modais -->
