@@ -387,6 +387,7 @@
     });
 
     window.editColaborador = function (id) {
+        document.getElementById('colaboradorUserId').value = '';
         fetch(`/api/rh/colaboradores/${id}/`)
             .then(res => res.json())
             .then(data => {
