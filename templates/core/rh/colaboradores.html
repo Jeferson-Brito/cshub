@@ -16,24 +16,24 @@
         </button>
     </div>
 
-    <!-- Filtros e busca -->
-    <div class="card border shadow-sm mb-4">
-        <div class="card-body p-3">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchColaborador" class="form-control border-start-0"
+    <!-- Barra de filtros e busca -->
+    <div class="card border-0 shadow-sm mb-4 barra-filtros-colab">
+        <div class="card-body py-3 px-4">
+            <div class="row g-2 g-md-3 align-items-center">
+                <div class="col-12 col-md-4 col-lg-4">
+                    <div class="input-group input-group-sm input-group-bar">
+                        <span class="input-group-text bg-white text-muted border-end-0 rounded-start"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchColaborador" class="form-control border-start-0 rounded-end"
                             placeholder="Buscar por nome, cargo ou CPF...">
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <select id="filterDept" class="form-select">
+                <div class="col-6 col-md-3 col-lg-2">
+                    <select id="filterDept" class="form-select form-select-sm">
                         <option value="">Todos Departamentos</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <select id="filterStatus" class="form-select">
+                <div class="col-6 col-md-2 col-lg-2">
+                    <select id="filterStatus" class="form-select form-select-sm">
                         <option value="ativo">Ativos</option>
                         <option value="ferias">Em Férias</option>
                         <option value="afastado">Afastados</option>
@@ -41,8 +41,9 @@
                         <option value="todos">Todos</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex justify-content-end">
-                    <button class="btn btn-light" id="btnRefresh" title="Recarregar">
+                <div class="col-12 col-md-3 col-lg-4 d-flex align-items-center justify-content-end gap-2">
+                    <span class="text-muted small" id="resultCount">0 de 0</span>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnRefresh" title="Recarregar">
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
                 </div>
@@ -147,6 +148,12 @@
 </div>
 
 <style>
+    .barra-filtros-colab .card-body { border-radius: 10px; }
+    .barra-filtros-colab .form-control,
+    .barra-filtros-colab .form-select { border-radius: 8px; }
+    .barra-filtros-colab .input-group-bar .input-group-text { border-radius: 8px 0 0 8px; }
+    .barra-filtros-colab .input-group-bar .form-control { border-radius: 0 8px 8px 0; }
+    .barra-filtros-colab #resultCount { min-width: 4rem; font-size: 0.8rem; }
     .colaborador-card {
         transition: transform 0.2s, box-shadow 0.2s;
         border-radius: 12px;
@@ -229,6 +236,9 @@
 
             const statusDisplay = (c) => c.status_display || c.status;
 
+            const countEl = document.getElementById('resultCount');
+            if (countEl) countEl.textContent = filtered.length + ' de ' + colaboradores.length;
+
             grid.innerHTML = filtered.map(c => `
                 <div class="col-xl-3 col-lg-4 col-md-6">
                     <div class="card colaborador-card shadow-sm h-100">
@@ -273,6 +283,7 @@
             `).join('');
 
             if (filtered.length === 0) {
+                if (countEl) countEl.textContent = '0 de ' + colaboradores.length;
                 grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum colaborador encontrado.</p></div>';
             }
         }
