@@ -2642,6 +2642,11 @@ def api_store_detail(request, store_id):
         return JsonResponse(data)
     except Store.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Loja não encontrada'}, status=404)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Erro em api_store_detail (store_id={store_id}): {e}', exc_info=True)
+        return JsonResponse({'success': False, 'error': f'Erro interno: {str(e)}'}, status=500)
 
 
 @login_required
